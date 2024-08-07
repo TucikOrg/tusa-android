@@ -5,7 +5,6 @@
 #ifndef TUSA_REQUEST_H
 #define TUSA_REQUEST_H
 
-
 #include <jni.h>
 #include <thread>
 #include "cache/cache.h"
@@ -20,7 +19,6 @@ public:
         mainThreadEnv->DeleteGlobalRef(requestTileClassGlobal);
     }
 
-    Tile* loadVectorTile(int zoom, int x, int y);
     Tile* request(int x, int y, int z);
 
     void setEnv(JNIEnv* jniEnv) {
