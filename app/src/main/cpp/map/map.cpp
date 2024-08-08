@@ -6,8 +6,7 @@
 #include "renderer/renderer.h"
 #include "network/get_tile_request.h"
 #include "util/frustrums.h"
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+
 
 void Map::onSurfaceCreated(AAssetManager *assetManager) {
     shadersBucket->compileAllShaders(assetManager);

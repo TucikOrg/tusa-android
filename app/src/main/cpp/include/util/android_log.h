@@ -10,6 +10,7 @@
 #include <vector>
 #include "map/mercator.h"
 #include "matrices.h"
+#include "renderer/point.h"
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <string>
@@ -19,6 +20,21 @@
 
 class CommonUtils {
 public:
+
+    static float longitudeToFlatCameraZ(float longitude, float planetRadius) {
+        return -(longitude / M_PI) * planetRadius;
+    }
+
+    static float latitudeToFlatCameraY(float latitude, float planetRadius) {
+        return -(CommonUtils::latitudeToTile(0, latitude) * 2 - 1) * planetRadius;
+    }
+
+    static Point planetCordsToWorldCords(float latitude, float longitude, float planetRadius) {
+        float y = planetRadius * sin(latitude);
+        float x = planetRadius * cos(latitude) * cos(-longitude);
+        float z = planetRadius * cos(latitude) * sin(-longitude);
+        return Point {x, y, z};
+    }
 
     static float randomFloatInRange(float min, float max) {
         return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min)));

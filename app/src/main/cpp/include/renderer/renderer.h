@@ -23,13 +23,14 @@
 #include "tile_node.h"
 #include "render_tile_hash.h"
 #include "visible_tiles_result.h"
+#include "user_marker.h"
+#include "point.h"
 #include <vector>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 #include <Eigen/Dense>
 #include <queue>
 #include <stack>
-
 
 class Renderer {
 public:
@@ -67,6 +68,15 @@ public:
     void onDown();
     void networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest);
     void setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env);
+    Eigen::Vector3f getCameraPosition() {
+        return Eigen::Vector3f(camX, camY, camZ);
+    }
+    float getCamLongitude() {
+        return cameraLongitudeRad;
+    }
+    float getCamLatitude() {
+        return cameraLatitudeRad;
+    }
 
     float evaluateCameraDistance(float _scaleFactor, bool flatRender, float zoomDiff) {
         float scale = evaluateScaleFactor(_scaleFactor, zoomDiff); // от 1 до cameraScaleOneUnitSphere * 2^19
@@ -140,6 +150,7 @@ private:
     std::vector<float> starsSizes = {};
     CornersCords currentCornersCords;
     std::map<std::string, TileCords> previousVisibleTiles = {};
+    std::vector<UserMarker> userMarkers = {};
 
     std::stack<TileCords> networkTilesStack;
     TileNode* readyTilesTree;
@@ -152,6 +163,7 @@ private:
     bool switchFlatSphereModeFlag = false;
 
     unsigned int testTextureId;
+    unsigned int testAvatarTextureId;
 
     void updateRenderTileProjection(short amountX, short amountY);
 
@@ -189,8 +201,8 @@ private:
             // это сфера и хотим плоскость
             float longitudeRad = getSphereLonRad();
             float latitudeRad = getSphereLatRad();
-            cameraZ = -(longitudeRad / M_PI) * planetRadius;
-            cameraY = -(CommonUtils::latitudeToTile(0, latitudeRad) * 2 - 1) * planetRadius;
+            cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, planetRadius);
+            cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, planetRadius);
             LOGI("SPHERE -> FLAT lat(%f) lon(%f)", latitudeRad, longitudeRad);
         }
 
@@ -483,6 +495,8 @@ private:
         glEnableVertexAttribArray(textureShader->getPosLocation());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
     }
+    void loadTextureFromAsset(unsigned int& textureId, const char* assetName, AAssetManager *assetManager);
+
 };
 
 

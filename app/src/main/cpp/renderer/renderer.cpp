@@ -21,6 +21,10 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
 bool DEBUG = false;
 
 std::atomic<bool> networkTileThreadRunning;
@@ -139,7 +143,6 @@ void Renderer::renderFrame() {
     longitudeCameraMoveCurrentForce *= decayParameter;
     latitudeCameraMoveCurrentForce *= decayParameter;
 
-
     std::shared_ptr<PlainShader> plainShader = shadersBucket->plainShader;
     std::shared_ptr<SymbolShader> symbolShader = shadersBucket->symbolShader;
     std::shared_ptr<PlanetShader> planetShader = shadersBucket->planetShader;
@@ -173,6 +176,22 @@ void Renderer::renderFrame() {
         drawPlanet(pvm);
     }
 
+    std::shared_ptr<UserMarkerShader> userMarkerShader = shadersBucket->userMarkerShader;
+    for (auto& marker : userMarkers) {
+        float newMarkerSize = planetRadius * 0.2 / pow(2, scaleFactorZoom);
+        if (newMarkerSize < 10) {
+            newMarkerSize = 10;
+        }
+        marker.moveTo(marker.getLatitude(), marker.getLongitude(), flatRender);
+        marker.setSize(newMarkerSize);
+        marker.update();
+        marker.draw(pvm, userMarkerShader,
+                    testAvatarTextureId,
+                    cameraLongitudeRad, cameraLatitudeRad,
+                    getSphereLonRad(), getSphereLatRad(),
+                    getCameraPosition()
+                    );
+    }
 
     auto pvm_UI = evaluatePVM_UI();
     drawTilesRenderTexture_UI(pvm_UI);
@@ -190,6 +209,11 @@ void Renderer::renderFrame() {
 }
 
 void Renderer::drawPlanet(Eigen::Matrix4f pvm) {
+    if (realMapZTile() < drawStarsToZoom) {
+        drawStars(pvm);
+        drawGlowing(pvm);
+    }
+
     // 1_drawPlanet
     glStencilMask(0X00);
     glDisable(GL_STENCIL_TEST);
@@ -208,11 +232,6 @@ void Renderer::drawPlanet(Eigen::Matrix4f pvm) {
     glBindTexture(GL_TEXTURE_2D, renderMapTexture);
     glUniform1i(planetShader->getTileTextureLocation0(), 0);
     glDrawElements(GL_TRIANGLES, planetGeometry.sphere_indices.size(), GL_UNSIGNED_INT, planetGeometry.sphere_indices.data());
-
-    if (realMapZTile() < drawStarsToZoom) {
-        drawStars(pvm);
-        drawGlowing(pvm);
-    }
 
     //drawPoints(pvm, planetGeometry.sphere_vertices, 10.0f);
 }
@@ -560,31 +579,40 @@ void Renderer::updateFrustum(bool flatRender) {
 }
 
 void Renderer::loadTextures(AAssetManager *assetManager) {
-    glGenTextures(1, &testTextureId);
-    glBindTexture(GL_TEXTURE_2D, testTextureId);
+    loadTextureFromAsset(testAvatarTextureId, "images/artem.jpg", assetManager);
+}
 
-    AAsset* asset = AAssetManager_open(assetManager, "images/earth2048.bmp", AASSET_MODE_UNKNOWN);
+void Renderer::loadTextureFromAsset(unsigned int &textureId, const char *assetName,
+                                    AAssetManager *assetManager) {
+    glGenTextures(1, &textureId);
+    glBindTexture(GL_TEXTURE_2D, textureId);
+
+    AAsset* asset = AAssetManager_open(assetManager, assetName, AASSET_MODE_UNKNOWN);
     off_t fileSize = AAsset_getLength(asset);
     unsigned char* imageData = (unsigned char*) malloc(fileSize);
     AAsset_read(asset, imageData, fileSize);
     AAsset_close(asset);
 
+    int width, height, channels;
+    unsigned char* image = stbi_load_from_memory(imageData, fileSize, &width, &height, &channels, STBI_rgb);
+
     glTexImage2D(
             GL_TEXTURE_2D,
             0,
             GL_RGB,
-            2048,
-            1024,
+            width,
+            height,
             0,
             GL_RGB,
             GL_UNSIGNED_BYTE,
-            imageData
+            image
     );
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     free(imageData);
+    delete[] image;
 }
 
 void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
@@ -603,6 +631,9 @@ void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
     glGenTextures(1, &renderMapTexture);
 
     generateStarsGeometry();
+
+    auto marker = UserMarker(DEG2RAD(55.7558), DEG2RAD(37.6176), planetRadius, false);
+    userMarkers.push_back(marker);
 }
 
 void Renderer::updateRenderTileProjection(short amountX, short amountY) {
@@ -861,6 +892,7 @@ void Renderer::generateStarsGeometry() {
 }
 
 void Renderer::drawGlowing(Eigen::Matrix4f pvm) {
+    glDisable(GL_DEPTH_TEST);
     auto planetGlowShader = shadersBucket->planetGlowShader;
     glUseProgram(planetGlowShader->program);
     Eigen::Matrix4f rotationY = EigenGL::createRotationMatrixY(-cameraLongitudeRad);

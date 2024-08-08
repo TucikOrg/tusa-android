@@ -36,6 +36,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/stars_shader.cpp
         shader/planet_glow_shader.cpp
         shader/texture_shader.cpp
+        shader/user_marker_shader.cpp
 
         renderer/renderer.cpp
         renderer/map_draw_call.cpp
@@ -48,6 +49,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         renderer/tile_node.cpp
         renderer/visible_tiles_result.cpp
         renderer/visible_tiles_block.cpp
+        renderer/user_marker.cpp
+        renderer/point.cpp
 
         util/frustrums.cpp
         util/matrices.cpp

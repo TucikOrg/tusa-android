@@ -32,6 +32,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     textureShader = std::shared_ptr<TextureShader>(new TextureShader(
             assetManager, "shaders/texture.vert", "shaders/texture.frag"
     ));
+    userMarkerShader = std::shared_ptr<UserMarkerShader>(new UserMarkerShader(
+            assetManager, "shaders/user_marker.vert", "shaders/user_marker.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {
