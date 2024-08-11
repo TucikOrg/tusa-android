@@ -16,11 +16,17 @@
 class UserMarker {
 
 public:
-    UserMarker(float latitude, float longitude, float planetRadius, bool flatRender) :
+    UserMarker(float latitude, float longitude, float planetRadius, bool flatRender, float markerSize) :
     latitude(latitude), longitude(longitude), planetRadius(planetRadius) {
-        setSize(planetRadius * 0.1);
         moveTo(latitude, longitude, flatRender);
-        update();
+        float initScale = 1.0;
+        animateToScale(initScale);
+        scale(initScale);
+        generateGeometry(markerSize);
+    }
+
+    void onChangeRenderMode(bool flatRender) {
+        moveTo(latitude, longitude, flatRender);
     }
 
     void moveTo(float latitude, float longitude, bool flatRender) {
@@ -42,11 +48,7 @@ public:
         this->z = point.z;
     }
 
-    void setSize(float size) {
-        this->size = size;
-    }
-
-    void update() {
+    void generateGeometry(float size) {
         float height = 2 * size + size / 2;
 
         // bottom left
@@ -70,12 +72,33 @@ public:
         vertices[11] = 0 + size;
     }
 
+    void animateToScale(float scale) {
+        this->targetScale = scale;
+    }
+
+    void scale(float scale) {
+        currentAnimScale = scale;
+        const int dim = 4;
+        Eigen::Vector4f scale_factors(scale, scale, scale, 1.0f);
+        Eigen::DiagonalMatrix<float, dim> scaling_matrix(scale_factors);
+        scaleMatrix = scaling_matrix.toDenseMatrix();
+    }
+
     void draw(Eigen::Matrix4f pvm, std::shared_ptr<UserMarkerShader> userMarkerShader,
               unsigned int avatarTextureId,
               float camLongitude, float camLatitude,
               float planetLongitude, float planetLatitude,
-              Eigen::Vector3f cameraPosition
+              Eigen::Vector3f cameraPosition, bool flatRender
               ) {
+
+        if (currentAnimScale != targetScale) {
+            float delta = targetScale - currentAnimScale;
+            float step = delta / 10;
+            currentAnimScale += step;
+            scale(currentAnimScale);
+        }
+
+
         float longitudeDelta = abs(longitude - planetLongitude);
         float latitudeDelta = abs(latitude - planetLatitude);
         bool enableDepthTest = longitudeDelta > M_PI / 3 || latitudeDelta > M_PI / 3;
@@ -104,7 +127,12 @@ public:
         Eigen::Matrix4f rotationLatitudeMatrix = EigenGL::createRotationMatrixAxis(camLatitude, axisLatitude);
 
         Eigen::Matrix4f translationMatrix = EigenGL::createTranslationMatrix(x, y, z);
-        Eigen::Matrix4f usePvm = pvm * translationMatrix * rotationLatitudeMatrix * rotationLongitudeMatrix;
+        Eigen::Matrix4f usePvm = Eigen::Matrix4f::Identity();
+        if (flatRender) {
+            usePvm = pvm * translationMatrix * scaleMatrix;
+        } else {
+            usePvm = pvm * translationMatrix * rotationLatitudeMatrix * rotationLongitudeMatrix * scaleMatrix;
+        }
         glUniformMatrix4fv(shader->getMatrixLocation(), 1, GL_FALSE, usePvm.data());
         glVertexAttribPointer(shader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords);
         glEnableVertexAttribArray(shader->getTextureCord());
@@ -121,15 +149,18 @@ public:
         return longitude;
     }
 
-
 private:
+    Eigen::Matrix4f scaleMatrix;
+
+    float currentAnimScale;
+    float targetScale;
+
     float planetRadius;
     float latitude;
     float longitude;
     float x;
     float y;
     float z;
-    float size = 10000;
     float vertices[12] = {
             0.0f, 0.0f, 0.0f,
             0.0f, 0.0f, 0.0f,

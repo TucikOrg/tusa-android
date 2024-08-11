@@ -46,8 +46,10 @@ public:
     float cameraScaleOneUnitFlat = 2.9; // число больше, плоскость меньше
     float dragCameraSpeedFlatMap = 1000;
     float forceCameraMoveOnDragSphere = 0.01;
+    float forceCameraMoveOnDragFlat = 5000;
     float refreshRenderDataEverySeconds = 0.5;
     short switchFlatSphereOnZoom = 15;
+    float markerSizePlanetPortion = 0.13;
     float fovy = 80.0f;
     CSSColorParser::Color spaceColor = CSSColorParser::parse("rgb(1, 21, 64)");
     CSSColorParser::Color backgroundColor = CSSColorParser::parse("rgb(255, 255, 255)");
@@ -140,6 +142,26 @@ public:
 
     void updateMapZoomScaleFactor(float scaleFactor) {
         scaleFactorZoom = scaleFactor;
+    }
+
+    float evaluateInitMarkerSize() {
+        return planetRadius * markerSizePlanetPortion;
+    }
+
+    void markersOnChangeRenderMode() {
+        for(auto& marker : userMarkers) {
+            marker.onChangeRenderMode(flatRender);
+        }
+    }
+
+    void updateMarkersSizes() {
+        float newScale = 1 / pow(2, realMapZTile());
+        if (flatRender) {
+            newScale *= 0.85;
+        }
+        for(auto& marker : userMarkers) {
+            marker.animateToScale(newScale);
+        }
     }
 
     void loadTextures(AAssetManager *assetManager);
@@ -429,6 +451,7 @@ private:
     double latitudeCameraAngleRadConstraint = DEG2RAD(85);
     double cameraLatitudeRad = 0, cameraLongitudeRad = 0;
     float cameraZ = 0, cameraY = 0;
+
     int screenW, screenH;
     int renderMapTextureWidth, renderMapTextureHeight;
     Cache* cache;

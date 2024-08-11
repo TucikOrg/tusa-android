@@ -94,6 +94,7 @@ void Renderer::renderFrame() {
     if (frameStateTimeSpan.count() >= refreshRenderDataEverySeconds && !DEBUG) {
         if (switchFlatSphereModeFlag) {
             switchFlatAndSphereRender();
+            markersOnChangeRenderMode();
             pvm = evaluatePVM();
         }
         currentCornersCords = evaluateCorners(pvm);
@@ -178,18 +179,11 @@ void Renderer::renderFrame() {
 
     std::shared_ptr<UserMarkerShader> userMarkerShader = shadersBucket->userMarkerShader;
     for (auto& marker : userMarkers) {
-        float newMarkerSize = planetRadius * 0.2 / pow(2, scaleFactorZoom);
-        if (newMarkerSize < 10) {
-            newMarkerSize = 10;
-        }
-        marker.moveTo(marker.getLatitude(), marker.getLongitude(), flatRender);
-        marker.setSize(newMarkerSize);
-        marker.update();
         marker.draw(pvm, userMarkerShader,
                     testAvatarTextureId,
                     cameraLongitudeRad, cameraLatitudeRad,
                     getSphereLonRad(), getSphereLatRad(),
-                    getCameraPosition()
+                    getCameraPosition(), flatRender
                     );
     }
 
@@ -472,14 +466,14 @@ void Renderer::scale(float factor) {
     latitudeCameraMoveCurrentForce = 0;
     longitudeCameraMoveCurrentForce = 0;
 
-    //updateCameraPosition(flatRender); // дистанция камеры от центра
     if(_savedLastScaleStateMapZ != realMapZTile()) {
-        //updateFrustum(flatRender);
+        updateMarkersSizes();
         _savedLastScaleStateMapZ = realMapZTile();
         if (
                 (_savedLastScaleStateMapZ >= switchFlatSphereOnZoom && !flatRender) ||
                 (_savedLastScaleStateMapZ < switchFlatSphereOnZoom && flatRender)) {
             switchFlatSphereModeFlag = true;
+
         }
         LOGI("New Z of map %d", realMapZTile());
         LOGI("Current tile extent %f", evaluateCurrentExtent());
@@ -632,7 +626,12 @@ void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     generateStarsGeometry();
 
-    auto marker = UserMarker(DEG2RAD(55.7558), DEG2RAD(37.6176), planetRadius, false);
+    auto marker = UserMarker(
+            DEG2RAD(55.7558),
+            DEG2RAD(37.6176),
+            planetRadius,
+            false, evaluateInitMarkerSize()
+    );
     userMarkers.push_back(marker);
 }
 
