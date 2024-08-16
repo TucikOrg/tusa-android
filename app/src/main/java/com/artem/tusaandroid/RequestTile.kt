@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
-
 class RequestTile {
     fun request(zoom: Int, x: Int, y: Int): ByteArray {
         val base = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8,mapbox.mapbox-terrain-v2/"

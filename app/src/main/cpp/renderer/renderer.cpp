@@ -26,6 +26,7 @@
 #include "stb_image.h"
 
 bool DEBUG = false;
+bool DRAW_DEBUG_UI = false;
 
 std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
@@ -187,9 +188,11 @@ void Renderer::renderFrame() {
                     );
     }
 
-    auto pvm_UI = evaluatePVM_UI();
-    drawTilesRenderTexture_UI(pvm_UI);
-    drawFPS_UI(pvm_UI);
+    if (DRAW_DEBUG_UI) {
+        auto pvm_UI = evaluatePVM_UI();
+        drawTilesRenderTexture_UI(pvm_UI);
+        drawFPS_UI(pvm_UI);
+    }
 
     if (DEBUG) {
         drawPoints(pvm, planetGeometry.sphere_vertices, 10.0f);
@@ -482,7 +485,7 @@ void Renderer::scale(float factor) {
 
 void Renderer::doubleTap() {
     //DEBUG = !DEBUG;
-    switchFlatSphereModeFlag = true;
+    //switchFlatSphereModeFlag = true;
 }
 
 void Renderer::networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest) {
@@ -837,12 +840,15 @@ void Renderer::updatePlanetGeometry(VisibleTilesResult visibleTilesResult) {
 }
 
 void Renderer::onStop() {
-    networkTileThreadRunning.store(false);
-    for (std::thread* networkTileThread : networkTileThreads) {
-        if (networkTileThread->joinable()) {
-            networkTileThread->join();
-        }
-    }
+    // когда экран сворачивается то вызывается этот метод
+    // и все крашиться :(
+    // он должен запускаться только если приложение выключается
+//    networkTileThreadRunning.store(false);
+//    for (std::thread* networkTileThread : networkTileThreads) {
+//        if (networkTileThread->joinable()) {
+//            networkTileThread->join();
+//        }
+//    }
 }
 
 void Renderer::onDown() {
