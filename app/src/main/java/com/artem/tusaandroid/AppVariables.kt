@@ -10,14 +10,28 @@ class AppVariables {
         return deviceAppIdentity!!
     }
 
-    val url = "http://192.168.0.103:8080"
+    val url = "https://4573-193-176-214-47.ngrok-free.app"
     var avatarSelectedUri: Uri? = null
     var avatarId: String? = null
-    var name: String? = null
-    var username: String? = null
-    var phone: String? = null
+    private var name: String? = null
+    private var uniqueName: String? = null
+    private var phone: String? = null
+    private var jwt: String? = null
+    private lateinit var sharedPreferences: SharedPreferences
     private var deviceAppIdentity: String? = null
     private val hash: MutableMap<String, Any> = mutableMapOf()
+
+    fun setSharedPreference(sharedPreferences: SharedPreferences) {
+        this.sharedPreferences = sharedPreferences
+    }
+
+    fun nameOrEmpty(): String {
+        return name?: ""
+    }
+
+    fun makeEndpoint(path: String): String {
+        return "$url/$path"
+    }
 
     fun saveToMem(key: String, value: Any) {
         hash[key] = value
@@ -27,16 +41,53 @@ class AppVariables {
         return hash[key] as T
     }
 
-    fun loadFromSharedPreferences(basic: SharedPreferences) {
-        deviceAppIdentity = basic.getString("deviceAppIdentity", null)
+    fun saveJwt(jwt: String) {
+        this.jwt = jwt
+        sharedPreferences.edit().putString("jwt", jwt).apply()
+    }
+
+    fun savePhone(phone: String) {
+        this.phone = phone
+        sharedPreferences.edit().putString("phone", phone).apply()
+    }
+
+    fun saveName(name: String) {
+        this.name = name
+        sharedPreferences.edit().putString("name", name).apply()
+    }
+
+    fun saveUniqueName(uniqueName: String) {
+        this.uniqueName = uniqueName
+        sharedPreferences.edit().putString("uniqueName", uniqueName).apply()
+    }
+
+    fun getJwt(): String {
+        return jwt?: ""
+    }
+
+    fun getPhone(): String {
+        return phone?: ""
+    }
+
+    fun getName(): String {
+        return name?: ""
+    }
+
+    fun getUniqueName(): String {
+        return uniqueName?: ""
+    }
+
+    fun load() {
+        deviceAppIdentity = sharedPreferences.getString("deviceAppIdentity", null)
         if (deviceAppIdentity == null) {
             deviceAppIdentity = UUID.randomUUID().toString()
-            basic.edit().putString("deviceAppIdentity", deviceAppIdentity).apply()
+            sharedPreferences.edit().putString("deviceAppIdentity", deviceAppIdentity).apply()
         }
-        avatarId = basic.getString("avatarId", null)
-        username = basic.getString("username", null)
-        phone = basic.getString("phone", null)
-        name = basic.getString("name", null)
+        avatarId = sharedPreferences.getString("avatarId", null)
+        uniqueName = sharedPreferences.getString("uniqueName", null)
+        phone = sharedPreferences.getString("phone", null)
+        name = sharedPreferences.getString("name", null)
+        jwt = sharedPreferences.getString("jwt", null)
     }
 
     companion object {

@@ -63,7 +63,7 @@ fun Avatar() {
     if (avaImage == null) {
         LaunchedEffect(Unit) {
             withContext(Dispatchers.IO) {
-                val url = "${AppVariables.getInstance().url}/avatar/image?owner=${AppVariables.getInstance().getDeviceAppIdentity()}"
+                val url = "${AppVariables.getInstance().url}/api/v1/avatar/image?owner=${AppVariables.getInstance().getDeviceAppIdentity()}"
                 val okHttpClient = OkHttpClient()
                 val request = Request.Builder().url(url).build()
                 okHttpClient.newCall(request).execute().use { response ->
