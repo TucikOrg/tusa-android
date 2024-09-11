@@ -1,7 +1,10 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
-    kotlin("plugin.serialization") version "2.0.10"
+    alias(libs.plugins.compose.compiler)
+    id("dagger.hilt.android.plugin")
+    id("com.google.devtools.ksp")
+    id("org.openapi.generator") version "7.8.0"
 }
 
 android {
@@ -56,15 +59,44 @@ android {
     }
 }
 
+val generatedSourcesPath = "$projectDir/openapi"
+
+openApiGenerate {
+    generatorName.set("kotlin")
+    remoteInputSpec.set("http://localhost:8080/v3/api-docs")
+    outputDir.set(generatedSourcesPath)
+    apiPackage.set("com.artem.tusaandroid.api")
+    invokerPackage.set("com.artem.tusaandroid.invoker")
+    modelPackage.set("com.artem.tusaandroid.model")
+    configOptions.put("dateLibrary", "java8")
+    generateModelTests.set(false)
+    generateApiTests.set(false)
+    generateApiDocumentation.set(false)
+}
+
+kotlin.sourceSets["main"].kotlin.srcDir("$generatedSourcesPath/src/main/kotlin")
+
 dependencies {
     // i add this libraries
     implementation(libs.coil.compose)
-    implementation(libs.android.image.cropper)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.okhttp)
     implementation(libs.play.services.location)
     implementation(libs.accompanist.permissions)
-    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.core)
+    implementation(libs.androidx.work.runtime.ktx)
+
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    implementation(libs.moshi.kotlin)
+    implementation(libs.moshi.adapters)
+
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

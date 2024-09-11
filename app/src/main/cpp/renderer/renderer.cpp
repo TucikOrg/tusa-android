@@ -180,8 +180,7 @@ void Renderer::renderFrame() {
 
     std::shared_ptr<UserMarkerShader> userMarkerShader = shadersBucket->userMarkerShader;
     for (auto& marker : userMarkers) {
-        marker.draw(pvm, userMarkerShader,
-                    testAvatarTextureId,
+        marker.second.draw(pvm, userMarkerShader,
                     cameraLongitudeRad, cameraLatitudeRad,
                     getSphereLonRad(), getSphereLatRad(),
                     getCameraPosition(), flatRender
@@ -576,22 +575,29 @@ void Renderer::updateFrustum(bool flatRender) {
 }
 
 void Renderer::loadTextures(AAssetManager *assetManager) {
-    loadTextureFromAsset(testAvatarTextureId, "images/artem.jpg", assetManager);
+    defaultAvatarTextureId = loadTextureFromAsset("images/person.png", assetManager);
 }
 
-void Renderer::loadTextureFromAsset(unsigned int &textureId, const char *assetName,
-                                    AAssetManager *assetManager) {
-    glGenTextures(1, &textureId);
-    glBindTexture(GL_TEXTURE_2D, textureId);
+GLuint Renderer::loadTextureFromAsset(const char *assetName, AAssetManager *assetManager) {
 
     AAsset* asset = AAssetManager_open(assetManager, assetName, AASSET_MODE_UNKNOWN);
     off_t fileSize = AAsset_getLength(asset);
-    unsigned char* imageData = (unsigned char*) malloc(fileSize);
+    auto* imageData = (unsigned char*) malloc(fileSize);
     AAsset_read(asset, imageData, fileSize);
     AAsset_close(asset);
 
+    return loadTextureFromBytes(imageData, fileSize);
+}
+
+GLuint Renderer::loadTextureFromBytes(unsigned char* imageData, off_t fileSize) {
     int width, height, channels;
     unsigned char* image = stbi_load_from_memory(imageData, fileSize, &width, &height, &channels, STBI_rgb);
+
+    unsigned int textureId;
+    CommonUtils::printGlError();
+    glGenTextures(1, &textureId);
+    CommonUtils::printGlError();
+    glBindTexture(GL_TEXTURE_2D, textureId);
 
     glTexImage2D(
             GL_TEXTURE_2D,
@@ -608,8 +614,9 @@ void Renderer::loadTextureFromAsset(unsigned int &textureId, const char *assetNa
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    free(imageData);
+    //free(imageData);
     delete[] image;
+    return textureId;
 }
 
 void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
@@ -628,18 +635,77 @@ void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
     glGenTextures(1, &renderMapTexture);
 
     generateStarsGeometry();
+}
 
+void Renderer::updateMarkerGeo(std::string key, float latitude, float longitude) {
+    auto markerIterator = userMarkers.find(key);
+    if (markerIterator == userMarkers.end()) {
+        return;
+    }
+
+    markerIterator->second.moveTo(latitude, longitude, flatRender);
+}
+
+
+void Renderer::removeMarker(std::string key) {
+    auto markerIterator = userMarkers.find(key);
+    if (markerIterator == userMarkers.end()) {
+        return;
+    }
+
+    GLuint textureId = markerIterator->second.getTextureId();
+    glDeleteTextures(1, &textureId);
+
+    userMarkers.erase(markerIterator);
+}
+
+void Renderer::updateMarkerAvatar(std::string key, unsigned char* imageData, off_t fileSize) {
+    auto markerIterator = userMarkers.find(key);
+    if (markerIterator == userMarkers.end()) {
+        return;
+    }
+
+    GLuint removeTextureId = markerIterator->second.getTextureId();
+    glDeleteTextures(1, &removeTextureId);
+
+    GLuint textureId = loadTextureFromBytes(imageData, fileSize);
+    markerIterator->second.setTextureId(textureId);
+}
+
+void Renderer::handleMarker(std::string key, float latitude, float longitude, unsigned char *imageData, off_t fileSize) {
+    auto markerIterator = userMarkers.find(key);
+    if (markerIterator != userMarkers.end()) {
+        GLuint removeTextureId = markerIterator->second.getTextureId();
+        glDeleteTextures(1, &removeTextureId);
+        GLuint textureId = loadTextureFromBytes(imageData, fileSize);
+        markerIterator->second.setTextureId(textureId);
+        markerIterator->second.moveTo(DEG2RAD(latitude), DEG2RAD(longitude), flatRender);
+    } else {
+        addMarker(key, latitude, longitude, imageData, fileSize);
+    }
+}
+
+void Renderer::addMarker(std::string key, float latitude, float longitude, unsigned char* imageData, off_t fileSize) {
+    auto markerIterator = userMarkers.find(key);
+    if (markerIterator != userMarkers.end()) {
+        return; // added already
+    }
+
+    GLuint textureId = loadTextureFromBytes(imageData, fileSize);
     auto marker = UserMarker(
-            DEG2RAD(55.7558),
-            DEG2RAD(37.6176),
+            latitude,
+            longitude,
             planetRadius,
-            false, evaluateInitMarkerSize()
+            flatRender,
+            evaluateInitMarkerSize(),
+            textureId
     );
-    userMarkers.push_back(marker);
+
+    userMarkers[key] = marker;
 }
 
 void Renderer::updateRenderTileProjection(short amountX, short amountY) {
-    rendererTileProjectionMatrix = EigenGL::createOrthoMatrix(0, 4096 * amountX, -4096 * amountY, 0, 0.1, 100);
+    rendererTileProjectionMatrix = EigenGL::createOrthoMatrix(0, 4096.0 * amountX, -4096.0 * amountY, 0, 0.1, 100);
 }
 
 CornersCords Renderer::evaluateCorners(Eigen::Matrix4f pvm) {
@@ -960,6 +1026,8 @@ void Renderer::drawStars(Eigen::Matrix4f pvm) {
     auto error = CommonUtils::getGLErrorString();
     glDrawArrays(GL_POINTS, 0, starsVertices.size() / 3);
 }
+
+
 
 
 

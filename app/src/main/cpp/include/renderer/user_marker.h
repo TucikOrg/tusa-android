@@ -16,8 +16,19 @@
 class UserMarker {
 
 public:
-    UserMarker(float latitude, float longitude, float planetRadius, bool flatRender, float markerSize) :
-    latitude(latitude), longitude(longitude), planetRadius(planetRadius) {
+    UserMarker() = default;
+    UserMarker(
+            float latitude,
+            float longitude,
+            float planetRadius,
+            bool flatRender,
+            float markerSize,
+            unsigned int textureId
+            ) :
+    latitude(latitude),
+    longitude(longitude),
+    planetRadius(planetRadius),
+    textureId(textureId) {
         moveTo(latitude, longitude, flatRender);
         float initScale = 1.0;
         animateToScale(initScale);
@@ -30,6 +41,9 @@ public:
     }
 
     void moveTo(float latitude, float longitude, bool flatRender) {
+        this->latitude = latitude;
+        this->longitude = longitude;
+
         auto point = Point {
             0, 0, 0
         };
@@ -41,8 +55,6 @@ public:
             point = Point {0, y, z};
         }
 
-        this->latitude = latitude;
-        this->longitude = longitude;
         this->x = point.x;
         this->y = point.y;
         this->z = point.z;
@@ -85,7 +97,6 @@ public:
     }
 
     void draw(Eigen::Matrix4f pvm, std::shared_ptr<UserMarkerShader> userMarkerShader,
-              unsigned int avatarTextureId,
               float camLongitude, float camLatitude,
               float planetLongitude, float planetLatitude,
               Eigen::Vector3f cameraPosition, bool flatRender
@@ -116,7 +127,7 @@ public:
 
         UserMarkerShader *shader = userMarkerShader.get();
         glUseProgram(shader->program);
-        glBindTexture(GL_TEXTURE_2D, avatarTextureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glUniform1f(shader->getTextureLocation(), 0);
 
         Eigen::Vector3f cameraXZ = Eigen::Vector3f(cameraPosition.x(), 0, cameraPosition.z());
@@ -141,15 +152,24 @@ public:
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
     }
 
-    float getLatitude() {
+    float getLatitude() const {
         return latitude;
     }
 
-    float getLongitude() {
+    float getLongitude() const {
         return longitude;
     }
 
+    unsigned int getTextureId() const {
+        return textureId;
+    }
+
+    void setTextureId(unsigned int textureId) {
+        this->textureId = textureId;
+    }
+
 private:
+    GLuint textureId;
     Eigen::Matrix4f scaleMatrix;
 
     float currentAnimScale;

@@ -70,6 +70,13 @@ public:
     void onDown();
     void networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest);
     void setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env);
+
+    void handleMarker(std::string key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
+    void addMarker(std::string key, float latitude, float longitude, unsigned char* imageData, off_t fileSize);
+    void updateMarkerGeo(std::string key, float latitude, float longitude);
+    void updateMarkerAvatar(std::string key, unsigned char* imageData, off_t fileSize);
+    void removeMarker(std::string key);
+
     Eigen::Vector3f getCameraPosition() {
         return Eigen::Vector3f(camX, camY, camZ);
     }
@@ -150,7 +157,7 @@ public:
 
     void markersOnChangeRenderMode() {
         for(auto& marker : userMarkers) {
-            marker.onChangeRenderMode(flatRender);
+            marker.second.onChangeRenderMode(flatRender);
         }
     }
 
@@ -160,7 +167,7 @@ public:
             newScale *= 0.85;
         }
         for(auto& marker : userMarkers) {
-            marker.animateToScale(newScale);
+            marker.second.animateToScale(newScale);
         }
     }
 
@@ -172,7 +179,7 @@ private:
     std::vector<float> starsSizes = {};
     CornersCords currentCornersCords;
     std::map<std::string, TileCords> previousVisibleTiles = {};
-    std::vector<UserMarker> userMarkers = {};
+    std::map<std::string, UserMarker> userMarkers = {};
 
     std::stack<TileCords> networkTilesStack;
     TileNode* readyTilesTree;
@@ -184,8 +191,7 @@ private:
     int frameCount = 0;
     bool switchFlatSphereModeFlag = false;
 
-    unsigned int testTextureId;
-    unsigned int testAvatarTextureId;
+    unsigned int defaultAvatarTextureId;
 
     void updateRenderTileProjection(short amountX, short amountY);
 
@@ -446,10 +452,10 @@ private:
     Sphere planetGeometry = Sphere();
     float cameraCurrentDistance = 0;
     float scaleFactorZoom = 0.0f; // из MapView устанавливается
-    double longitudeCameraMoveCurrentForce = 0;
-    double latitudeCameraMoveCurrentForce = 0;
-    double latitudeCameraAngleRadConstraint = DEG2RAD(85);
-    double cameraLatitudeRad = 0, cameraLongitudeRad = 0;
+    float longitudeCameraMoveCurrentForce = 0;
+    float latitudeCameraMoveCurrentForce = 0;
+    float latitudeCameraAngleRadConstraint = DEG2RAD(85);
+    float cameraLatitudeRad = 0, cameraLongitudeRad = 0;
     float cameraZ = 0, cameraY = 0;
 
     int screenW, screenH;
@@ -518,8 +524,10 @@ private:
         glEnableVertexAttribArray(textureShader->getPosLocation());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
     }
-    void loadTextureFromAsset(unsigned int& textureId, const char* assetName, AAssetManager *assetManager);
 
+    GLuint loadTextureFromAsset(const char* assetName, AAssetManager *assetManager);
+
+    GLuint loadTextureFromBytes(unsigned char* imageData, off_t fileSize);
 };
 
 

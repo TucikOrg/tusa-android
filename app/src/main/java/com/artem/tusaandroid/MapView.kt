@@ -4,15 +4,21 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.PointF
 import android.opengl.GLSurfaceView
-import android.util.AttributeSet
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
 import android.view.MotionEvent
 import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import android.view.SurfaceHolder
+import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.location.LastLocationState
 
-class MapView : GLSurfaceView {
+@SuppressLint("ViewConstructor")
+class MapView(
+    context: Context,
+    private val meAvatarState: MeAvatarState,
+    private val lastLocationState: LastLocationState
+) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
 
@@ -31,23 +37,20 @@ class MapView : GLSurfaceView {
         return scaleFactor - scaleShift
     }
 
-    constructor(context: Context) : super(context) {}
-    constructor(context: Context, attributes: AttributeSet) : super(context, attributes) {}
-
     init {
         // Чтобы при старте синхронизировать C++ и Java состояния карты
         NativeLibrary.noOpenGlContextInit(resources.assets, getScaleForMap())
 
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
-        setRenderer(Renderer(resources.assets))
+        setRenderer(Renderer(
+            resources.assets,
+            meAvatarState,
+            lastLocationState
+        ))
 
         scaleGestureDetector = ScaleGestureDetector(context, ScaleListener())
         gestureDetector = GestureDetector(context, GestureListener())
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder) {
-        super.surfaceCreated(holder)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {

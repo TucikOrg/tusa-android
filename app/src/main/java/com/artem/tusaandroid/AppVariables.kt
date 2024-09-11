@@ -1,44 +1,30 @@
 package com.artem.tusaandroid
 
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
+import com.artem.tusaandroid.encryption.EncryptionUtils
+import java.time.LocalDateTime
+import java.util.Base64
 import java.util.UUID
+import javax.crypto.SecretKey
 
 class AppVariables {
-
-    fun getDeviceAppIdentity(): String {
-        return deviceAppIdentity!!
-    }
-
-    val url = "https://4573-193-176-214-47.ngrok-free.app"
-    var avatarSelectedUri: Uri? = null
-    var avatarId: String? = null
+    private var avatarId: String? = null
     private var name: String? = null
     private var uniqueName: String? = null
     private var phone: String? = null
     private var jwt: String? = null
     private lateinit var sharedPreferences: SharedPreferences
-    private var deviceAppIdentity: String? = null
-    private val hash: MutableMap<String, Any> = mutableMapOf()
+    private var installAppIdentity: String? = null
 
     fun setSharedPreference(sharedPreferences: SharedPreferences) {
         this.sharedPreferences = sharedPreferences
     }
 
-    fun nameOrEmpty(): String {
-        return name?: ""
-    }
-
-    fun makeEndpoint(path: String): String {
-        return "$url/$path"
-    }
-
-    fun saveToMem(key: String, value: Any) {
-        hash[key] = value
-    }
-
-    fun <T> getFromMem(key: String): T  {
-        return hash[key] as T
+    fun getIsAuthenticated(): Boolean {
+        return jwt != null
     }
 
     fun saveJwt(jwt: String) {
@@ -56,11 +42,6 @@ class AppVariables {
         sharedPreferences.edit().putString("name", name).apply()
     }
 
-    fun saveUniqueName(uniqueName: String) {
-        this.uniqueName = uniqueName
-        sharedPreferences.edit().putString("uniqueName", uniqueName).apply()
-    }
-
     fun getJwt(): String {
         return jwt?: ""
     }
@@ -73,15 +54,11 @@ class AppVariables {
         return name?: ""
     }
 
-    fun getUniqueName(): String {
-        return uniqueName?: ""
-    }
-
     fun load() {
-        deviceAppIdentity = sharedPreferences.getString("deviceAppIdentity", null)
-        if (deviceAppIdentity == null) {
-            deviceAppIdentity = UUID.randomUUID().toString()
-            sharedPreferences.edit().putString("deviceAppIdentity", deviceAppIdentity).apply()
+        installAppIdentity = sharedPreferences.getString("installAppIdentity", null)
+        if (installAppIdentity == null) {
+            installAppIdentity = UUID.randomUUID().toString()
+            sharedPreferences.edit().putString("installAppIdentity", installAppIdentity).apply()
         }
         avatarId = sharedPreferences.getString("avatarId", null)
         uniqueName = sharedPreferences.getString("uniqueName", null)
@@ -91,13 +68,6 @@ class AppVariables {
     }
 
     companion object {
-        private var instance: AppVariables? = null
-
-        fun getInstance(): AppVariables {
-            if (instance == null) {
-                instance = AppVariables()
-            }
-            return instance!!
-        }
+        const val TIME_LEFT: Int = 40
     }
 }

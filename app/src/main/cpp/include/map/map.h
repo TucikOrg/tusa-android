@@ -13,22 +13,27 @@
 #include "mutex"
 #include "gl/open_gl_interface.h"
 
-class Map : public IOpenGl{
+class Map {
 public:
     Map(Cache* cache);
 
 //    Map(const Map&) = delete;
 //    Map& operator=(const Map&) = delete;
 
-    void render() override;
-    void onSurfaceChanged(int w, int h) override;
-    void onSurfaceCreated(AAssetManager* assetManager) override;
-    void noOpenGlContextInit(AAssetManager* assetManager, float scaleFactor, JNIEnv *env) override;
-    void drag(float dx, float dy) override;
-    void scale(float scaleFactor) override;
-    void doubleTap() override;
-    void onStop() override;
-    void onDown() override;
+    void render();
+    void onSurfaceChanged(int w, int h);
+    void onSurfaceCreated(AAssetManager* assetManager);
+    void noOpenGlContextInit(AAssetManager* assetManager, float scaleFactor, JNIEnv *env);
+    void drag(float dx, float dy);
+    void scale(float scaleFactor);
+    void doubleTap();
+    void onStop();
+    void onDown();
+    void addMarker(std::string key, float latitude, float longitude, unsigned char* imageData, off_t fileSize);
+    void updateMarkerGeo(std::string key, float latitude, float longitude);
+    void removeMarker(std::string key);
+    void updateMarkerAvatar(std::string key, unsigned char *imageData, off_t fileSize);
+    void handleMarker(std::string key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
 private:
     float zoom = 0;
     Cache* cache;

@@ -16,6 +16,10 @@ object NativeLibrary {
     external fun scale(scaleFactor: Float)
     external fun doubleTap()
     external fun onStop()
-
     external fun onDown()
+    external fun addMarker(key: String, latitude: Float, longitude: Float, avatarBuffer: ByteArray)
+    external fun updateMarkerGeo(key: String, latitude: Float, longitude: Float)
+    external fun removeMarker(key: String)
+    external fun updateMarkerAvatar(key: String, avatarBuffer: ByteArray)
+    external fun handleMarker(key: String, latitude: Float, longitude: Float, avatarBuffer: ByteArray)
 }
