@@ -3,8 +3,7 @@ package com.artem.tusaandroid.app
 import android.graphics.BitmapFactory
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.AppVariables
-import com.artem.tusaandroid.api.AvatarControllerApi
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -18,8 +17,7 @@ import javax.inject.Inject
 @HiltViewModel
 class LoadMeAvatarViewModel @Inject constructor(
     private val meAvatarState: MeAvatarState,
-    private val avatarControllerApi: AvatarControllerApi,
-    private val appVariables: AppVariables,
+    private val profileState: ProfileState,
     private val okHttpClient: OkHttpClient,
     private val customTucikEndpoints: CustomTucikEndpoints
 ): ViewModel() {
@@ -27,7 +25,7 @@ class LoadMeAvatarViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
-                    val phone = appVariables.getPhone()
+                    val phone = profileState.getPhone()
                     val request = Request.Builder()
                         .url(customTucikEndpoints.makeToAvatarImage(phone))
                         .get()

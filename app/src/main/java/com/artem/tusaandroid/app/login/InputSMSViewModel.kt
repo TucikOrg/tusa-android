@@ -5,10 +5,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.AppVariables
 import com.artem.tusaandroid.api.AuthenticationControllerApi
 import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.action.MainActionFabViewModel
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.model.LoginDto
 import com.artem.tusaandroid.model.SendCodeDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -20,15 +20,15 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class InputSMSViewModel @Inject constructor(
-    private val appVariables: AppVariables?,
+    private val profileState: ProfileState?,
     private val authenticationControllerApi: AuthenticationControllerApi?,
     private val authenticationState: AuthenticationState?
 ): ViewModel() {
-    private val initTimeLeft = AppVariables.TIME_LEFT
+    private val initTimeLeft = profileState?.timeLeftInit?: 40
     var timeLeft by mutableIntStateOf(initTimeLeft)
 
     fun getPhone(): String {
-        return appVariables?.getPhone()?: ""
+        return profileState?.getPhone()?: ""
     }
 
     fun makeTimeLeftText(): String {
@@ -36,7 +36,7 @@ open class InputSMSViewModel @Inject constructor(
     }
 
     fun sendCodeToPhone(phone: String) {
-        appVariables?.savePhone(phone)
+        profileState?.savePhone(phone)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {
@@ -53,10 +53,10 @@ open class InputSMSViewModel @Inject constructor(
             withContext(Dispatchers.IO) {
                 try {
                     val response = authenticationControllerApi?.login(LoginDto(code = code, phone = phone))?: return@withContext
-                    appVariables?.saveJwt(response.jwt)
-                    appVariables?.saveName(response.name)
+                    profileState?.saveJwt(response.jwt)
+                    profileState?.saveName(response.name)
                     authenticationState?.authenticated = true
-                    if (appVariables?.getName().isNullOrBlank()) {
+                    if (profileState?.getName().isNullOrBlank()) {
                         mainActionFabViewModel.stage = MainActionStage.INPUT_NAME
                     } else {
                         mainActionFabViewModel.stage = MainActionStage.PROFILE

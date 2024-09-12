@@ -11,10 +11,10 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
-import com.artem.tusaandroid.AppVariables
 import com.artem.tusaandroid.MainActivity
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.api.LocationControllerApi
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.await
 import com.artem.tusaandroid.model.AddLocationDto
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -36,8 +36,6 @@ class LocationForegroundService: Service() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
-    @Inject
-    lateinit var appVariables: AppVariables
     @Inject
     lateinit var lastLocationState: LastLocationState
     @Inject

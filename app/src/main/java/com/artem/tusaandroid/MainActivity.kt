@@ -21,6 +21,7 @@ import com.artem.tusaandroid.app.action.MainActionFab
 import com.artem.tusaandroid.app.MainActivityViewModel
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.StartForegroundIfHaveLocationPermission
 import com.artem.tusaandroid.theme.TusaAndroidTheme
@@ -30,8 +31,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject
-    lateinit var appVariables: AppVariables
-
+    lateinit var profileState: ProfileState
     @Inject
     lateinit var lastLocationState: LastLocationState
 
@@ -39,8 +39,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         val sharedPreferences: SharedPreferences = getSharedPreferences("basic", Context.MODE_PRIVATE)
-        appVariables.setSharedPreference(sharedPreferences)
-        appVariables.load()
+        profileState.load(sharedPreferences)
         lastLocationState.load(sharedPreferences)
 
         setContent {

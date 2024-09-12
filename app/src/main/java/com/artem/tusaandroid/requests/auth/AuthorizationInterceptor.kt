@@ -1,12 +1,12 @@
 package com.artem.tusaandroid.requests.auth
 
-import com.artem.tusaandroid.AppVariables
+import com.artem.tusaandroid.app.profile.ProfileState
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 
 class AuthorizationInterceptor(
-    private val appVariables: AppVariables
+    private val profileState: ProfileState
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val newRequest = chain.request().signedRequest()
@@ -14,9 +14,9 @@ class AuthorizationInterceptor(
     }
 
     private fun Request.signedRequest(): Request {
-        if (appVariables.getIsAuthenticated()) {
+        if (profileState.getIsAuthenticated()) {
             return this.newBuilder()
-                .header("Authorization", "Bearer ${appVariables.getJwt()}")
+                .header("Authorization", "Bearer ${profileState.getJwt()}")
                 .build()
         }
 

@@ -11,9 +11,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.AppVariables
 import com.artem.tusaandroid.api.AuthenticationControllerApi
 import com.artem.tusaandroid.app.action.MainActionFabViewModel
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.model.SendCodeDto
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -25,15 +25,14 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class InputPhoneViewModel @Inject constructor(
-    private val appVariables: AppVariables?,
+    private val profileState: ProfileState?,
     private val authenticationControllerApi: AuthenticationControllerApi?,
     private val customTucikEndpoints: CustomTucikEndpoints?
 ): ViewModel() {
-
     val legalDocumentsAnnotated = makeLegalDocumentsText()
 
     fun sendCodeToPhone(phone: String, mainActionFabViewModel: MainActionFabViewModel) {
-        appVariables?.savePhone(phone)
+        profileState?.savePhone(phone)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {

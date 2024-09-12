@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -15,13 +14,11 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.AppVariables
 import com.artem.tusaandroid.api.AuthenticationControllerApi
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.model.SendCodeDto
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ActivityContext
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -30,7 +27,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class InputPhoneModalViewModel @Inject constructor(
-    private val appVariables: AppVariables,
+    private val profileState: ProfileState,
     private val authenticationControllerApi: AuthenticationControllerApi,
     private val customTucikEndpoints: CustomTucikEndpoints
 ): ViewModel() {
@@ -44,7 +41,7 @@ class InputPhoneModalViewModel @Inject constructor(
     }
 
     fun sendCode(phone: String) {
-        appVariables.savePhone(phone)
+        profileState.savePhone(phone)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
                 try {

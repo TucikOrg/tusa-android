@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.AppVariables
 import com.artem.tusaandroid.api.ProfileControllerApi
 import com.artem.tusaandroid.model.ChangeNameDto
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,14 +16,14 @@ import javax.inject.Inject
 @HiltViewModel
 open class ProfileCardViewModel @Inject constructor(
     private val profileControllerApi: ProfileControllerApi?,
-    private val appVariables: AppVariables?
+    private val profileState: ProfileState?
 ): ViewModel() {
     private var showModal = mutableStateOf(false)
-    var name by mutableStateOf(appVariables?.getName())
+    var name by mutableStateOf(profileState?.getName())
     private var lastSaved: String? = name
 
     open fun getPhone(): String {
-        return appVariables?.getPhone()?: "Phone"
+        return profileState?.getPhone()?: "Phone"
     }
 
     fun getShowModal(): Boolean {
@@ -41,7 +40,7 @@ open class ProfileCardViewModel @Inject constructor(
     }
 
     fun saveName() {
-        appVariables?.saveName(name!!)
+        profileState?.saveName(name!!)
         if (name == null || name == lastSaved) {
             return
         }

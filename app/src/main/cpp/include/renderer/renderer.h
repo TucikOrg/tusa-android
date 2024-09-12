@@ -174,6 +174,8 @@ public:
     void loadTextures(AAssetManager *assetManager);
 
 private:
+    int count = 0;
+
     float fps;
     std::vector<float> starsVertices = {};
     std::vector<float> starsSizes = {};
@@ -245,139 +247,7 @@ private:
     VisibleTilesResult visibleTilesResult;
     std::map<std::string, RenderTileHash> renderTileHash;
 
-    void renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture) {
-        std::shared_ptr<PlainShader> plainShader = shadersBucket->plainShader;
-
-        int leftX = visibleTilesResult.visibleBlocks.tileX_start;
-        int leftY = visibleTilesResult.visibleBlocks.tileY_start;
-        int z = visibleTilesResult.visibleBlocks.zoom;
-        int rightX = visibleTilesResult.visibleBlocks.tileX_end;
-
-        glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
-        glDisable(GL_DEPTH_TEST);
-        glDisable(GL_STENCIL_TEST);
-        glUseProgram(plainShader->program);
-
-        for(short geometryHeapIndex = Style::maxGeometryHeaps; geometryHeapIndex >= 0; --geometryHeapIndex) {
-            for(auto& tileCords : renderTiles) {
-                auto& visibleTile = tileCords;
-                auto visibleTileKey = tileCords.getKey();
-
-                Eigen::Matrix4f forTileMatrix;
-                if (renderTileHash.find(visibleTileKey) != renderTileHash.end()) {
-                    short deltaTileZ = z - visibleTile.getTileZ();
-
-                    int visibleTileN = pow(2, visibleTile.getTileZ());
-                    int topLefTileN = pow(2, z);
-
-                    double visibleTileX = (double)visibleTile.getTileX() / visibleTileN;
-                    double visibleTileY = (double)visibleTile.getTileY() / visibleTileN;
-
-                    double topLeftTileX = (double)leftX / topLefTileN;
-                    double topLeftTileY = (double)leftY / topLefTileN;
-
-                    double deltaTileXPlanet = visibleTileX - topLeftTileX;
-                    double deltaTileYPlanet = visibleTileY - topLeftTileY;
-
-                    bool isVisibleTileOnRightSideOfEdge =
-                            leftX > rightX &&
-                            visibleTileX < topLeftTileX;
-                    if (isVisibleTileOnRightSideOfEdge) {
-                        deltaTileXPlanet += 1;
-                    }
-
-                    // либо больше текущего зума, либо меньше текущего зума.
-                    // насколько он больше или меньше относительно текущего зума
-                    float scaleVisual2topLeft = pow(2, deltaTileZ);
-                    // размер относительно текущего видимого тайла
-                    // extent это всегда одна доля рендеринга тексутры всех тайлов
-                    // поэтому умножая на скейл получаем относительный размер
-                    float sizeOfVisualTile = extent * scaleVisual2topLeft;
-
-                    double tilesXDelta = deltaTileXPlanet * visibleTileN;
-                    double tilesYDelta = deltaTileYPlanet * visibleTileN;
-                    float deltaVisualX = tilesXDelta * sizeOfVisualTile;
-                    float deltaVisualY = -tilesYDelta * sizeOfVisualTile;
-
-                    Eigen::Affine3f modelTranslation(Eigen::Translation3f(deltaVisualX,deltaVisualY, 0));
-                    Eigen::Affine3f scaleMatrix(Eigen::Scaling(scaleVisual2topLeft, scaleVisual2topLeft, 0.0f));
-                    forTileMatrix = pvmTexture * modelTranslation.matrix() * scaleMatrix.matrix();
-
-                    renderTileHash[visibleTileKey] = RenderTileHash { forTileMatrix };
-                } else {
-                    forTileMatrix = renderTileHash[visibleTileKey].forTileMatrix;
-                }
-
-                glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, forTileMatrix.data());
-                Tile* tile = visibleTile.getDrawGeometry();
-
-                // рисуем бекграунд
-                if(geometryHeapIndex == Style::maxGeometryHeaps) {
-                    CSSColorParser::Color colorOfStyle = CSSColorParser::parse("rgb(241, 255, 230)");
-                    GLfloat red   = static_cast<GLfloat>(colorOfStyle.r) / 255;
-                    GLfloat green = static_cast<GLfloat>(colorOfStyle.g) / 255;
-                    GLfloat blue  = static_cast<GLfloat>(colorOfStyle.b) / 255;
-                    GLfloat alpha = static_cast<GLfloat>(colorOfStyle.a);
-                    const GLfloat color[] = { red, green, blue, alpha};
-                    glUniform4fv(plainShader->getColorLocation(), 1, color);
-
-                    float backPoints[] = {
-                            0, 0,
-                            (float) extent, 0,
-                            (float) extent, -(float) extent,
-                            0, 0,
-                            0, - (float) extent,
-                            (float) extent, -(float) extent,
-                    };
-
-                    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                                          GL_FALSE, 0, backPoints
-                    );
-                    glEnableVertexAttribArray(plainShader->getPosLocation());
-                    glDrawArrays(GL_TRIANGLES, 0, 6);
-                    continue;
-                }
-
-                // Рисуем основную карту
-                if(geometryHeapIndex < Style::maxGeometryHeaps) {
-                    Geometry<float, unsigned int>& polygonsGeometry = tile->resultPolygons[geometryHeapIndex];
-                    Geometry<float, unsigned int>& linesGeometry = tile->resultLines[geometryHeapIndex];
-                    if(polygonsGeometry.isEmpty() && linesGeometry.isEmpty())
-                        continue;
-
-                    float lineWidth = tile->style.getLineWidthOfHeap(geometryHeapIndex);
-                    glLineWidth(lineWidth);
-
-                    CSSColorParser::Color colorOfStyle = tile->style.getColorOfGeometryHeap(geometryHeapIndex);
-                    GLfloat red   = static_cast<GLfloat>(colorOfStyle.r) / 255;
-                    GLfloat green = static_cast<GLfloat>(colorOfStyle.g) / 255;
-                    GLfloat blue  = static_cast<GLfloat>(colorOfStyle.b) / 255;
-                    GLfloat alpha = static_cast<GLfloat>(colorOfStyle.a);
-                    const GLfloat color[] = { red, green, blue, alpha};
-                    glUniform4fv(plainShader->getColorLocation(), 1, color);
-
-
-                    if (!polygonsGeometry.isEmpty()) {
-                        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                                              GL_FALSE, 0, polygonsGeometry.points
-                        );
-                        glEnableVertexAttribArray(plainShader->getPosLocation());
-                        glDrawElements(GL_TRIANGLES, polygonsGeometry.indicesCount, GL_UNSIGNED_INT, polygonsGeometry.indices);
-                    }
-
-                    if (!linesGeometry.isEmpty()) {
-                        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                                              GL_FALSE, 0, linesGeometry.points
-                        );
-                        glEnableVertexAttribArray(plainShader->getPosLocation());
-                        glDrawElements(GL_LINES, linesGeometry.indicesCount, GL_UNSIGNED_INT, linesGeometry.indices);
-                    }
-
-                    continue;
-                }
-            }
-        }
-    }
+    void renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture);
 
     Eigen::Matrix4f evaluatePVM();
 
@@ -462,10 +332,9 @@ private:
     int renderMapTextureWidth, renderMapTextureHeight;
     Cache* cache;
     TilesStorage tilesStorage = TilesStorage(cache, nullptr);
-    std::map<std::string, TileCords> tilesForRenderer = {};
     GLuint renderMapTexture;
     GLuint renderMapFrameBuffer;
-    std::string renderFrameKey = "";
+    std::string currentVisibleTilesKey = "";
 
     // текущее положение камеры в пространстве
     float camX = 0;

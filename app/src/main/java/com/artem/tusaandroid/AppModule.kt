@@ -7,6 +7,7 @@ import com.artem.tusaandroid.api.LocationControllerApi
 import com.artem.tusaandroid.api.ProfileControllerApi
 import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
@@ -24,20 +25,20 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun customTucikEndpoints(): CustomTucikEndpoints {
+    fun provideCustomTucikEndpoints(): CustomTucikEndpoints {
         return CustomTucikEndpoints(basePath)
     }
 
     @Provides
     @Singleton
-    fun meAvatarState(): MeAvatarState {
+    fun provideMeAvatarState(): MeAvatarState {
         return MeAvatarState()
     }
 
     @Provides
     @Singleton
-    fun provideAppVariables(): AppVariables {
-        return AppVariables()
+    fun provideProfileState(): ProfileState {
+        return ProfileState()
     }
 
     @Provides
@@ -49,48 +50,48 @@ class AppModule {
     @Provides
     @Singleton
     fun provideAuthenticationState(
-        appVariables: AppVariables,
+        profileState: ProfileState,
         client: OkHttpClient,
         customTucikEndpoints: CustomTucikEndpoints
     ): AuthenticationState {
-        return AuthenticationState(appVariables, client, customTucikEndpoints)
+        return AuthenticationState(profileState, client, customTucikEndpoints)
     }
 
     @Provides
     @Singleton
-    fun provideClient(appVariables: AppVariables): OkHttpClient {
+    fun provideClient(profileState: ProfileState): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(AuthorizationInterceptor(appVariables))
+            .addInterceptor(AuthorizationInterceptor(profileState))
             .build()
     }
 
     @Provides
     @Singleton
-    fun authenticationController(): AuthenticationControllerApi {
+    fun provideAuthenticationController(): AuthenticationControllerApi {
         return AuthenticationControllerApi(basePath)
     }
 
     @Provides
     @Singleton
-    fun avatarControllerApi(client: OkHttpClient): AvatarControllerApi {
+    fun provideAvatarControllerApi(client: OkHttpClient): AvatarControllerApi {
         return AvatarControllerApi(basePath, client)
     }
 
     @Provides
     @Singleton
-    fun legalControllerApi(client: OkHttpClient): LegalControllerApi {
+    fun provideLegalControllerApi(client: OkHttpClient): LegalControllerApi {
         return LegalControllerApi(basePath, client)
     }
 
     @Provides
     @Singleton
-    fun locationControllerApi(client: OkHttpClient): LocationControllerApi {
+    fun provideLocationControllerApi(client: OkHttpClient): LocationControllerApi {
         return LocationControllerApi(basePath, client)
     }
 
     @Provides
     @Singleton
-    fun profileControllerApi(client: OkHttpClient): ProfileControllerApi {
+    fun provideProfileControllerApi(client: OkHttpClient): ProfileControllerApi {
         return ProfileControllerApi(basePath, client)
     }
 }
