@@ -38,6 +38,8 @@ public:
     ~Renderer() = default;
 private:
     // Camera functions
+    void evaluateCameraWorldPosition(bool isFlat, float& camWorldX, float& camWorldY, float& camWorldZ);
+    VisibleTilesResult evaluateVisibleTiles(CornersCords& corners, bool isFlat);
     float evaluateCameraDistance(float _scaleFactor, float zoomDiff);
     float evaluateCameraDistanceCurrentZ(short zoomDiff = 0) {
         return evaluateCameraDistance(realMapZTile(), zoomDiff);
@@ -49,11 +51,11 @@ private:
         return cameraLatitudeRad;
     }
     [[nodiscard]] Eigen::Vector3f getCameraPosition() const {
-        return {camX, camY, camZ};
+        return {camWorldX, camWorldY, camWorldZ};
     }
     void updateCameraPosition();
     void updateFrustum();
-    CornersCords evaluateCorners(Eigen::Matrix4f pvm);
+    CornersCords evaluateCorners(Eigen::Matrix4f& pvm, bool isFlat);
 
     // Surface, Space environment functions
     void drawStars(Eigen::Matrix4f pvm);
@@ -77,7 +79,7 @@ public:
     void setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env);
     void onStop();
 private:
-    Eigen::Matrix4f evaluatePVM();
+    Eigen::Matrix4f evaluatePVM(bool isFlat, float camWorldX, float camWorldY, float camWorldZ);
     void clearColor();
     void loadAssets(AAssetManager *assetManager);
     void loadTextures(AAssetManager *assetManager);
@@ -112,7 +114,7 @@ private:
     void networkRootTileFunction(JavaVM* gJvm, GetTileRequest* getTileRequest);
     void pushToNetworkTiles(std::map<std::string, TileCords>& newVisibleTiles);
     void updateRenderTileProjection(short amountX, short amountY);
-    void renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture);
+    void renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture, VisibleTilesResult visibleTilesResult);
 
     // Controls
 public:
@@ -184,6 +186,7 @@ private:
     std::shared_ptr<ShadersBucket> shadersBucket;
     std::shared_ptr<RenderTileCoordinates> renderTileCoordinates;
     std::shared_ptr<Symbols> symbols;
+    std::map<std::string, TileCords> previousVisibleTile;
     Eigen::Matrix4f projectionMatrix;
     Eigen::Matrix4f rendererTileProjectionMatrix;
     const uint32_t extent = 4096;
@@ -202,10 +205,14 @@ private:
     GLuint renderMapTexture;
     GLuint renderMapFrameBuffer;
     std::string currentVisibleTilesKey;
+
     // текущее положение камеры в пространстве
-    float camX = 0;
-    float camY = 0;
-    float camZ = 0;
+    // Именно в мировом пространстве координат open gl (x y z)
+    float camWorldX = 0;
+    float camWorldY = 0;
+    float camWorldZ = 0;
+
+
     float flatTileSizeInit = 2.0f * planetRadius * (M_PI / 2);
     float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
 

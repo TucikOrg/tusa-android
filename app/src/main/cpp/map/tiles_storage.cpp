@@ -6,23 +6,35 @@
 #include "util/android_log.h"
 #include <fstream>
 
+std::mutex cacheMutex;
+
 Tile* TilesStorage::getOrLoad(int zoom, int x, int y, GetTileRequest* getTileRequest) {
+    cacheMutex.lock();
     std::string key = Tile::makeKey(zoom, x, y);
     auto it = cacheTiles.find(key);
     auto exists = it != cacheTiles.end();
+    cacheMutex.unlock();
     if (exists) {
         return it->second;
     }
 
+    // network long time operation
     Tile* newTile = getTileRequest->request(x, y, zoom);
+
+    cacheMutex.lock();
     cacheTiles.insert({key, newTile});
+    cacheMutex.unlock();
+
     return newTile;
 }
 
 Tile* TilesStorage::getTile(int zoom, int x, int y) {
+    cacheMutex.lock();
     std::string key = Tile::makeKey(zoom, x, y);
     auto it = cacheTiles.find(key);
-    if (it == cacheTiles.end()) {
+    auto empty = it == cacheTiles.end();
+    cacheMutex.unlock();
+    if (empty) {
         return nullptr;
     }
     return it->second;

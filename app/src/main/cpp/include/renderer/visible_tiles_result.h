@@ -14,6 +14,8 @@ class VisibleTilesResult {
 public:
     VisibleTilesBlock visibleBlocks;
     std::map<std::string, TileCords> newVisibleTiles = {};
+    short renderZDiffSize;
+    short renderYDiffSize;
 };
 
 

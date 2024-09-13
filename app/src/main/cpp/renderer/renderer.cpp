@@ -31,7 +31,7 @@ bool DRAW_CENTER_POINT = true;
 
 std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
-std::mutex renderFrameMutex;
+std::mutex visibleTilesResultMutex;
 
 Renderer::Renderer(
         std::shared_ptr<ShadersBucket> shadersBucket,
@@ -43,26 +43,30 @@ Renderer::Renderer(
     renderTileCoordinates = std::shared_ptr<RenderTileCoordinates>(new RenderTileCoordinates(shadersBucket, symbols));
 }
 
+void Renderer::evaluateCameraWorldPosition(bool isFlat, float& camWorldX, float& camWorldY, float& camWorldZ) {
+    if (isFlat) {
+        camWorldX = cameraCurrentDistance;
+        camWorldY = cameraY;
+        camWorldZ = cameraZ;
+        return;
+    }
 
-Eigen::Matrix4f Renderer::evaluatePVM() {
+    camWorldX = cameraCurrentDistance * cos(cameraLatitudeRad) * cos(cameraLongitudeRad);
+    camWorldY = cameraCurrentDistance * sin(cameraLatitudeRad);
+    camWorldZ = cameraCurrentDistance * cos(cameraLatitudeRad) * sin(cameraLongitudeRad);
+}
+
+Eigen::Matrix4f Renderer::evaluatePVM(bool isFlat, float camWorldX, float camWorldY, float camWorldZ) {
     float targetX = 0;
     float targetY = 0;
     float targetZ = 0;
 
-    if (flatRender) {
-        camX = cameraCurrentDistance;
-        camY = cameraY;
-        camZ = cameraZ;
-
+    if (isFlat) {
         targetY = cameraY;
         targetZ = cameraZ;
-    } else {
-        camX = cameraCurrentDistance * cos(cameraLatitudeRad) * cos(cameraLongitudeRad);
-        camY = cameraCurrentDistance * sin(cameraLatitudeRad);
-        camZ = cameraCurrentDistance * cos(cameraLatitudeRad) * sin(cameraLongitudeRad);
     }
 
-    Eigen::Vector3f cameraPosition = Eigen::Vector3f(camX, camY, camZ);
+    Eigen::Vector3f cameraPosition = Eigen::Vector3f(camWorldX, camWorldY, camWorldZ);
     Eigen::Vector3f target(targetX, targetY, targetZ);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
     Eigen::Matrix4f viewMatrix = EigenGL::createViewMatrix(cameraPosition, target, up);
@@ -70,8 +74,14 @@ Eigen::Matrix4f Renderer::evaluatePVM() {
     return pvm;
 }
 
+VisibleTilesResult Renderer::evaluateVisibleTiles(CornersCords& corners, bool isFlat) {
+    if (isFlat) {
+        return updateVisibleTilesFlat(corners);
+    }
+    return updateVisibleTilesSphere(corners);
+}
+
 void Renderer::renderFrame() {
-    renderFrameMutex.lock();
     auto currentTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> frameDeltaTime = currentTime - previousRenderFrameTime;
     previousRenderFrameTime = currentTime;
@@ -80,7 +90,8 @@ void Renderer::renderFrame() {
     updateCameraPosition();
     updateFrustum();
 
-    Eigen::Matrix4f pvm = evaluatePVM();
+    evaluateCameraWorldPosition(flatRender, camWorldX, camWorldY, camWorldZ);
+    Eigen::Matrix4f pvm = evaluatePVM(flatRender, camWorldX, camWorldY, camWorldZ);
     bool refreshTilesTexture = false;
     std::chrono::duration<float> fpsTimeSpan = currentTime - fpsRenderFrameTime;
     if (fpsTimeSpan.count() >= 1.0f) {
@@ -99,17 +110,23 @@ void Renderer::renderFrame() {
     // По этому состоянию рендриться картинка
     if (frameStateTimeSpan.count() >= refreshRenderDataEverySeconds && !DEBUG) {
         if (switchFlatSphereModeFlag) {
-            switchFlatAndSphereRender();
+            switchFlatAndSphereRender(); // меняет flatRender флаг
             markersOnChangeRenderMode();
-            pvm = evaluatePVM();
+            evaluateCameraWorldPosition(flatRender, camWorldX, camWorldY, camWorldZ);
+            pvm = evaluatePVM(flatRender, camWorldX, camWorldY, camWorldZ);
         }
-        currentCornersCords = evaluateCorners(pvm);
 
-        if (flatRender) {
-            visibleTilesResult = updateVisibleTilesFlat(currentCornersCords);
-        } else {
-            visibleTilesResult = updateVisibleTilesSphere(currentCornersCords);
-        }
+        currentCornersCords = evaluateCorners(pvm, flatRender);
+        visibleTilesResultMutex.lock();
+        visibleTilesResult = evaluateVisibleTiles(currentCornersCords, flatRender);
+        visibleTilesResultMutex.unlock();
+
+        updateRenderTileProjection(visibleTilesResult.renderZDiffSize, visibleTilesResult.renderYDiffSize);
+        pushToNetworkTiles(visibleTilesResult.newVisibleTiles);
+
+//        auto testCorners__ = evaluateCorners(pvm, !flatRender);
+//        auto testVisibleTiles__ = evaluateVisibleTiles(testCorners__, !flatRender);
+
 
         // Геометрия генерируется четко по видимым тайлам
         // Текстура так же маппиться по геометрии видимых тайлов
@@ -181,8 +198,8 @@ void Renderer::renderFrame() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
         renderTileHash.clear();
-        renderTiles(renderFirstTiles, pvmTexture);
-        renderTiles(renderSecondTiles, pvmTexture);
+        renderTiles(renderFirstTiles, pvmTexture, visibleTilesResult);
+        renderTiles(renderSecondTiles, pvmTexture, visibleTilesResult);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -222,7 +239,6 @@ void Renderer::renderFrame() {
             drawPoint(pvm, 0, 0, 0, 30.0f);
         }
     }
-    renderFrameMutex.unlock();
 }
 
 void Renderer::drawPlanet(Eigen::Matrix4f pvm) {
@@ -330,26 +346,24 @@ VisibleTilesResult Renderer::updateVisibleTilesFlat(CornersCords corners) {
             z
     };
 
-    int renderZDiffSize = (int) rightBottom_zTile - (int) leftTop_zTile + 1;
-    int renderYDiffSize = (int) rightBottom_yTile - (int) leftTop_yTile + 1;
-
-    updateRenderTileProjection(renderZDiffSize, renderYDiffSize);
+    auto renderZDiffSize = (short)((int) rightBottom_zTile - (int) leftTop_zTile + 1);
+    auto renderYDiffSize = (short)((int) rightBottom_yTile - (int) leftTop_yTile + 1);
 
     // end_updateVisibleTiles
     std::ostringstream oss;
     for (auto& tile : newVisibleTiles) {
         oss << tile.second.toString() << " ";
     }
-    LOGI("[SHOW_PIPE] New visible tiles: %s", oss.str().c_str());
+    LOGI("[SHOW_PIPE] New visible tiles (FLAT): %s", oss.str().c_str());
     LOGI("[VISIBLE_TILES_SIZE] %s", std::to_string(newVisibleTiles.size()).c_str());
 
-    pushToNetworkTiles(newVisibleTiles);
 
     return VisibleTilesResult {
             visibleBlock,
-            newVisibleTiles
+            newVisibleTiles,
+            renderZDiffSize,
+            renderYDiffSize
     };
-
 }
 
 VisibleTilesResult Renderer::updateVisibleTilesSphere(CornersCords cornersCords) {
@@ -423,41 +437,47 @@ VisibleTilesResult Renderer::updateVisibleTilesSphere(CornersCords cornersCords)
             z
     };
 
-    int renderXDiffSize = (int) rightBottom_xTile - (int) leftTop_xTile + 1;
-    int renderYDiffSize = (int) rightBottom_yTile - (int) leftTop_yTile + 1;
+    auto renderXDiffSize = (short)((int) rightBottom_xTile - (int) leftTop_xTile + 1);
+    auto renderYDiffSize = (short)((int) rightBottom_yTile - (int) leftTop_yTile + 1);
     if (isOnTheEdge) {
-        renderXDiffSize = (int) n - (int) leftTop_xTile + (int) rightBottom_xTile + 1;
+        renderXDiffSize = (short)((int) n - (int) leftTop_xTile + (int) rightBottom_xTile + 1);
     }
-
-    updateRenderTileProjection(renderXDiffSize, renderYDiffSize);
 
     // end_updateVisibleTiles
     std::ostringstream oss;
     for (auto& tile : newVisibleTiles) {
         oss << tile.second.toString() << " ";
     }
-    LOGI("[SHOW_PIPE] New visible tiles: %s", oss.str().c_str());
+    LOGI("[SHOW_PIPE] New visible tiles (SPHERE): %s", oss.str().c_str());
     LOGI("[VISIBLE_TILES_SIZE] %s", std::to_string(newVisibleTiles.size()).c_str());
-
-    pushToNetworkTiles(newVisibleTiles);
 
     return VisibleTilesResult {
             visibleBlocks,
-            newVisibleTiles
+            newVisibleTiles,
+            renderXDiffSize,
+            renderYDiffSize
     };
 }
 
 void Renderer::pushToNetworkTiles(std::map<std::string, TileCords>& newVisibleTiles) {
-    networkTileStackMutex.lock();
+
     for(auto& tilePair : newVisibleTiles) {
         auto& tile = tilePair.second;
+
+        // Этот тайл в предыдущей итерации грузили
+        if (previousVisibleTile.find(tile.getKey()) != previousVisibleTile.end())
+            continue;
+
         // Если тайлы уже загружены то нету смысла их грузить
         if(tilesStorage.existInMemory(tile.getTileZ(), tile.getTileX(), tile.getTileY()))
             continue;
 
+        networkTileStackMutex.lock();
         networkTilesStack.push(tile);
+        networkTileStackMutex.unlock();
     }
-    networkTileStackMutex.unlock();
+
+    previousVisibleTile = newVisibleTiles;
 }
 
 
@@ -533,11 +553,11 @@ void Renderer::networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest
 
         // Проверяем что тайл актуален и есть смысл его загружать к данному моменту
         // в момент когда наступает его очередь загрузки может быть так что он уже не нужен
-        renderFrameMutex.lock();
+        visibleTilesResultMutex.lock();
         if (visibleTilesResult.newVisibleTiles.find(tileToNetwork.getKey()) == visibleTilesResult.newVisibleTiles.end()) {
             shouldLoadTile = false;
         }
-        renderFrameMutex.unlock();
+        visibleTilesResultMutex.unlock();
 
         // Рутовый тайл тоже не грузим. Он грузится в другом потоке
         if (tileToNetwork.getTileZ() == 0 && tileToNetwork.getTileX() == 0 && tileToNetwork.getTileY() == 0) {
@@ -864,7 +884,7 @@ void Renderer::updateRenderTileProjection(short amountX, short amountY) {
     rendererTileProjectionMatrix = EigenGL::createOrthoMatrix(0, 4096.0 * amountX, -4096.0 * amountY, 0, 0.1, 100);
 }
 
-CornersCords Renderer::evaluateCorners(Eigen::Matrix4f pvm) {
+CornersCords Renderer::evaluateCorners(Eigen::Matrix4f& pvm, bool isFlat) {
     std::vector<Eigen::Vector4f> planes = EigenGL::extractFrustumPlanes(pvm);
     auto leftPlane = planes[0];
     auto topPlane = planes[3];
@@ -888,7 +908,7 @@ CornersCords Renderer::evaluateCorners(Eigen::Matrix4f pvm) {
     float rightBottom_y = 0;
     float rightBottom_z = 0;
 
-    if (flatRender) {
+    if (isFlat) {
         evaluateLatLonByIntersectionPlanes_Flat(
                 leftPlane,
                 topPlane,
@@ -1122,7 +1142,7 @@ void Renderer::generateStarsGeometry() {
     }
 }
 
-void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture) {
+void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f pvmTexture, VisibleTilesResult visibleTilesResult) {
     std::shared_ptr<PlainShader> plainShader = shadersBucket->plainShader;
 
     int leftX = visibleTilesResult.visibleBlocks.tileX_start;
@@ -1263,7 +1283,7 @@ void Renderer::drawGlowing(Eigen::Matrix4f pvm) {
     Eigen::Matrix4f rotationY = EigenGL::createRotationMatrixY(-cameraLongitudeRad);
     Eigen::AngleAxisf rotationYBy90(-M_PI / 2, Eigen::Vector3f::UnitY());
 
-    Eigen::Vector3f cameraVectorXZ(camX, 0, camZ);
+    Eigen::Vector3f cameraVectorXZ(camWorldX, 0, camWorldZ);
     Eigen::Vector3f rotationUpDownAxis = rotationYBy90 * cameraVectorXZ;
     rotationUpDownAxis.normalize();
     Eigen::Matrix4f rotationUpDown = EigenGL::createRotationMatrixAxis(cameraLatitudeRad, rotationUpDownAxis);
