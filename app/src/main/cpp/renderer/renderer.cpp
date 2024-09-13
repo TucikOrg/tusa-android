@@ -481,11 +481,10 @@ void Renderer::scale(float factor) {
     if(_savedLastScaleStateMapZ != realMapZTile()) {
         updateMarkersSizes();
         _savedLastScaleStateMapZ = realMapZTile();
-        if (
-                (_savedLastScaleStateMapZ >= switchFlatSphereOnZoom && !flatRender) ||
-                (_savedLastScaleStateMapZ < switchFlatSphereOnZoom && flatRender)) {
+        bool sphere2FlatCondition = _savedLastScaleStateMapZ >= switchSphere2FlatAtZoom && !flatRender;
+        bool flat2SphereCondition = _savedLastScaleStateMapZ < switchSphere2FlatAtZoom && flatRender;
+        if (sphere2FlatCondition || flat2SphereCondition) {
             switchFlatSphereModeFlag = true;
-
         }
         LOGI("New Z of map %d", realMapZTile());
         LOGI("Current tile extent %f", evaluateCurrentExtent());
@@ -493,8 +492,8 @@ void Renderer::scale(float factor) {
 }
 
 void Renderer::doubleTap() {
-    DEBUG = !DEBUG;
-    //switchFlatSphereModeFlag = true;
+    //DEBUG = !DEBUG;
+    switchFlatSphereModeFlag = true;
     //DEBUG_TILES = !DEBUG_TILES;
 }
 

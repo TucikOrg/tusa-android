@@ -153,7 +153,7 @@ private:
     float forceCameraMoveOnDragSphere = 0.01;
     float forceCameraMoveOnDragFlat = 5000;
     float refreshRenderDataEverySeconds = 0.5;
-    short switchFlatSphereOnZoom = 15;
+    short switchSphere2FlatAtZoom = 15;
     float markerSizePlanetPortion = 0.13;
     float fovy = 80.0f;
 
@@ -177,7 +177,7 @@ private:
     std::stack<TileCords> networkTilesStack;
     TileNode* readyTilesTree;
     std::vector<std::thread*> networkTileThreads;
-    float _savedLastScaleStateMapZ;
+    short _savedLastScaleStateMapZ;
 
     bool switchFlatSphereModeFlag = false;
     unsigned int defaultAvatarTextureId;
