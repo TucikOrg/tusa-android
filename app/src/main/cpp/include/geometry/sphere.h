@@ -221,8 +221,10 @@ public:
             int tileY_end,
             int zoom,
             int tileGrain,
-            float radius
+            float radius,
+            float tileSizeInit
     ) {
+        float tileSizeInitHalf = tileSizeInit / 2;
 
         // clear memory of prev arrays
         std::vector<float>().swap(sphere_vertices);
@@ -233,13 +235,13 @@ public:
         int n = pow(2, zoom);
         int tilesZCount = tileZ_end - tileZ_start + 1;
         int tilesYCount = tileY_end - tileY_start + 1;
-        float tileSize = 2 * radius / n;
+        float tileSize = tileSizeInit / n;
 
         for (int tileZ = tileZ_start; tileZ <= tileZ_end + 1; tileZ++) {
             for (int tileY = tileY_start; tileY <= tileY_end + 1; tileY++) {
-                float x = 0.0;
-                float y = -1 * (tileY * tileSize - radius);
-                float z = -1 * (tileZ * tileSize - radius);
+                float x = radius;
+                float y = -1 * (tileY * tileSize - tileSizeInitHalf);
+                float z = -1 * (tileZ * tileSize - tileSizeInitHalf);
 
                 sphere_vertices.push_back(x);
                 sphere_vertices.push_back(y);

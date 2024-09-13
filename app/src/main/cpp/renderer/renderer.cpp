@@ -27,9 +27,11 @@
 
 bool DEBUG = false;
 bool DRAW_DEBUG_UI = true;
+bool DRAW_CENTER_POINT = true;
 
 std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
+std::mutex renderFrameMutex;
 
 Renderer::Renderer(
         std::shared_ptr<ShadersBucket> shadersBucket,
@@ -69,13 +71,14 @@ Eigen::Matrix4f Renderer::evaluatePVM() {
 }
 
 void Renderer::renderFrame() {
+    renderFrameMutex.lock();
     auto currentTime = std::chrono::high_resolution_clock::now();
     std::chrono::duration<float> frameDeltaTime = currentTime - previousRenderFrameTime;
     previousRenderFrameTime = currentTime;
     frameCount++;
 
-    updateCameraPosition(flatRender);
-    updateFrustum(flatRender);
+    updateCameraPosition();
+    updateFrustum();
 
     Eigen::Matrix4f pvm = evaluatePVM();
     bool refreshTilesTexture = false;
@@ -210,13 +213,16 @@ void Renderer::renderFrame() {
 
     if (DEBUG) {
         drawPoints(pvm, planetGeometry.sphere_vertices, 10.0f);
+    }
 
+    if (DRAW_CENTER_POINT) {
         if (flatRender) {
             drawPoint(pvm, 0, cameraY, cameraZ, 30.0f);
         } else {
             drawPoint(pvm, 0, 0, 0, 30.0f);
         }
     }
+    renderFrameMutex.unlock();
 }
 
 void Renderer::drawPlanet(Eigen::Matrix4f pvm) {
@@ -272,7 +278,7 @@ void Renderer::onSurfaceChanged(int w, int h) {
     screenW = w;
     screenH = h;
     glViewPortDefaultSize();
-    updateFrustum(flatRender);
+    updateFrustum();
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &renderMapTextureWidth);
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &renderMapTextureHeight);
@@ -296,7 +302,7 @@ VisibleTilesResult Renderer::updateVisibleTilesFlat(CornersCords corners) {
     float rightBottom_zTile = n - 1;
     float rightBottom_yTile = n - 1;
 
-    float tileSize = 2 * planetRadius / n;
+    float tileSize = flatTileSizeInit / n;
     float leftTopZ_n = flatZNormalized(corners.leftTopZ);
     float leftTopY_n = flatYNormalized(corners.leftTopY);
     float rightBottomZ_n = flatZNormalized(corners.rightBottomZ);
@@ -527,9 +533,11 @@ void Renderer::networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest
 
         // Проверяем что тайл актуален и есть смысл его загружать к данному моменту
         // в момент когда наступает его очередь загрузки может быть так что он уже не нужен
+        renderFrameMutex.lock();
         if (visibleTilesResult.newVisibleTiles.find(tileToNetwork.getKey()) == visibleTilesResult.newVisibleTiles.end()) {
             shouldLoadTile = false;
         }
+        renderFrameMutex.unlock();
 
         // Рутовый тайл тоже не грузим. Он грузится в другом потоке
         if (tileToNetwork.getTileZ() == 0 && tileToNetwork.getTileX() == 0 && tileToNetwork.getTileY() == 0) {
@@ -569,8 +577,8 @@ void Renderer::updateMarkersSizes() {
     }
 }
 
-void Renderer::updateCameraPosition(bool isFlatRender) {
-    cameraCurrentDistance = evaluateCameraDistance(scaleFactorZoom, isFlatRender, 0);
+void Renderer::updateCameraPosition() {
+    cameraCurrentDistance = evaluateCameraDistance(scaleFactorZoom, 0);
     LOGI("Camera distance %f", cameraCurrentDistance);
 }
 
@@ -582,19 +590,19 @@ short Renderer::currentMapZTile() {
 }
 
 float Renderer::flatZNormalized(float z) {
-    return fmod(z, planetRadius) - planetRadius;
+    return fmod(z, flatHalfOfTileSizeInit) - flatHalfOfTileSizeInit;
 }
 
 float Renderer::flatYNormalized(float y) {
-    return fmod(y, planetRadius) - planetRadius;
+    return fmod(y, flatHalfOfTileSizeInit) - flatHalfOfTileSizeInit;
 }
 
 float Renderer::getFlatLongitude() {
-    return -(cameraZ / planetRadius) * M_PI;
+    return -(cameraZ / flatHalfOfTileSizeInit) * M_PI;
 }
 
 float Renderer::getFlatLatitude() {
-    float y = ((cameraY / planetRadius) + 1) / 2;
+    float y = ((cameraY / flatHalfOfTileSizeInit) + 1) / 2;
     return CommonUtils::tileLatitude(1 - y, 1);
 }
 
@@ -613,16 +621,16 @@ void Renderer::switchFlatAndSphereRender() {
         // это сфера и хотим плоскость
         float longitudeRad = getSphereLonRad();
         float latitudeRad = getSphereLatRad();
-        cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, planetRadius);
-        cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, planetRadius);
+        cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, flatHalfOfTileSizeInit);
+        cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, flatHalfOfTileSizeInit);
         LOGI("SPHERE -> FLAT lat(%f) lon(%f)", latitudeRad, longitudeRad);
     }
 
     switchFlatSphereModeFlag = false;
     flatRender = !flatRender;
 
-    updateCameraPosition(flatRender);
-    updateFrustum(flatRender);
+    updateCameraPosition();
+    updateFrustum();
     //LOGI("Flat lon %f lat %f", RAD2DEG(flatLongitude), RAD2DEG(flatLatitude));
 }
 
@@ -667,17 +675,13 @@ float Renderer::evaluateCurrentExtent() {
     return evaluateExtentForScaleFactor(evaluateScaleFactorCurrentZ());
 }
 
-float Renderer::evaluateCameraDistance(float _scaleFactor, bool flatRender, float zoomDiff) {
+float Renderer::evaluateCameraDistance(float _scaleFactor, float zoomDiff) {
     float scale = evaluateScaleFactor(_scaleFactor, zoomDiff); // от 1 до cameraScaleOneUnitSphere * 2^19
 
     float resultDistance = 0;
-    if (flatRender) {
-        float zoomingDistance = cameraScaleOneUnitFlat * scale;
-        resultDistance = zoomingDistance;
-    } else {
-        float zoomingDistance = cameraScaleOneUnitSphere * scale;
-        resultDistance = zoomingDistance + planetRadius;
-    }
+    float zoomingDistance = cameraScaleOneUnitSphere * scale;
+    resultDistance = zoomingDistance + planetRadius;
+
     LOGI("Camera distance %f", resultDistance);
     return resultDistance;
 }
@@ -685,7 +689,7 @@ float Renderer::evaluateCameraDistance(float _scaleFactor, bool flatRender, floa
 void Renderer::setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env) {
     loadAssets(assetManager);
     updateMapZoomScaleFactor(scaleFactor);
-    updateCameraPosition(flatRender);
+    updateCameraPosition();
     _savedLastScaleStateMapZ = realMapZTile();
     JavaVM* gJvm = nullptr;
     env->GetJavaVM(&gJvm);
@@ -710,34 +714,20 @@ void Renderer::loadAssets(AAssetManager *assetManager) {
     symbols->loadFont(assetManager);
 }
 
-void Renderer::updateFrustum(bool flatRender) {
+void Renderer::updateFrustum() {
     // сколько нужно проскролить до нового зума
     float currentCameraDistance = evaluateCameraDistanceCurrentZ();
     float nextCameraDistance = evaluateCameraDistanceCurrentZ(1);
     float distanceDelta = currentCameraDistance - nextCameraDistance;
 
-    if (flatRender) {
-        float near = currentCameraDistance - distanceDelta;
-        if (near < 2) {
-            near = 0.1;
-        }
-        float far = currentCameraDistance;
-        projectionMatrix = EigenGL::createPerspectiveProjectionMatrix(
-                fovy,
-                (float) screenW / (float) screenH,
-                near,
-                far
-        );
-    } else {
-        float near = currentCameraDistance - planetRadius - distanceDelta;
-        float far = currentCameraDistance + planetRadius * 10;
-        projectionMatrix = EigenGL::createPerspectiveProjectionMatrix(
-                fovy,
-                (float) screenW / (float) screenH,
-                near,
-                far
-        );
-    }
+    float near = currentCameraDistance - planetRadius - distanceDelta;
+    float far = currentCameraDistance + planetRadius * 10;
+    projectionMatrix = EigenGL::createPerspectiveProjectionMatrix(
+            fovy,
+            (float) screenW / (float) screenH,
+            near,
+            far
+    );
 }
 
 void Renderer::loadTextures(AAssetManager *assetManager) {
@@ -961,21 +951,25 @@ CornersCords Renderer::evaluateCorners(Eigen::Matrix4f pvm) {
 }
 
 void Renderer::evaluateLatLonByIntersectionPlanes_Flat(Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane, Eigen::Matrix4f pvm, float& y, float& z) {
-    double B1 = firstPlane[1];
-    double C1 = firstPlane[2];
-    double D1 = firstPlane[3];
+    float A1 = firstPlane[0];
+    float B1 = firstPlane[1];
+    float C1 = firstPlane[2];
+    float D1 = firstPlane[3];
+    float d1 = A1 * planetRadius + D1;
 
-    double B2 = secondPlane[1];
-    double C2 = secondPlane[2];
-    double D2 = secondPlane[3];
+    float A2 = firstPlane[0];
+    float B2 = secondPlane[1];
+    float C2 = secondPlane[2];
+    float D2 = secondPlane[3];
+    float d2 = A2 * planetRadius + D2;
 
-    double det = B1 * C2 - B2 * C1;
-    double detY = (-D1) * C2 - (-D2) * C1;
-    double detZ = B1 * (-D2) - B2 * (-D1);
+    float det = B1 * C2 - B2 * C1;
+    float detY = (-d1) * C2 - (-d2) * C1;
+    float detZ = B1 * (-d2) - B2 * (-d1);
 
-    double y0 = detY / det;
-    double z0 = detZ / det;
-    double x0 = 0;
+    float y0 = detY / det;
+    float z0 = detZ / det;
+    float x0 = planetRadius;
 
     y = y0;
     z = z0;
@@ -1065,7 +1059,7 @@ void Renderer::updatePlanetGeometry(VisibleTilesResult visibleTilesResult) {
     }
 
     if (flatRender) {
-        planetGeometry.generateFlatData(tileX_start, tileX_end, tileY_start, tileY_end, zoom, tileGrain, planetRadius);
+        planetGeometry.generateFlatData(tileX_start, tileX_end, tileY_start, tileY_end, zoom, tileGrain, planetRadius, flatTileSizeInit);
     } else {
         planetGeometry.generateSphereData(tileX_start, tileX_end, tileY_start, tileY_end, zoom, tileGrain, planetRadius);
     }

@@ -35,14 +35,12 @@
 class Renderer {
 public:
     Renderer(std::shared_ptr<ShadersBucket> shadersBucket, Cache* cache);
-    ~Renderer() {}
-
-
+    ~Renderer() = default;
 private:
     // Camera functions
-    float evaluateCameraDistance(float _scaleFactor, bool flatRender, float zoomDiff);
+    float evaluateCameraDistance(float _scaleFactor, float zoomDiff);
     float evaluateCameraDistanceCurrentZ(short zoomDiff = 0) {
-        return evaluateCameraDistance(realMapZTile(), flatRender, zoomDiff);
+        return evaluateCameraDistance(realMapZTile(), zoomDiff);
     }
     [[nodiscard]] float getCamLongitude() const {
         return cameraLongitudeRad;
@@ -53,8 +51,8 @@ private:
     [[nodiscard]] Eigen::Vector3f getCameraPosition() const {
         return {camX, camY, camZ};
     }
-    void updateCameraPosition(bool isFlatRender);
-    void updateFrustum(bool flatRender);
+    void updateCameraPosition();
+    void updateFrustum();
     CornersCords evaluateCorners(Eigen::Matrix4f pvm);
 
     // Surface, Space environment functions
@@ -148,7 +146,7 @@ private:
     short mapZTileCordMax = 19;
     float planetRadius = 1000000;
     float cameraScaleOneUnitSphere = 5; // число больше, планета меньше
-    float cameraScaleOneUnitFlat = 2.9; // число больше, плоскость меньше
+    //float cameraScaleOneUnitFlat = 2.9; // число больше, плоскость меньше
     float dragCameraSpeedFlatMap = 1000;
     float forceCameraMoveOnDragSphere = 0.01;
     float forceCameraMoveOnDragFlat = 5000;
@@ -208,6 +206,8 @@ private:
     float camX = 0;
     float camY = 0;
     float camZ = 0;
+    float flatTileSizeInit = 2.0f * planetRadius * (M_PI / 2);
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
 
 };
 
