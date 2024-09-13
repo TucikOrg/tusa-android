@@ -6,26 +6,30 @@
 #include "util/android_log.h"
 #include <fstream>
 
-bool USE_MEM_CACHE = true;
-
-Tile* TilesStorage::getTile(int zoom, int x, int y, GetTileRequest* getTileRequest) {
+Tile* TilesStorage::getOrLoad(int zoom, int x, int y, GetTileRequest* getTileRequest) {
     std::string key = Tile::makeKey(zoom, x, y);
     auto it = cacheTiles.find(key);
-    if(it == cacheTiles.end() || !USE_MEM_CACHE) {
-        Tile* newTile = getTileRequest->request(x, y, zoom);
-        cacheTiles.insert({key, newTile});
-        return newTile;
+    auto exists = it != cacheTiles.end();
+    if (exists) {
+        return it->second;
     }
 
+    Tile* newTile = getTileRequest->request(x, y, zoom);
+    cacheTiles.insert({key, newTile});
+    return newTile;
+}
+
+Tile* TilesStorage::getTile(int zoom, int x, int y) {
+    std::string key = Tile::makeKey(zoom, x, y);
+    auto it = cacheTiles.find(key);
+    if (it == cacheTiles.end()) {
+        return nullptr;
+    }
     return it->second;
 }
 
-TilesStorage::TilesStorage(Cache* cache, GetTileRequest* getTileRequest)
-    : cache(cache), request(getTileRequest) { }
-
-TilesStorage::~TilesStorage() {
-    delete request;
-}
+TilesStorage::TilesStorage(Cache* cache)
+    : cache(cache) { }
 
 bool TilesStorage::existInMemory(int zoom, int x, int y) {
     std::string key = Tile::makeKey(zoom, x, y);

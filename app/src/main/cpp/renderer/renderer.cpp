@@ -30,7 +30,6 @@ bool DRAW_DEBUG_UI = true;
 
 std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
-std::mutex insertToTreeMutex;
 
 Renderer::Renderer(
         std::shared_ptr<ShadersBucket> shadersBucket,
@@ -120,18 +119,21 @@ void Renderer::renderFrame() {
         std::string newVisibleTilesKey;
         // Это списко уже добавленных тайлов
         // Он нужен чтобы не было дубликатов
-        std::map<std::string, TileCords> tilesForRenderer = {};
+        std::map<std::string, void*> tilesKeysToRender = {};
+
         if (readyTilesTree != nullptr) {
             for (auto& visibleTile : visibleTiles) {
                 newVisibleTilesKey += visibleTile.second.getKey();
                 bool isReplacement = false;
-                auto foundTile = readyTilesTree->search(visibleTile.second, isReplacement, nullptr);
+                auto foundTile = readyTilesTree->searchAndCreate(visibleTile.second, isReplacement, nullptr, tilesStorage);
 
-                if (foundTile->containsData() && tilesForRenderer.find(foundTile->tile.getKey()) == tilesForRenderer.end()) {
+                if (foundTile->containsData() && tilesKeysToRender.find(foundTile->tile.getKey()) == tilesKeysToRender.end()) {
+                    tilesKeysToRender[foundTile->tile.getKey()] = nullptr;
                     if (isReplacement) {
                         renderFirstTiles.push_back(foundTile->tile);
                     } else {
                         renderSecondTiles.push_back(foundTile->tile);
+                        newVisibleTilesKey += "e";
                     }
                 }
             }
@@ -335,17 +337,8 @@ VisibleTilesResult Renderer::updateVisibleTilesFlat(CornersCords corners) {
     LOGI("[SHOW_PIPE] New visible tiles: %s", oss.str().c_str());
     LOGI("[VISIBLE_TILES_SIZE] %s", std::to_string(newVisibleTiles.size()).c_str());
 
-    networkTileStackMutex.lock();
-    for(auto& tilePair : newVisibleTiles) {
-        auto& tile = tilePair.second;
-        // Если тайлы уже в рендре или уже в видимых тайлах то нету смысла их грузить
-        if(isInPreviousVisibleTiles(tile))
-            continue;
+    pushToNetworkTiles(newVisibleTiles);
 
-        networkTilesStack.push(tile);
-    }
-    networkTileStackMutex.unlock();
-    previousVisibleTiles = newVisibleTiles;
     return VisibleTilesResult {
             visibleBlock,
             newVisibleTiles
@@ -416,7 +409,7 @@ VisibleTilesResult Renderer::updateVisibleTilesSphere(CornersCords cornersCords)
             }
         }
     }
-    VisibleTilesBlock visibleBlocks = VisibleTilesBlock {
+    auto visibleBlocks = VisibleTilesBlock {
             (int)leftTop_xTile,
             (int)rightBottom_xTile,
             (int)leftTop_yTile,
@@ -440,21 +433,25 @@ VisibleTilesResult Renderer::updateVisibleTilesSphere(CornersCords cornersCords)
     LOGI("[SHOW_PIPE] New visible tiles: %s", oss.str().c_str());
     LOGI("[VISIBLE_TILES_SIZE] %s", std::to_string(newVisibleTiles.size()).c_str());
 
+    pushToNetworkTiles(newVisibleTiles);
+
+    return VisibleTilesResult {
+            visibleBlocks,
+            newVisibleTiles
+    };
+}
+
+void Renderer::pushToNetworkTiles(std::map<std::string, TileCords>& newVisibleTiles) {
     networkTileStackMutex.lock();
     for(auto& tilePair : newVisibleTiles) {
         auto& tile = tilePair.second;
-        // Если тайлы уже в рендре или уже в видимых тайлах то нету смысла их грузить
-        if(isInPreviousVisibleTiles(tile))
+        // Если тайлы уже загружены то нету смысла их грузить
+        if(tilesStorage.existInMemory(tile.getTileZ(), tile.getTileX(), tile.getTileY()))
             continue;
 
         networkTilesStack.push(tile);
     }
     networkTileStackMutex.unlock();
-    previousVisibleTiles = newVisibleTiles;
-    return VisibleTilesResult {
-            visibleBlocks,
-            newVisibleTiles
-    };
 }
 
 
@@ -501,37 +498,189 @@ void Renderer::doubleTap() {
     //DEBUG_TILES = !DEBUG_TILES;
 }
 
+void Renderer::networkRootTileFunction(JavaVM* gJvm, GetTileRequest* getTileRequest) {
+    JNIEnv* threadEnv;
+    gJvm->AttachCurrentThread(&threadEnv, NULL);
+    getTileRequest->setEnv(threadEnv);
+
+    TileCords rootTile = TileCords(0, 0, 0);
+    auto rootTileData= tilesStorage.getOrLoad(rootTile.getTileZ(), rootTile.getTileX(), rootTile.getTileY(), getTileRequest);
+    rootTile.setData(rootTileData);
+    readyTilesTree = new TileNode(rootTile);
+}
+
 void Renderer::networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest) {
     JNIEnv* threadEnv;
     gJvm->AttachCurrentThread(&threadEnv, NULL);
     getTileRequest->setEnv(threadEnv);
 
     while (networkTileThreadRunning.load()) {
-        networkTileStackMutex.lock();
+        // Берем тайлы для загрузки из списка и грузим потом
         TileCords tileToNetwork;
-        bool showCord = false;
+        bool shouldLoadTile = false;
+        networkTileStackMutex.lock();
         if (!networkTilesStack.empty()) {
             tileToNetwork = networkTilesStack.top();
             networkTilesStack.pop();
-            showCord = true;
+            shouldLoadTile = true;
         }
         networkTileStackMutex.unlock();
 
-        if (showCord) {
-            auto drawGeometry = tilesStorage.getTile(tileToNetwork.getTileZ(), tileToNetwork.getTileX(), tileToNetwork.getTileY(), getTileRequest);
-            tileToNetwork.setData(drawGeometry);
-            insertToTreeMutex.lock();
-            if (readyTilesTree == nullptr) {
-                readyTilesTree = new TileNode(tileToNetwork);
-            } else {
-                bool exists;
-                auto inserted = readyTilesTree->insert(tileToNetwork, exists);
-            }
-            insertToTreeMutex.unlock();
+        // Проверяем что тайл актуален и есть смысл его загружать к данному моменту
+        // в момент когда наступает его очередь загрузки может быть так что он уже не нужен
+        if (visibleTilesResult.newVisibleTiles.find(tileToNetwork.getKey()) == visibleTilesResult.newVisibleTiles.end()) {
+            shouldLoadTile = false;
+        }
+
+        // Рутовый тайл тоже не грузим. Он грузится в другом потоке
+        if (tileToNetwork.getTileZ() == 0 && tileToNetwork.getTileX() == 0 && tileToNetwork.getTileY() == 0) {
+            shouldLoadTile = false;
+        }
+
+        if (shouldLoadTile) {
+            // Загружаем тайл
+            auto loadedTileData = tilesStorage.getOrLoad(tileToNetwork.getTileZ(), tileToNetwork.getTileX(), tileToNetwork.getTileY(), getTileRequest);
         }
     }
 
     gJvm->DetachCurrentThread();
+}
+
+float Renderer::evaluateScaleFactor(float z, float zoomDiff) {
+    return pow(2, mapZTileCordMax - z - zoomDiff);
+}
+
+float Renderer::evaluateScaleFactorCurrentZ(short zoomDiff) {
+    return evaluateScaleFactor(realMapZTile(), zoomDiff);
+}
+
+void Renderer::markersOnChangeRenderMode() {
+    for(auto& marker : userMarkers) {
+        marker.second.onChangeRenderMode(flatRender);
+    }
+}
+
+void Renderer::updateMarkersSizes() {
+    float newScale = 1 / pow(2, realMapZTile());
+    if (flatRender) {
+        newScale *= 0.85;
+    }
+    for(auto& marker : userMarkers) {
+        marker.second.animateToScale(newScale);
+    }
+}
+
+void Renderer::updateCameraPosition(bool isFlatRender) {
+    cameraCurrentDistance = evaluateCameraDistance(scaleFactorZoom, isFlatRender, 0);
+    LOGI("Camera distance %f", cameraCurrentDistance);
+}
+
+short Renderer::currentMapZTile() {
+    short realZ = realMapZTile();
+    if (realZ > 16)
+        realZ = 16;
+    return realZ;
+}
+
+float Renderer::flatZNormalized(float z) {
+    return fmod(z, planetRadius) - planetRadius;
+}
+
+float Renderer::flatYNormalized(float y) {
+    return fmod(y, planetRadius) - planetRadius;
+}
+
+float Renderer::getFlatLongitude() {
+    return -(cameraZ / planetRadius) * M_PI;
+}
+
+float Renderer::getFlatLatitude() {
+    float y = ((cameraY / planetRadius) + 1) / 2;
+    return CommonUtils::tileLatitude(1 - y, 1);
+}
+
+void Renderer::switchFlatAndSphereRender() {
+    short z = currentMapZTile();
+    int n = pow(2, z);
+
+    if (flatRender) {
+        float flatLongitude = getFlatLongitude();
+        float flatLatitude = getFlatLatitude();
+
+        cameraLongitudeRad = -flatLongitude;
+        cameraLatitudeRad = flatLatitude;
+        LOGI("FLAT -> SPHERE lat(%f) lon(%f)", flatLatitude, flatLongitude);
+    } else {
+        // это сфера и хотим плоскость
+        float longitudeRad = getSphereLonRad();
+        float latitudeRad = getSphereLatRad();
+        cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, planetRadius);
+        cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, planetRadius);
+        LOGI("SPHERE -> FLAT lat(%f) lon(%f)", latitudeRad, longitudeRad);
+    }
+
+    switchFlatSphereModeFlag = false;
+    flatRender = !flatRender;
+
+    updateCameraPosition(flatRender);
+    updateFrustum(flatRender);
+    //LOGI("Flat lon %f lat %f", RAD2DEG(flatLongitude), RAD2DEG(flatLatitude));
+}
+
+float Renderer::getSphereLonRad() {
+    return CommonUtils::normalizeLongitudeRad(-cameraLongitudeRad);
+}
+
+void Renderer::drawPoints(Eigen::Matrix4f matrix, std::vector<float> points, float pointSize) {
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+    auto plainShader = shadersBucket.get()->plainShader;
+    const GLfloat color[] = { 1, 0, 0, 1};
+    glUseProgram(plainShader->program);
+    glUniform1f(plainShader->getPointSizeLocation(), pointSize);
+    glUniform4fv(plainShader->getColorLocation(), 1, color);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, points.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glDrawArrays(GL_POINTS, 0, points.size() / 3);
+}
+
+void Renderer::drawPoint(Eigen::Matrix4f matrix, float x, float y, float z, float pointSize) {
+    float points[] = {x, y, z};
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+    auto plainShader = shadersBucket.get()->plainShader;
+    const GLfloat color[] = { 1, 0, 0, 1};
+    glUseProgram(plainShader->program);
+    glUniform1f(plainShader->getPointSizeLocation(), pointSize);
+    glUniform4fv(plainShader->getColorLocation(), 1, color);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, points);
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glDrawArrays(GL_POINTS, 0, 1);
+}
+
+float Renderer::evaluateExtentForScaleFactor(float scaleFactor) {
+    return (float) extent * scaleFactor;
+}
+
+float Renderer::evaluateCurrentExtent() {
+    return evaluateExtentForScaleFactor(evaluateScaleFactorCurrentZ());
+}
+
+float Renderer::evaluateCameraDistance(float _scaleFactor, bool flatRender, float zoomDiff) {
+    float scale = evaluateScaleFactor(_scaleFactor, zoomDiff); // от 1 до cameraScaleOneUnitSphere * 2^19
+
+    float resultDistance = 0;
+    if (flatRender) {
+        float zoomingDistance = cameraScaleOneUnitFlat * scale;
+        resultDistance = zoomingDistance;
+    } else {
+        float zoomingDistance = cameraScaleOneUnitSphere * scale;
+        resultDistance = zoomingDistance + planetRadius;
+    }
+    LOGI("Camera distance %f", resultDistance);
+    return resultDistance;
 }
 
 void Renderer::setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env) {
@@ -541,12 +690,16 @@ void Renderer::setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetMana
     _savedLastScaleStateMapZ = realMapZTile();
     JavaVM* gJvm = nullptr;
     env->GetJavaVM(&gJvm);
-    GetTileRequest* getTileRequest = new GetTileRequest(cache, env);
+    auto* getTileRequest = new GetTileRequest(cache, env);
 
     // network_tile_thread
+    std::thread networkRootTileThread([this, gJvm, getTileRequest] { networkRootTileFunction(gJvm, getTileRequest); });
+    networkRootTileThread.detach();
+    networkTileThreads.push_back(&networkRootTileThread);
+
     networkTileThreadRunning.store(true);
     for(short i = 0; i < networkTilesThreads; i++) {
-        std::thread networkTileThread(std::bind(&Renderer::networkTilesFunction, this, gJvm, getTileRequest));
+        std::thread networkTileThread([this, gJvm, getTileRequest] { networkTilesFunction(gJvm, getTileRequest); });
         networkTileThread.detach();
         networkTileThreads.push_back(&networkTileThread);
     }
@@ -1173,6 +1326,61 @@ void Renderer::drawStars(Eigen::Matrix4f pvm) {
     glEnableVertexAttribArray(starsShader->getPointSizeLocation());
     auto error = CommonUtils::getGLErrorString();
     glDrawArrays(GL_POINTS, 0, starsVertices.size() / 3);
+}
+
+
+// Test UI
+Eigen::Matrix4f Renderer::evaluatePVM_UI() {
+    Eigen::Vector3f cameraPosition = Eigen::Vector3f(0, 0, 1);
+    Eigen::Vector3f target(0.0f, 0.0f, 0.0f);
+    Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
+    Eigen::Matrix4f viewMatrixUI = EigenGL::createViewMatrix(cameraPosition, target, up);
+    Eigen::Matrix4f projectionMatrixUI = EigenGL::createOrthoMatrix(0, screenW, 0, screenH, 0.1f, 1.0f);
+    Eigen::Matrix4f pvmUI = projectionMatrixUI * viewMatrixUI;
+    return pvmUI;
+}
+
+void Renderer::drawFPS_UI(Eigen::Matrix4f pvmUI) {
+    glStencilMask(0X00);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+
+    std::shared_ptr<SymbolShader> symbolShader = shadersBucket->symbolShader;
+    CSSColorParser::Color color = CSSColorParser::parse("rgb(255, 255, 255)");
+    symbols.get()->renderText("FPS: " + std::to_string((short)fps), 200, screenH - 100, pvmUI, 2, color);
+}
+
+void Renderer::drawTilesRenderTexture_UI(Eigen::Matrix4f pvmUI) {
+    std::shared_ptr<TextureShader> textureShader = shadersBucket->textureShader;
+    glUseProgram(textureShader->program);
+    glStencilMask(0X00);
+    glDisable(GL_STENCIL_TEST);
+    glDisable(GL_DEPTH_TEST);
+
+    float sizeUI = screenW / 4;
+    float points[] = {
+            0, sizeUI,
+            0, 0,
+            sizeUI, 0,
+            sizeUI, sizeUI
+    };
+    GLfloat textureCords[] = {
+            0.0f, 1.0f,
+            0.0f, 0.0f,
+            1.0f, 0.0f,
+            1.0f, 1.0f
+    };
+    unsigned int indices[6] = {
+            2, 3, 0,
+            0, 1, 2
+    };
+    glUniformMatrix4fv(textureShader->getMatrixLocation(), 1, GL_FALSE, pvmUI.data());
+    glBindTexture(GL_TEXTURE_2D, renderMapTexture);
+    glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords);
+    glEnableVertexAttribArray(textureShader->getTextureCord());
+    glVertexAttribPointer(textureShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, points);
+    glEnableVertexAttribArray(textureShader->getPosLocation());
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
 }
 
 
