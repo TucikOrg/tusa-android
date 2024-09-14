@@ -17,43 +17,43 @@
 #include "util/matrices.h"
 #include "util/frustrums.h"
 #include "shader/shaders_bucket.h"
-#include "map/map.h"
 #include "cache/cache.h"
 #include "gl/cube_example.h"
 #include "gl/triangle_example.h"
+#include "renderer/renderer.h"
 
 #define LOG_TAG "GL_ARTEM"
 
 Cache *cache = new Cache();
-Map map = Map(cache);
+Renderer renderer = Renderer(cache);
 
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_render(JNIEnv *env, jclass clazz) {
-    map.render();
+    renderer.renderFrame();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_onSurfaceChanged(JNIEnv *env, jclass clazz, jint width,
                                                           jint height) {
-    map.onSurfaceChanged(width, height);
+    renderer.onSurfaceChanged(width, height);
 }
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_surfaceCreated(JNIEnv *env, jclass clazz,
                                                         jobject assetManager) {
     AAssetManager* assetManagerFromJava = AAssetManager_fromJava(env, assetManager);
-    map.onSurfaceCreated(assetManagerFromJava);
+    renderer.onSurfaceCreated(assetManagerFromJava);
 }
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_noOpenGlContextInit(JNIEnv *env, jclass clazz,
-                                                             jobject assetManager,
-                                                             jfloat scale_factor) {
+                                                             jobject assetManager) {
+
     AAssetManager* assetManagerFromJava = AAssetManager_fromJava(env, assetManager);
-    map.noOpenGlContextInit(assetManagerFromJava, scale_factor, env);
+    renderer.setupNoOpenGLMapState(assetManagerFromJava, env);
 }
 
 extern "C"
@@ -67,31 +67,31 @@ Java_com_artem_tusaandroid_NativeLibrary_setupCacheDirAbsolutePath(JNIEnv *env, 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_drag(JNIEnv *env, jclass clazz, jfloat dx, jfloat dy) {
-    map.drag(dx, dy);
+    renderer.drag(dx, dy);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_scale(JNIEnv *env, jclass clazz, jfloat scale_factor) {
-    map.scale(scale_factor);
+    renderer.scale(scale_factor);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_doubleTap(JNIEnv *env, jclass clazz) {
-    map.doubleTap();
+    renderer.doubleTap();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_onStop(JNIEnv *env, jclass clazz) {
-    map.onStop();
+    renderer.onStop();
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_onDown(JNIEnv *env, jclass clazz) {
-    map.onDown();
+    renderer.onDown();
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -101,7 +101,7 @@ Java_com_artem_tusaandroid_NativeLibrary_addMarker(JNIEnv *env, jobject thiz, js
     auto key_str = env->GetStringUTFChars(key, 0);
     jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
     auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
-    map.addMarker(key_str, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
+    renderer.addMarker(key_str, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
 
     env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
 }
@@ -110,13 +110,13 @@ JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_updateMarkerGeo(JNIEnv *env, jobject thiz, jstring key,
                                                          jfloat latitude, jfloat longitude) {
     auto key_str = env->GetStringUTFChars(key, 0);
-    map.updateMarkerGeo(key_str, DEG2RAD(latitude), DEG2RAD(longitude));
+    renderer.updateMarkerGeo(key_str, DEG2RAD(latitude), DEG2RAD(longitude));
 }
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_removeMarker(JNIEnv *env, jobject thiz, jstring key) {
     auto key_str = env->GetStringUTFChars(key, 0);
-    map.removeMarker(key_str);
+    renderer.removeMarker(key_str);
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -125,7 +125,7 @@ Java_com_artem_tusaandroid_NativeLibrary_updateMarkerAvatar(JNIEnv *env, jobject
     auto key_str = env->GetStringUTFChars(key, 0);
     jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
     auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
-    map.updateMarkerAvatar(key_str , unsignedBuffer, env->GetArrayLength(avatar_buffer));
+    renderer.updateMarkerAvatar(key_str , unsignedBuffer, env->GetArrayLength(avatar_buffer));
 
     env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
 }
@@ -137,7 +137,7 @@ Java_com_artem_tusaandroid_NativeLibrary_handleMarker(JNIEnv *env, jobject thiz,
     auto key_str = env->GetStringUTFChars(key, 0);
     jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
     auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
-    map.handleMarker(key_str, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
+    renderer.handleMarker(key_str, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
 
     env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
 }

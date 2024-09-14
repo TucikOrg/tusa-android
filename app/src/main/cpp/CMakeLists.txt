@@ -61,7 +61,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
         gl/open_gl_interface.cpp
 
-        map/map.cpp
         map/tile.cpp
         map/tiles_storage.cpp
         map/linestring_handler.cpp

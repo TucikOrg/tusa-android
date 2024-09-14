@@ -34,7 +34,7 @@
 
 class Renderer {
 public:
-    Renderer(std::shared_ptr<ShadersBucket> shadersBucket, Cache* cache);
+    Renderer(Cache* cache);
     ~Renderer() = default;
 private:
     // Camera functions
@@ -69,26 +69,33 @@ private:
     short currentMapZTile();
     float evaluateExtentForScaleFactor(float scaleFactor);
     float evaluateCurrentExtent();
-    void updateMapZoomScaleFactor(float scaleFactor) { scaleFactorZoom = scaleFactor; }
+    void updateMapZoomScaleFactor();
+    void updateRawScaleFactor(float detectorScale);
+    void changeMaxZoom(float newMaxZoom);
+    void initStartZoom(float startZoom);
 
     // Open Gl functions, core functions
 public:
     void onSurfaceChanged(int w, int h);
     void onSurfaceCreated(AAssetManager *assetManager);
     void renderFrame();
-    void setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env);
+    void setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env);
     void onStop();
 private:
     Eigen::Matrix4f evaluatePVM(bool isFlat, float camWorldX, float camWorldY, float camWorldZ);
     void clearColor();
     void loadAssets(AAssetManager *assetManager);
     void loadTextures(AAssetManager *assetManager);
-    void switchFlatAndSphereRender();
     void drawPoints(Eigen::Matrix4f matrix, std::vector<float> points, float pointSize);
     void drawPoint(Eigen::Matrix4f matrix, float x, float y, float z, float pointSize);
     void glViewPortDefaultSize() { glViewport(0, 0, screenW, screenH); }
     GLuint loadTextureFromAsset(const char* assetName, AAssetManager *assetManager);
     GLuint loadTextureFromBytes(unsigned char* imageData, off_t fileSize);
+
+    // Switch render modes code
+    void switchFlatAndSphereRender();
+    void updateSphereCurrentCameraRadians(); // если например сейчас рендерится плоская карта, то нужно обновить текущие радианы камеры для сферы
+    void updateFlatCurrentCoordinates(); // если например сейчас рендерится сфера, то нужно обновить текущие координаты для плоскости
 
     // Planet map
     void drawPlanet(Eigen::Matrix4f);
@@ -98,6 +105,8 @@ private:
     float getPlanetCurrentLongitudeDeg() { return RAD2DEG(getSphereLonRad()); }
     float getPlanetCurrentLatitudeDeg() { return RAD2DEG(getSphereLatRad()); }
     void evaluateLatLonByIntersectionPlanes_Sphere(Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane, Eigen::Matrix4f pvm, double& longitudeRad, double& latitudeRad, bool& has);
+    void setPlanetLongitudeDeg(float longitudeDeg) {  cameraLongitudeRad = -DEG2RAD(longitudeDeg); }
+    void setPlanetLatitudeDeg(float latitudeDeg) {  cameraLatitudeRad = DEG2RAD(latitudeDeg); }
 
     // Flat map
     float flatZNormalized(float z);
@@ -178,12 +187,12 @@ private:
     TileNode* readyTilesTree;
     std::vector<std::thread*> networkTileThreads;
     short _savedLastScaleStateMapZ;
-
+    short maxZoomForTiles = 16;
     bool switchFlatSphereModeFlag = false;
     unsigned int defaultAvatarTextureId;
     VisibleTilesResult visibleTilesResult;
     std::map<std::string, RenderTileHash> renderTileHash;
-    std::shared_ptr<ShadersBucket> shadersBucket;
+    std::shared_ptr<ShadersBucket> shadersBucket = std::shared_ptr<ShadersBucket>(new ShadersBucket());
     std::shared_ptr<RenderTileCoordinates> renderTileCoordinates;
     std::shared_ptr<Symbols> symbols;
     std::map<std::string, TileCords> previousVisibleTile;
@@ -192,7 +201,7 @@ private:
     const uint32_t extent = 4096;
     Sphere planetGeometry = Sphere();
     float cameraCurrentDistance = 0;
-    float scaleFactorZoom = 0.0f; // из MapView устанавливается
+    float scaleFactorZoom = 0.0f;
     float longitudeCameraMoveCurrentForce = 0;
     float latitudeCameraMoveCurrentForce = 0;
     float latitudeCameraAngleRadConstraint = DEG2RAD(85);
@@ -200,6 +209,14 @@ private:
     float cameraZ = 0, cameraY = 0;
     int screenW, screenH;
     int renderMapTextureWidth, renderMapTextureHeight;
+
+    float onAppStartMapZoom = 0.0f;
+    float scaleShift = 1.0f;
+    float maxZoom = 19.0f;
+    float scaleSpeed = 0.25f;
+    float maxScale = 0;
+    float scaleFactorRaw = 0;
+
     Cache* cache;
     TilesStorage tilesStorage = TilesStorage(cache);
     GLuint renderMapTexture;
@@ -214,8 +231,8 @@ private:
 
 
     float flatTileSizeInit = 2.0f * planetRadius * (M_PI / 2);
-    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
-
+    //float flatTileSizeInit = 2.0f * planetRadius;
+    //float flatTileSizeInit = 1999865.0f;
 };
 
 

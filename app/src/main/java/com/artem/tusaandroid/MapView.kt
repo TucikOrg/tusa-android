@@ -2,7 +2,6 @@ package com.artem.tusaandroid
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.PointF
 import android.opengl.GLSurfaceView
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -22,24 +21,9 @@ class MapView(
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
 
-    // Зум при запуске от 0 до 19
-    private val onAppStartMapZoom = 0
-
-    private val scaleShift = 1.0f
-    private val maxScale = 19f + scaleShift
-    private var scaleFactor = onAppStartMapZoom + scaleShift
-    private var lastFocusX = 0f
-    private var lastFocusY = 0f
-    private val translate = PointF(0f, 0f)
-    private val scaleSpeed = 0.25f
-
-    fun getScaleForMap(): Float {
-        return scaleFactor - scaleShift
-    }
-
     init {
-        // Чтобы при старте синхронизировать C++ и Java состояния карты
-        NativeLibrary.noOpenGlContextInit(resources.assets, getScaleForMap())
+        // Настраиваем карту первоначально перед запуском
+        NativeLibrary.noOpenGlContextInit(resources.assets)
 
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
@@ -67,19 +51,11 @@ class MapView(
 
     private inner class ScaleListener : SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            val detectorScale = detector.scaleFactor
-            val realScale = (detectorScale - 1f)
-
-            scaleFactor *= (1 + realScale * scaleSpeed)
-            scaleFactor = scaleShift.coerceAtLeast(scaleFactor.coerceAtMost(maxScale))
-
-            NativeLibrary.scale(getScaleForMap())
+            NativeLibrary.scale(detector.scaleFactor)
             return true
         }
 
         override fun onScaleBegin(detector: ScaleGestureDetector): Boolean {
-            lastFocusX = detector.focusX
-            lastFocusY = detector.focusY
             return true
         }
     }
@@ -91,8 +67,6 @@ class MapView(
             distanceX: Float,
             distanceY: Float
         ): Boolean {
-            translate.x -= distanceX
-            translate.y -= distanceY
             NativeLibrary.drag(distanceX, distanceY)
             return true
         }

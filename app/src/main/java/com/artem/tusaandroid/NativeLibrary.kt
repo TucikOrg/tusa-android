@@ -10,7 +10,7 @@ object NativeLibrary {
     external fun render()
     external fun onSurfaceChanged(width: Int, height: Int)
     external fun surfaceCreated(assetManager: AssetManager?)
-    external fun noOpenGlContextInit(assetManager: AssetManager?, appStartScaleFactor: Float)
+    external fun noOpenGlContextInit(assetManager: AssetManager?)
     external fun setupCacheDirAbsolutePath(path: String?)
     external fun drag(dx: Float, dy: Float)
     external fun scale(scaleFactor: Float)

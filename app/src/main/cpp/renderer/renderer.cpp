@@ -29,15 +29,15 @@ bool DEBUG = false;
 bool DRAW_DEBUG_UI = true;
 bool DRAW_CENTER_POINT = true;
 
+bool FIND_SOLUTION = false;
+
 std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
 std::mutex visibleTilesResultMutex;
 
 Renderer::Renderer(
-        std::shared_ptr<ShadersBucket> shadersBucket,
         Cache* cache
 ):
-    shadersBucket(shadersBucket),
     cache(cache) {
     symbols = std::shared_ptr<Symbols>(new Symbols(shadersBucket));
     renderTileCoordinates = std::shared_ptr<RenderTileCoordinates>(new RenderTileCoordinates(shadersBucket, symbols));
@@ -124,14 +124,59 @@ void Renderer::renderFrame() {
         updateRenderTileProjection(visibleTilesResult.renderZDiffSize, visibleTilesResult.renderYDiffSize);
         pushToNetworkTiles(visibleTilesResult.newVisibleTiles);
 
-//        auto testCorners__ = evaluateCorners(pvm, !flatRender);
-//        auto testVisibleTiles__ = evaluateVisibleTiles(testCorners__, !flatRender);
+
+        // TEST чтобы найти размер плоскости для перехода со сферы на плоскость
+        if (FIND_SOLUTION) {
+            if (flatRender) {
+                // это плоскость и хотим сферу
+                updateSphereCurrentCameraRadians();
+                LOGI("(UPDATE) Mode FLAT -> SPHERE");
+            } else {
+                // это сфера и хотим плоскость
+                updateFlatCurrentCoordinates();
+                LOGI("(UPDATE) Mode SPHERE -> FLAT");
+            }
+
+            auto sphereTileXStart = visibleTilesResult.visibleBlocks.tileX_start_f;
+            auto sphereTileXEnd = visibleTilesResult.visibleBlocks.tileX_end_f;
+            auto sphereTileYStart = visibleTilesResult.visibleBlocks.tileY_start_f;
+            auto sphereTileYEnd = visibleTilesResult.visibleBlocks.tileY_end_f;
+            auto allowedDelta = 0.01f;
+            auto flatTileSizeDelta = 1.0f;
+
+
+            while(FIND_SOLUTION) {
+                float testCamX, testCamY, testCamZ;
+                evaluateCameraWorldPosition(!flatRender, testCamX, testCamY, testCamZ);
+                auto testPVM = evaluatePVM(!flatRender, testCamX, testCamY, testCamZ);
+                auto testCorners__ = evaluateCorners(testPVM, !flatRender);
+                auto testVisibleTiles__ = evaluateVisibleTiles(testCorners__, !flatRender);
+
+                auto flatTileXStart = testVisibleTiles__.visibleBlocks.tileX_start_f;
+                auto flatTileXEnd = testVisibleTiles__.visibleBlocks.tileX_end_f;
+                auto flatTileYStart = testVisibleTiles__.visibleBlocks.tileY_start_f;
+                auto flatTileYEnd = testVisibleTiles__.visibleBlocks.tileY_end_f;
+
+                float tileStartXDelta = flatTileXStart - sphereTileXStart;
+                float tileEndXDelta = flatTileXEnd - sphereTileXEnd;
+                float tileStartYDelta = flatTileYStart - sphereTileYStart;
+                float tileEndYDelta = flatTileYEnd - sphereTileYEnd;
+
+                LOGI("Tile X delta %f flatSize(%f)", tileStartXDelta, flatTileSizeInit);
+
+                if (abs(tileStartXDelta) < allowedDelta) {
+                    int stophere = 0;
+                }
+
+                flatTileSizeInit -= flatTileSizeDelta;
+            }
+        }
+
 
 
         // Геометрия генерируется четко по видимым тайлам
         // Текстура так же маппиться по геометрии видимых тайлов
         // Текстура должна точно соответствовать геометрии так как накладывается от края до края геометрии
-        auto visibleTiles = visibleTilesResult.newVisibleTiles;
         updatePlanetGeometry(visibleTilesResult);
 
         // По ключу опредеяем нужно ли текстуру новую рендрить или нет
@@ -142,7 +187,7 @@ void Renderer::renderFrame() {
         std::map<std::string, void*> tilesKeysToRender = {};
 
         if (readyTilesTree != nullptr) {
-            for (auto& visibleTile : visibleTiles) {
+            for (auto& visibleTile : visibleTilesResult.newVisibleTiles) {
                 newVisibleTilesKey += visibleTile.second.getKey();
                 bool isReplacement = false;
                 auto foundTile = readyTilesTree->searchAndCreate(visibleTile.second, isReplacement, nullptr, tilesStorage);
@@ -339,6 +384,10 @@ VisibleTilesResult Renderer::updateVisibleTilesFlat(CornersCords corners) {
     }
 
     VisibleTilesBlock visibleBlock = VisibleTilesBlock {
+            leftTop_zTile,
+            rightBottom_zTile,
+            leftTop_yTile,
+            rightBottom_yTile,
             (int)leftTop_zTile,
             (int)rightBottom_zTile,
             (int)leftTop_yTile,
@@ -430,6 +479,10 @@ VisibleTilesResult Renderer::updateVisibleTilesSphere(CornersCords cornersCords)
         }
     }
     auto visibleBlocks = VisibleTilesBlock {
+            leftTop_xTile,
+            rightBottom_xTile,
+            leftTop_yTile,
+            rightBottom_yTile,
             (int)leftTop_xTile,
             (int)rightBottom_xTile,
             (int)leftTop_yTile,
@@ -496,10 +549,21 @@ void Renderer::drag(float dx, float dy) {
     }
 }
 
-void Renderer::scale(float factor) {
-    LOGI("Factor %f", factor);
-    updateMapZoomScaleFactor(factor); // обновляет текущий скейл, параметр скейла
+void Renderer::updateMapZoomScaleFactor() {
+    float factor = scaleFactorRaw - scaleShift;
+    scaleFactorZoom = factor;
     LOGI("Scale factor %f", scaleFactorZoom);
+}
+
+void Renderer::updateRawScaleFactor(float detectorScale) {
+    float realScale = (detectorScale - 1.0f);
+    scaleFactorRaw *= (1 + realScale * scaleSpeed);
+    scaleFactorRaw = std::max(scaleShift, std::min(scaleFactorRaw, maxScale));
+}
+
+void Renderer::scale(float detectorScale) {
+    updateRawScaleFactor(detectorScale);
+    updateMapZoomScaleFactor();
 
     latitudeCameraMoveCurrentForce = 0;
     longitudeCameraMoveCurrentForce = 0;
@@ -518,6 +582,7 @@ void Renderer::scale(float factor) {
 }
 
 void Renderer::doubleTap() {
+    //FIND_SOLUTION = !FIND_SOLUTION;
     //DEBUG = !DEBUG;
     switchFlatSphereModeFlag = true;
     //DEBUG_TILES = !DEBUG_TILES;
@@ -604,54 +669,63 @@ void Renderer::updateCameraPosition() {
 
 short Renderer::currentMapZTile() {
     short realZ = realMapZTile();
-    if (realZ > 16)
-        realZ = 16;
+    if (realZ > maxZoomForTiles)
+        realZ = maxZoomForTiles;
     return realZ;
 }
 
 float Renderer::flatZNormalized(float z) {
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
     return fmod(z, flatHalfOfTileSizeInit) - flatHalfOfTileSizeInit;
 }
 
 float Renderer::flatYNormalized(float y) {
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
     return fmod(y, flatHalfOfTileSizeInit) - flatHalfOfTileSizeInit;
 }
 
 float Renderer::getFlatLongitude() {
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
     return -(cameraZ / flatHalfOfTileSizeInit) * M_PI;
 }
 
 float Renderer::getFlatLatitude() {
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
     float y = ((cameraY / flatHalfOfTileSizeInit) + 1) / 2;
     return CommonUtils::tileLatitude(1 - y, 1);
 }
 
+void Renderer::updateSphereCurrentCameraRadians() {
+    float flatLongitude = getFlatLongitude();
+    float flatLatitude = getFlatLatitude();
+
+    cameraLongitudeRad = -flatLongitude;
+    cameraLatitudeRad = flatLatitude;
+    LOGI("(SYNC_RENDER_CORDS) FLAT -> SPHERE lat(%f) lon(%f)", flatLatitude, flatLongitude);
+}
+
+void Renderer::updateFlatCurrentCoordinates() {
+    float longitudeRad = getSphereLonRad();
+    float latitudeRad = getSphereLatRad();
+    float flatHalfOfTileSizeInit = flatTileSizeInit / 2;
+    cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, flatHalfOfTileSizeInit);
+    cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, flatHalfOfTileSizeInit);
+    LOGI("(SYNC_RENDER_CORDS) SPHERE -> FLAT lat(%f) lon(%f)", latitudeRad, longitudeRad);
+}
+
 void Renderer::switchFlatAndSphereRender() {
-    short z = currentMapZTile();
-    int n = pow(2, z);
-
     if (flatRender) {
-        float flatLongitude = getFlatLongitude();
-        float flatLatitude = getFlatLatitude();
-
-        cameraLongitudeRad = -flatLongitude;
-        cameraLatitudeRad = flatLatitude;
-        LOGI("FLAT -> SPHERE lat(%f) lon(%f)", flatLatitude, flatLongitude);
+        // это плоскость и хотим сферу
+        updateSphereCurrentCameraRadians();
+        LOGI("(SWITCH) Mode FLAT -> SPHERE");
     } else {
         // это сфера и хотим плоскость
-        float longitudeRad = getSphereLonRad();
-        float latitudeRad = getSphereLatRad();
-        cameraZ = CommonUtils::longitudeToFlatCameraZ(longitudeRad, flatHalfOfTileSizeInit);
-        cameraY = CommonUtils::latitudeToFlatCameraY(latitudeRad, flatHalfOfTileSizeInit);
-        LOGI("SPHERE -> FLAT lat(%f) lon(%f)", latitudeRad, longitudeRad);
+        updateFlatCurrentCoordinates();
+        LOGI("(SWITCH) Mode SPHERE -> FLAT");
     }
 
     switchFlatSphereModeFlag = false;
     flatRender = !flatRender;
-
-    updateCameraPosition();
-    updateFrustum();
-    //LOGI("Flat lon %f lat %f", RAD2DEG(flatLongitude), RAD2DEG(flatLatitude));
 }
 
 float Renderer::getSphereLonRad() {
@@ -676,7 +750,7 @@ void Renderer::drawPoint(Eigen::Matrix4f matrix, float x, float y, float z, floa
     float points[] = {x, y, z};
     glDisable(GL_STENCIL_TEST);
     glDisable(GL_DEPTH_TEST);
-    auto plainShader = shadersBucket.get()->plainShader;
+    auto plainShader = shadersBucket->plainShader;
     const GLfloat color[] = { 1, 0, 0, 1};
     glUseProgram(plainShader->program);
     glUniform1f(plainShader->getPointSizeLocation(), pointSize);
@@ -706,10 +780,15 @@ float Renderer::evaluateCameraDistance(float _scaleFactor, float zoomDiff) {
     return resultDistance;
 }
 
-void Renderer::setupNoOpenGLMapState(float scaleFactor, AAssetManager *assetManager, JNIEnv *env) {
+void Renderer::setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env) {
+    changeMaxZoom(19.0f);
+    initStartZoom(14.0f);
+    // moscow latitude and longitude
+    setPlanetLongitudeDeg(37.6176);
+    setPlanetLatitudeDeg(55.7558);
+
     loadAssets(assetManager);
-    updateMapZoomScaleFactor(scaleFactor);
-    updateCameraPosition();
+    updateMapZoomScaleFactor();
     _savedLastScaleStateMapZ = realMapZTile();
     JavaVM* gJvm = nullptr;
     env->GetJavaVM(&gJvm);
@@ -796,6 +875,7 @@ GLuint Renderer::loadTextureFromBytes(unsigned char* imageData, off_t fileSize) 
 }
 
 void Renderer::onSurfaceCreated(AAssetManager *assetManager) {
+    shadersBucket->compileAllShaders(assetManager);
     getSymbols()->createFontTextures();
     loadTextures(assetManager);
 
@@ -1276,6 +1356,16 @@ void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f p
     }
 }
 
+void Renderer::initStartZoom(float startZoom) {
+    onAppStartMapZoom = startZoom;
+    scaleFactorRaw = onAppStartMapZoom + scaleShift;
+}
+
+void Renderer::changeMaxZoom(float newMaxZoom) {
+    maxZoom = newMaxZoom;
+    maxScale = maxZoom + scaleShift;
+}
+
 void Renderer::drawGlowing(Eigen::Matrix4f pvm) {
     glDisable(GL_DEPTH_TEST);
     auto planetGlowShader = shadersBucket->planetGlowShader;
@@ -1322,7 +1412,7 @@ void Renderer::drawGlowing(Eigen::Matrix4f pvm) {
 
 void Renderer::drawStars(Eigen::Matrix4f pvm) {
     glEnable(GL_DEPTH_TEST);
-    auto starsShader = shadersBucket.get()->starsShader;
+    auto starsShader = shadersBucket->starsShader;
     auto starsColor = CSSColorParser::parse("rgb(255, 242, 214)");
     GLfloat red   = static_cast<GLfloat>(starsColor.r) / 255;
     GLfloat green = static_cast<GLfloat>(starsColor.g) / 255;

@@ -8,6 +8,11 @@
 
 class VisibleTilesBlock {
 public:
+    float tileX_start_f;
+    float tileX_end_f;
+    float tileY_start_f;
+    float tileY_end_f;
+
     int tileX_start;
     int tileX_end;
     int tileY_start;
