@@ -33,10 +33,22 @@ public:
         }
         return defaultLineWidth;
     }
+    float getTrianglesStripLineWidthOfHeap(short style) {
+        if(trianglesStripLineWidth[style] != 0) {
+            return trianglesStripLineWidth[style];
+        }
+        return -1;
+    }
+    std::set<short> getStyles() {
+        return styles;
+    };
+
 private:
     CSSColorParser::Color colorsOfHeaps[Style::maxGeometryHeaps] = {};
     float defaultLineWidth = 1;
     float lineWidth[Style::maxGeometryHeaps] = {};
+    float trianglesStripLineWidth[Style::maxGeometryHeaps] = {};
+    std::set<short> styles;
 };
 
 

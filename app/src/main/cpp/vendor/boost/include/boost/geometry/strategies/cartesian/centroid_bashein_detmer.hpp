@@ -51,7 +51,7 @@ namespace strategy { namespace centroid
 \details Calculates centroid using triangulation method published by
     Bashein / Detmer
 \tparam Point point type of centroid to calculate
-\tparam PointOfSegment point type of segments, defaults to PolygonPoint
+\tparam PointOfSegment point type of segments, defaults to float
 \tparam CalculationType \tparam_calculation
 
 \author Adapted from  "Centroid of a Polygon" by

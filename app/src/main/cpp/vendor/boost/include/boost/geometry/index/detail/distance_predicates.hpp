@@ -102,7 +102,7 @@ struct calculate_distance
     BOOST_MPL_ASSERT_MSG((false), INVALID_PREDICATE_OR_TAG, (calculate_distance));
 };
 
-// this handles nearest() with default PolygonPoint parameter, to_nearest() and bounds
+// this handles nearest() with default float parameter, to_nearest() and bounds
 template <typename PointRelation, typename Indexable, typename Tag>
 struct calculate_distance< predicates::nearest<PointRelation>, Indexable, Tag >
 {

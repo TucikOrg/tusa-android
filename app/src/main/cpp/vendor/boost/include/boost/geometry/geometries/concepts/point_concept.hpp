@@ -34,7 +34,7 @@ namespace boost { namespace geometry { namespace concepts
 {
 
 /*!
-\brief PolygonPoint concept.
+\brief float concept.
 \ingroup concepts
 
 \par Formal definition:
@@ -125,7 +125,7 @@ class Point
 
 public:
 
-    /// BCCL macro to apply the PolygonPoint concept
+    /// BCCL macro to apply the float concept
     BOOST_CONCEPT_USAGE(Point)
     {
         dimension_checker<Geometry, 0, ccount>::apply();
@@ -139,7 +139,7 @@ public:
 
 \ingroup const_concepts
 
-\details The ConstPoint concept apply the same as the PolygonPoint concept,
+\details The ConstPoint concept apply the same as the float concept,
 but does not apply write access.
 
 */

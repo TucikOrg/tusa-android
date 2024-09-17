@@ -14,9 +14,8 @@
 #include "style/style.h"
 #include "renderer/map_draw_call.h"
 
-using PolygonCoord = float;
 using PolygonIndic = unsigned int;
-using PolygonPoint = std::array<PolygonCoord, 2>;
+
 
 using LineCoord = float;
 using LineIndic = unsigned int;
@@ -32,7 +31,10 @@ public:
 
     Style style = Style();
     Geometry<LineCoord, LineIndic> *resultLines = new Geometry<LineCoord, LineIndic>[Style::maxGeometryHeaps];
-    Geometry<PolygonCoord, PolygonIndic> *resultPolygons = new Geometry<PolygonCoord, PolygonIndic>[Style::maxGeometryHeaps];
+    Geometry<float, PolygonIndic> *resultPolygons = new Geometry<float, PolygonIndic>[Style::maxGeometryHeaps];
+    Geometry<LineCoord, LineIndic> *resultWideLines = new Geometry<float, PolygonIndic>[Style::maxGeometryHeaps];
+
+    std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> widePolygonedLinesFeatureGeomBlockList[Style::maxGeometryHeaps];
 
     std::vector<MapDrawCall> drawCalls = {};
 
@@ -47,6 +49,22 @@ private:
     int y;
 
     void parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile);
+    void decodeWideLines(
+            size_t (&wideLinesPointsCount)[Style::maxGeometryHeaps],
+            size_t (&wideLinesResultIndicesCount)[Style::maxGeometryHeaps],
+            vtzero::feature& feature,
+            short styleIndex,
+            std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&widePolygonedLinesFeatureGeomBlockList)[Style::maxGeometryHeaps],
+            float width
+    );
+    void decodeLines(size_t (&linesPointsCount)[Style::maxGeometryHeaps], size_t (&linesResultIndicesCount)[Style::maxGeometryHeaps], std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&linesFeatureGeomBlockList)[Style::maxGeometryHeaps], vtzero::feature& feature, short styleIndex);
+
+    void makeWidthLinesResult(
+            size_t (&wideLinesPointsCount)[Style::maxGeometryHeaps],
+            size_t (&wideLinesResultIndicesCount)[Style::maxGeometryHeaps],
+            short useStyleIndex,
+            std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&widePolygonedLinesFeatureGeomBlockList)[Style::maxGeometryHeaps]
+    );
 };
 
 

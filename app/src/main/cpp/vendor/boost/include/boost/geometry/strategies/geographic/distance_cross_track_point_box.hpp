@@ -90,7 +90,7 @@ public:
             (
                 (concepts::PointSegmentDistanceStrategy
                     <
-                        Strategy, PolygonPoint, typename point_type<Box>::type
+                        Strategy, float, typename point_type<Box>::type
                     >)
             );
 #endif

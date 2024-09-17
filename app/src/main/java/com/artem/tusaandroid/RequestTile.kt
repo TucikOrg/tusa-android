@@ -1,11 +1,31 @@
 package com.artem.tusaandroid
 
+import android.content.Context
 import java.io.ByteArrayOutputStream
+import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
 
-class RequestTile {
+class RequestTile(private val context: Context) {
+    private fun saveByteArrayToCache(fileName: String, byteArray: ByteArray) {
+        val cacheFile = File(context.cacheDir, fileName)
+        cacheFile.outputStream().use { it.write(byteArray) }
+    }
+
+    private fun readByteArrayFromCache(fileName: String): ByteArray? {
+        val cacheFile = File(context.cacheDir, fileName)
+        if (!cacheFile.exists()) {
+            return null
+        }
+        return cacheFile.inputStream().use { it.readBytes() }
+    }
+
     fun request(zoom: Int, x: Int, y: Int): ByteArray {
+        val fileName = "$zoom-$x-$y.mvt"
+        readByteArrayFromCache(fileName)?.let {
+            return it
+        }
+
         val base = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8,mapbox.mapbox-terrain-v2/"
         val token = "pk.eyJ1IjoiaW52ZWN0eXMiLCJhIjoiY2w0emRzYWx5MG1iMzNlbW91eWRwZzdldCJ9.EAByLTrB_zc7-ytI6GDGBw"
         val url = URL("$base$zoom/$x/$y.mvt?access_token=$token")
@@ -18,6 +38,9 @@ class RequestTile {
                 result.write(buffer, 0, length)
             }
         }
-        return result.toByteArray()
+
+        val bytesResult = result.toByteArray()
+        saveByteArrayToCache(fileName, bytesResult)
+        return bytesResult
     }
 }

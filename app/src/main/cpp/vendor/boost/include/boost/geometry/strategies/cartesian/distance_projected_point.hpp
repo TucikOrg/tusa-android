@@ -58,7 +58,7 @@ namespace strategy { namespace distance
 \tparam CalculationType \tparam_calculation
 \tparam Strategy underlying point-point distance strategy
 \par Concepts for Strategy:
-- cartesian_distance operator(PolygonPoint,PolygonPoint)
+- cartesian_distance operator(float,float)
 \note If the Strategy is a "comparable::pythagoras", this strategy
     automatically is a comparable projected_point strategy (so without sqrt)
 

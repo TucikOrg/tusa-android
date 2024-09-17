@@ -11,13 +11,12 @@
 
 class TilesStorage {
 public:
-    TilesStorage(Cache* cache);
+    TilesStorage();
     Tile* getTile(int zoom, int x, int y);
     Tile* getOrLoad(int zoom, int x, int y, GetTileRequest* getTileRequest);
     bool existInMemory(int zoom, int x, int y);
 private:
     std::map<std::string, Tile*> cacheTiles = {};
-    Cache* cache;
 };
 
 

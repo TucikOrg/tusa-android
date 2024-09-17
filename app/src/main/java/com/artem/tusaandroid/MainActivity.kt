@@ -44,8 +44,8 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             TusaAndroidTheme {
-                StartForegroundIfHaveLocationPermission(hiltViewModel())
-                LoadMeAvatar()
+//                StartForegroundIfHaveLocationPermission(hiltViewModel())
+//                LoadMeAvatar()
 
                 TucikScaffold()
             }
@@ -60,13 +60,13 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
             TucikMap(
                 model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMapViewModel())
             )
-            MainActionFab(modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .width(120.dp)
-                .height(120.dp)
-                .padding(16.dp),
-                hiltViewModel()
-            )
+//            MainActionFab(modifier = Modifier
+//                .align(Alignment.BottomCenter)
+//                .width(120.dp)
+//                .height(120.dp)
+//                .padding(16.dp),
+//                hiltViewModel()
+//            )
         }
     }
 }

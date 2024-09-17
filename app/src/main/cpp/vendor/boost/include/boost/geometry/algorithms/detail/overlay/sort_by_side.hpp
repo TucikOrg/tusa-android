@@ -37,7 +37,7 @@ enum direction_type { dir_unknown = -1, dir_from = 0, dir_to = 1 };
 typedef signed_size_type rank_type;
 
 
-// PolygonPoint-wrapper, adding some properties
+// float-wrapper, adding some properties
 template <typename Point>
 struct ranked_point
 {

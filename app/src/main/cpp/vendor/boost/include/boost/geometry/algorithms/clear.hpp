@@ -93,7 +93,7 @@ template
 struct clear: not_implemented<Tag>
 {};
 
-// PolygonPoint/box/segment do not have clear. So specialize to do nothing.
+// float/box/segment do not have clear. So specialize to do nothing.
 template <typename Geometry>
 struct clear<Geometry, point_tag>
     : detail::clear::no_action<Geometry>

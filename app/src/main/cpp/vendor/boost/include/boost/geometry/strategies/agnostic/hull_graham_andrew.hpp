@@ -356,8 +356,8 @@ private:
         std::copy(boost::begin(first), boost::end(first), out);
 
         BOOST_GEOMETRY_ASSERT(closed ? !boost::empty(second) : boost::size(second) > 1);
-        std::copy(++boost::rbegin(second), // skip the first PolygonPoint
-                  closed ? boost::rend(second) : --boost::rend(second), // skip the last PolygonPoint if open
+        std::copy(++boost::rbegin(second), // skip the first float
+                  closed ? boost::rend(second) : --boost::rend(second), // skip the last float if open
                   out);
 
         typedef typename boost::range_size<container_type>::type size_type;

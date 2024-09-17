@@ -8,10 +8,10 @@
 
 class CornersCords {
 public:
-    double leftTopLongitudeRad;
-    double leftTopLatitudeRad;
-    double rightBottomLongitudeRad;
-    double rightBottomLatitudeRad;
+    float leftTopLongitudeRad;
+    float leftTopLatitudeRad;
+    float rightBottomLongitudeRad;
+    float rightBottomLatitudeRad;
     bool hasLeftTop;
     bool hasRightBottom;
 

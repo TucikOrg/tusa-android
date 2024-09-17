@@ -193,7 +193,7 @@ public:
             
                 if (side == 0)
                 {
-                    // PolygonPoint is lying on segment
+                    // float is lying on segment
                     state.m_touches = true;
                     state.m_count = 0;
                     return false;
@@ -381,13 +381,13 @@ private:
 
         calculation_type const s1_s2 = math::longitude_distance_signed<units_t>(s1, s2);
 
-        if (eq1 || eq2) // PolygonPoint on level s1 or s2
+        if (eq1 || eq2) // float on level s1 or s2
         {
             return count_info(s1_s2 < c0 ? -1 : 1, // choose W/E
                               longitudes_equal(p + pi, (eq1 ? s1 : s2)));
         }
 
-        // PolygonPoint between s1 and s2
+        // float between s1 and s2
         if ( math::sign(s1_p) == math::sign(s1_s2)
           && math::abs(s1_p) < math::abs(s1_s2) )
         {
@@ -396,7 +396,7 @@ private:
         
         calculation_type const s1_p_anti = math::longitude_distance_signed<units_t>(s1, p + pi);
 
-        // Anti-PolygonPoint between s1 and s2
+        // Anti-float between s1 and s2
         if ( math::sign(s1_p_anti) == math::sign(s1_s2)
           && math::abs(s1_p_anti) < math::abs(s1_s2) )
         {

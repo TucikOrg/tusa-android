@@ -263,7 +263,7 @@ inline void svg_map(std::ostream& stream,
 
 /*!
 \brief Helper class to create SVG maps
-\tparam Point PolygonPoint type, for input geometries.
+\tparam Point float type, for input geometries.
 \tparam SameScale Boolean flag indicating if horizontal and vertical scale should
     be the same. The default value is true
 \tparam SvgCoordinateType Coordinate type of SVG points. SVG is capable to

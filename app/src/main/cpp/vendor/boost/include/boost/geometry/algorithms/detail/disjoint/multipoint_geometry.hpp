@@ -269,7 +269,7 @@ public:
         typedef typename boost::range_const_iterator<MultiPoint>::type iterator;
         for ( iterator it = boost::begin(multi_point) ; it != boost::end(multi_point) ; ++it )
         {
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             if (! detail::disjoint::disjoint_point_box(*it, box2)
                 && ! dispatch::disjoint<point1_type, SingleGeometry>::apply(*it, single_geometry, strategy))
             {
@@ -315,7 +315,7 @@ private:
         template <typename Box, typename Point>
         static inline bool apply(Box const& box, Point const& point)
         {
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             return ! detail::disjoint::disjoint_point_box(point, box);
         }
     };
@@ -346,7 +346,7 @@ private:
         {
             typedef typename boost::range_value<MultiGeometry>::type single_type;
 
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             if (! m_intersection_found
                 && ! detail::disjoint::disjoint_point_box(point, box_pair.first)
                 && ! dispatch::disjoint<Point, single_type>::apply(point, range::at(m_multi_geometry, box_pair.second), m_strategy))

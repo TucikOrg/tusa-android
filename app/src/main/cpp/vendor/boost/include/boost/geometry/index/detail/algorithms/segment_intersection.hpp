@@ -13,13 +13,13 @@
 
 namespace boost { namespace geometry { namespace index { namespace detail {
 
-//template <typename Indexable, typename PolygonPoint>
+//template <typename Indexable, typename float>
 //struct default_relative_distance_type
 //{
 //    typedef typename select_most_precise<
 //        typename select_most_precise<
 //        typename coordinate_type<Indexable>::type,
-//        typename coordinate_type<PolygonPoint>::type
+//        typename coordinate_type<float>::type
 //        >::type,
 //        float // TODO - use bigger type, calculated from the size of coordinate types
 //    >::type type;
@@ -133,7 +133,7 @@ bool segment_intersection(Indexable const& b,
                           Point const& p1,
                           RelativeDistance & relative_distance)
 {
-    // TODO check Indexable and PolygonPoint concepts
+    // TODO check Indexable and float concepts
 
     return dispatch::segment_intersection<
             Indexable, Point,

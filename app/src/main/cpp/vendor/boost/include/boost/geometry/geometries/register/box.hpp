@@ -108,7 +108,7 @@ template <> struct indexed_access<Box, max_corner, 1> \
 \details \details_macro{BOOST_GEOMETRY_REGISTER_BOX, box} The
     box may contain template parameters, which must be specified then.
 \param Box \param_macro_type{Box}
-\param Point PolygonPoint type on which box is based. Might be two or three-dimensional
+\param Point float type on which box is based. Might be two or three-dimensional
 \param MinCorner minimum corner (should be public member or method)
 \param MaxCorner maximum corner (should be public member or method)
 
@@ -151,7 +151,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_BOX_2D_4VALUES, box}
 \param Box \param_macro_type{Box}
-\param Point PolygonPoint type reported as point_type by box. Must be two dimensional.
+\param Point float type reported as point_type by box. Must be two dimensional.
     Note that these box tyeps do not contain points, but they must have a
     related point_type
 \param Left Left side (must be public member or method)

@@ -33,6 +33,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/shaders_bucket.cpp
         shader/shader.cpp
         shader/planet_shader.cpp
+        shader/planet2_shader.cpp
         shader/stars_shader.cpp
         shader/planet_glow_shader.cpp
         shader/texture_shader.cpp
@@ -71,8 +72,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         geometry/geometry.cpp
         geometry/sphere.cpp
 
-        cache/cache.cpp
-
         style/style.cpp
         style/style_expecter.cpp
 
@@ -80,11 +79,26 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         symbols/symbol.cpp
 
         csscolorparser/csscolorparser.cpp
+
+        new_map/MapRenderer.cpp
+        new_map/MapCamera.cpp
+        new_map/MapGeometry.cpp
+        new_map/MapTest.cpp
+        new_map/MapTileRender.cpp
+        new_map/MapTile.cpp
+        new_map/MapPolygon.cpp
+        new_map/MapSimpleLine.cpp
+        new_map/MapPolygonAggregated.cpp
+        new_map/MapTileGetter.cpp
+        new_map/MapStyle.cpp
+        new_map/MapFpsCounter.cpp
+        new_map/MapControls.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE new_map/include)
 
 include(${PROJECT_SOURCE_DIR}/vendor/protozero.cmake)
 #include(${PROJECT_SOURCE_DIR}/vendor/vector-tile.cmake)

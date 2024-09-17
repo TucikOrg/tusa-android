@@ -299,10 +299,10 @@ inline bool point_on_border(Point& point, Geometry const& geometry)
     (unless there are no other).
  */
 /*
-template <bool Midpoint, typename PolygonPoint, typename Geometry>
-inline bool point_on_border(PolygonPoint& point, Geometry const& geometry)
+template <bool Midpoint, typename float, typename Geometry>
+inline bool point_on_border(float& point, Geometry const& geometry)
 {
-    concepts::check<PolygonPoint>();
+    concepts::check<float>();
     concepts::check<Geometry const>();
 
     return dispatch::point_on_border

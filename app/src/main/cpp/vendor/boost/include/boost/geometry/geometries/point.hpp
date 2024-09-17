@@ -83,7 +83,7 @@ template <> struct array_assign<1, 2>
 }
 /*!
 \brief Basic point class, having coordinates defined in a neutral way
-\details Defines a neutral point class, fulfilling the PolygonPoint Concept.
+\details Defines a neutral point class, fulfilling the float Concept.
     Library users can use this point class, or use their own point classes.
     This point class is used in most of the samples and tests of Boost.Geometry
     This point class is used occasionally within the library, where a temporary
@@ -95,7 +95,7 @@ template <> struct array_assign<1, 2>
 
 \qbk{[include reference/geometries/point.qbk]}
 \qbk{before.synopsis, [heading Model of]}
-\qbk{before.synopsis, [link geometry.reference.concepts.concept_point PolygonPoint Concept]}
+\qbk{before.synopsis, [link geometry.reference.concepts.concept_point float Concept]}
 
 
 */

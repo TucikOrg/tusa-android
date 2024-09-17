@@ -35,10 +35,7 @@ std::atomic<bool> networkTileThreadRunning;
 std::mutex networkTileStackMutex;
 std::mutex visibleTilesResultMutex;
 
-Renderer::Renderer(
-        Cache* cache
-):
-    cache(cache) {
+Renderer::Renderer() {
     symbols = std::shared_ptr<Symbols>(new Symbols(shadersBucket));
     renderTileCoordinates = std::shared_ptr<RenderTileCoordinates>(new RenderTileCoordinates(shadersBucket, symbols));
 }
@@ -87,7 +84,7 @@ void Renderer::renderFrame() {
     previousRenderFrameTime = currentTime;
     frameCount++;
 
-    updateCameraPosition();
+    updateCameraDistance();
     updateFrustum();
 
     evaluateCameraWorldPosition(flatRender, camWorldX, camWorldY, camWorldZ);
@@ -124,60 +121,10 @@ void Renderer::renderFrame() {
         updateRenderTileProjection(visibleTilesResult.renderZDiffSize, visibleTilesResult.renderYDiffSize);
         pushToNetworkTiles(visibleTilesResult.newVisibleTiles);
 
-
-        // TEST чтобы найти размер плоскости для перехода со сферы на плоскость
-        if (FIND_SOLUTION) {
-            if (flatRender) {
-                // это плоскость и хотим сферу
-                updateSphereCurrentCameraRadians();
-                LOGI("(UPDATE) Mode FLAT -> SPHERE");
-            } else {
-                // это сфера и хотим плоскость
-                updateFlatCurrentCoordinates();
-                LOGI("(UPDATE) Mode SPHERE -> FLAT");
-            }
-
-            auto sphereTileXStart = visibleTilesResult.visibleBlocks.tileX_start_f;
-            auto sphereTileXEnd = visibleTilesResult.visibleBlocks.tileX_end_f;
-            auto sphereTileYStart = visibleTilesResult.visibleBlocks.tileY_start_f;
-            auto sphereTileYEnd = visibleTilesResult.visibleBlocks.tileY_end_f;
-            auto allowedDelta = 0.01f;
-            auto flatTileSizeDelta = 1.0f;
-
-
-            while(FIND_SOLUTION) {
-                float testCamX, testCamY, testCamZ;
-                evaluateCameraWorldPosition(!flatRender, testCamX, testCamY, testCamZ);
-                auto testPVM = evaluatePVM(!flatRender, testCamX, testCamY, testCamZ);
-                auto testCorners__ = evaluateCorners(testPVM, !flatRender);
-                auto testVisibleTiles__ = evaluateVisibleTiles(testCorners__, !flatRender);
-
-                auto flatTileXStart = testVisibleTiles__.visibleBlocks.tileX_start_f;
-                auto flatTileXEnd = testVisibleTiles__.visibleBlocks.tileX_end_f;
-                auto flatTileYStart = testVisibleTiles__.visibleBlocks.tileY_start_f;
-                auto flatTileYEnd = testVisibleTiles__.visibleBlocks.tileY_end_f;
-
-                float tileStartXDelta = flatTileXStart - sphereTileXStart;
-                float tileEndXDelta = flatTileXEnd - sphereTileXEnd;
-                float tileStartYDelta = flatTileYStart - sphereTileYStart;
-                float tileEndYDelta = flatTileYEnd - sphereTileYEnd;
-
-                LOGI("Tile X delta %f flatSize(%f)", tileStartXDelta, flatTileSizeInit);
-
-                if (abs(tileStartXDelta) < allowedDelta) {
-                    int stophere = 0;
-                }
-
-                flatTileSizeInit -= flatTileSizeDelta;
-            }
-        }
-
-
-
         // Геометрия генерируется четко по видимым тайлам
         // Текстура так же маппиться по геометрии видимых тайлов
         // Текстура должна точно соответствовать геометрии так как накладывается от края до края геометрии
-        updatePlanetGeometry(visibleTilesResult);
+        updatMapGeometry(visibleTilesResult);
 
         // По ключу опредеяем нужно ли текстуру новую рендрить или нет
         // Если есть изменения в видимых тайлах то значит нужно все заново отрендрить
@@ -190,15 +137,16 @@ void Renderer::renderFrame() {
             for (auto& visibleTile : visibleTilesResult.newVisibleTiles) {
                 newVisibleTilesKey += visibleTile.second.getKey();
                 bool isReplacement = false;
-                auto foundTile = readyTilesTree->searchAndCreate(visibleTile.second, isReplacement, nullptr, tilesStorage);
-
-                if (foundTile->containsData() && tilesKeysToRender.find(foundTile->tile.getKey()) == tilesKeysToRender.end()) {
-                    tilesKeysToRender[foundTile->tile.getKey()] = nullptr;
-                    if (isReplacement) {
-                        renderFirstTiles.push_back(foundTile->tile);
-                    } else {
-                        renderSecondTiles.push_back(foundTile->tile);
-                        newVisibleTilesKey += "e";
+                auto tilesFounded = readyTilesTree->searchAndCreate(visibleTile.second, isReplacement, nullptr, tilesStorage);
+                for (auto& foundTile : tilesFounded) {
+                    if (foundTile->containsData() && tilesKeysToRender.find(foundTile->tile.getKey()) == tilesKeysToRender.end()) {
+                        tilesKeysToRender[foundTile->tile.getKey()] = nullptr;
+                        if (isReplacement) {
+                            renderFirstTiles.push_back(foundTile->tile);
+                        } else {
+                            renderSecondTiles.push_back(foundTile->tile);
+                            newVisibleTilesKey += "e";
+                        }
                     }
                 }
             }
@@ -561,6 +509,13 @@ void Renderer::updateRawScaleFactor(float detectorScale) {
     scaleFactorRaw = std::max(scaleShift, std::min(scaleFactorRaw, maxScale));
 }
 
+void Renderer::updateFlatInitSize() {
+    float latitudeRad = getSphereLatRad();
+    float distortion = 1 / cos(latitudeRad);
+    LOGI("Distortion %f", distortion);
+    flatTileSizeInit = 2.0f * planetRadius * (M_PI / distortion);
+}
+
 void Renderer::scale(float detectorScale) {
     updateRawScaleFactor(detectorScale);
     updateMapZoomScaleFactor();
@@ -571,13 +526,17 @@ void Renderer::scale(float detectorScale) {
     if(_savedLastScaleStateMapZ != realMapZTile()) {
         updateMarkersSizes();
         _savedLastScaleStateMapZ = realMapZTile();
-        bool sphere2FlatCondition = _savedLastScaleStateMapZ >= switchSphere2FlatAtZoom && !flatRender;
-        bool flat2SphereCondition = _savedLastScaleStateMapZ < switchSphere2FlatAtZoom && flatRender;
-        if (sphere2FlatCondition || flat2SphereCondition) {
-            switchFlatSphereModeFlag = true;
-        }
+        checkShouldSwitchRenderMode(_savedLastScaleStateMapZ);
         LOGI("New Z of map %d", realMapZTile());
         LOGI("Current tile extent %f", evaluateCurrentExtent());
+    }
+}
+
+void Renderer::checkShouldSwitchRenderMode(short mapZ) {
+    bool sphere2FlatCondition = mapZ >= switchSphere2FlatAtZoom && !flatRender;
+    bool flat2SphereCondition = mapZ < switchSphere2FlatAtZoom && flatRender;
+    if (sphere2FlatCondition || flat2SphereCondition) {
+        switchFlatSphereModeFlag = true;
     }
 }
 
@@ -631,7 +590,7 @@ void Renderer::networkTilesFunction(JavaVM* gJvm, GetTileRequest* getTileRequest
 
         if (shouldLoadTile) {
             // Загружаем тайл
-            auto loadedTileData = tilesStorage.getOrLoad(tileToNetwork.getTileZ(), tileToNetwork.getTileX(), tileToNetwork.getTileY(), getTileRequest);
+            tilesStorage.getOrLoad(tileToNetwork.getTileZ(), tileToNetwork.getTileX(), tileToNetwork.getTileY(), getTileRequest);
         }
     }
 
@@ -662,7 +621,7 @@ void Renderer::updateMarkersSizes() {
     }
 }
 
-void Renderer::updateCameraPosition() {
+void Renderer::updateCameraDistance() {
     cameraCurrentDistance = evaluateCameraDistance(scaleFactorZoom, 0);
     LOGI("Camera distance %f", cameraCurrentDistance);
 }
@@ -720,6 +679,7 @@ void Renderer::switchFlatAndSphereRender() {
         LOGI("(SWITCH) Mode FLAT -> SPHERE");
     } else {
         // это сфера и хотим плоскость
+        updateFlatInitSize();
         updateFlatCurrentCoordinates();
         LOGI("(SWITCH) Mode SPHERE -> FLAT");
     }
@@ -780,19 +740,24 @@ float Renderer::evaluateCameraDistance(float _scaleFactor, float zoomDiff) {
     return resultDistance;
 }
 
-void Renderer::setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env) {
+void Renderer::setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env, jobject request_tile) {
     changeMaxZoom(19.0f);
-    initStartZoom(14.0f);
-    // moscow latitude and longitude
-    setPlanetLongitudeDeg(37.6176);
-    setPlanetLatitudeDeg(55.7558);
+    initStartZoom(0.0f);
+    checkShouldSwitchRenderMode(onAppStartMapZoom);
+
+    // Moscow latitude and longitude
+    setPlanetLongitudeDeg(0);
+    setPlanetLatitudeDeg(0);
+
+//    setPlanetLongitudeDeg(37.624508);
+//    setPlanetLatitudeDeg(55.749393);
 
     loadAssets(assetManager);
     updateMapZoomScaleFactor();
     _savedLastScaleStateMapZ = realMapZTile();
     JavaVM* gJvm = nullptr;
     env->GetJavaVM(&gJvm);
-    auto* getTileRequest = new GetTileRequest(cache, env);
+    auto* getTileRequest = new GetTileRequest(env, request_tile);
 
     // network_tile_thread
     std::thread networkRootTileThread([this, gJvm, getTileRequest] { networkRootTileFunction(gJvm, getTileRequest); });
@@ -961,25 +926,25 @@ void Renderer::addMarker(std::string key, float latitude, float longitude, unsig
 }
 
 void Renderer::updateRenderTileProjection(short amountX, short amountY) {
-    rendererTileProjectionMatrix = EigenGL::createOrthoMatrix(0, 4096.0 * amountX, -4096.0 * amountY, 0, 0.1, 100);
+    rendererTileProjectionMatrix = EigenGL::createOrthoMatrix(0, 4096.0f * amountX, -4096.0f * amountY, 0, 0.1, 100);
 }
 
 CornersCords Renderer::evaluateCorners(Eigen::Matrix4f& pvm, bool isFlat) {
     std::vector<Eigen::Vector4f> planes = EigenGL::extractFrustumPlanes(pvm);
     auto leftPlane = planes[0];
     auto topPlane = planes[3];
-    double topLeftLongitudeRad = 0;
-    double topLeftLatitudeRad = 0;
+    float topLeftLongitudeRad = 0;
+    float topLeftLatitudeRad = 0;
     bool hasTopLeft = false;
 
     auto rightPlane = planes[1];
     auto bottomPlane = planes[2];
-    double bottomRightLongitudeRad = 0;
-    double bottomRightLatitudeRad = 0;
+    float bottomRightLongitudeRad = 0;
+    float bottomRightLatitudeRad = 0;
     bool hasBottomRight = false;
 
-    double topRightLongitudeRad = 0;
-    double topRightLatitudeRad = 0;
+    float topRightLongitudeRad = 0;
+    float topRightLatitudeRad = 0;
     bool hasTopRight = false;
 
     float leftTop_y = 0;
@@ -1077,56 +1042,56 @@ void Renderer::evaluateLatLonByIntersectionPlanes_Flat(Eigen::Vector4f firstPlan
 
 void Renderer::evaluateLatLonByIntersectionPlanes_Sphere(
         Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane,
-        Eigen::Matrix4f pvm, double& longitudeRad, double& latitudeRad, bool& has) {
-    double A1 = firstPlane[0];
-    double B1 = firstPlane[1];
-    double C1 = firstPlane[2];
-    double D1 = firstPlane[3];
+        Eigen::Matrix4f pvm, float& longitudeRad, float& latitudeRad, bool& has) {
+    float A1 = firstPlane[0];
+    float B1 = firstPlane[1];
+    float C1 = firstPlane[2];
+    float D1 = firstPlane[3];
 
-    double A2 = secondPlane[0];
-    double B2 = secondPlane[1];
-    double C2 = secondPlane[2];
-    double D2 = secondPlane[3];
+    float A2 = secondPlane[0];
+    float B2 = secondPlane[1];
+    float C2 = secondPlane[2];
+    float D2 = secondPlane[3];
 
-    double leftTopPlaneLineVector[3] = {
+    float leftTopPlaneLineVector[3] = {
             B1 * C2 - C1 * B2, // a
             C1 * A2 - A1 * C2, // b
             A1 * B2 - B1 * A2 // c
     };
 
-    double det = A1 * B2 - A2 * B1;
-    double detX = (-D1) * B2 - (-D2) * B1;
-    double detY = A1 * (-D2) - A2 * (-D1);
+    float det = A1 * B2 - A2 * B1;
+    float detX = (-D1) * B2 - (-D2) * B1;
+    float detY = A1 * (-D2) - A2 * (-D1);
 
-    double x0 = detX / det;
-    double y0 = detY / det;
-    double z0 = 0; // потому что мы взяли его как свободный параметр для нахождения любой точки
+    float x0 = detX / det;
+    float y0 = detY / det;
+    float z0 = 0; // потому что мы взяли его как свободный параметр для нахождения любой точки
 
-    double a = leftTopPlaneLineVector[0];
-    double b = leftTopPlaneLineVector[1];
-    double c = leftTopPlaneLineVector[2];
+    float a = leftTopPlaneLineVector[0];
+    float b = leftTopPlaneLineVector[1];
+    float c = leftTopPlaneLineVector[2];
 
-    double Ay = pow(a, 2.0) + pow(b, 2.0) + pow(c, 2.0);
-    double By = 2 * (x0 * a + y0 * b + z0 * c);
-    double Cy = pow(x0, 2.0) + pow(y0, 2.0) + pow(z0, 2.0) - pow(planetRadius, 2.0);
-    double discremenant = pow(By, 2.0) - 4 * Ay * Cy;
+    float Ay = pow(a, 2.0) + pow(b, 2.0) + pow(c, 2.0);
+    float By = 2 * (x0 * a + y0 * b + z0 * c);
+    float Cy = pow(x0, 2.0) + pow(y0, 2.0) + pow(z0, 2.0) - pow(planetRadius, 2.0);
+    float discremenant = pow(By, 2.0) - 4 * Ay * Cy;
     if (discremenant > 0) {
-        double t1 = (-By + sqrt(discremenant)) / (2 * Ay);
-        double t2 = (-By - sqrt(discremenant)) / (2 * Ay);
+        float t1 = (-By + sqrt(discremenant)) / (2 * Ay);
+        float t2 = (-By - sqrt(discremenant)) / (2 * Ay);
 
-        double xi1 = x0 + a * t1;
-        double yi1 = y0 + b * t1;
-        double zi1 = z0 + c * t1;
+        float xi1 = x0 + a * t1;
+        float yi1 = y0 + b * t1;
+        float zi1 = z0 + c * t1;
 
         // точка пересечения ближайшая к камере
-        double xi2 = x0 + a * t2;
-        double yi2 = y0 + b * t2;
-        double zi2 = z0 + c * t2;
+        float xi2 = x0 + a * t2;
+        float yi2 = y0 + b * t2;
+        float zi2 = z0 + c * t2;
 
         longitudeRad = atan2(xi2, zi2) - M_PI / 2;
         longitudeRad = CommonUtils::normalizeLongitudeRad(longitudeRad);
 
-        double hypotenuse = sqrt(pow(xi2, 2.0) + pow(zi2, 2.0));
+        float hypotenuse = sqrt(pow(xi2, 2.0) + pow(zi2, 2.0));
         latitudeRad = atan2(yi2, hypotenuse);
         has = true;
         return;
@@ -1137,7 +1102,7 @@ void Renderer::evaluateLatLonByIntersectionPlanes_Sphere(
     has = false;
 }
 
-void Renderer::updatePlanetGeometry(VisibleTilesResult visibleTilesResult) {
+void Renderer::updatMapGeometry(VisibleTilesResult visibleTilesResult) {
     auto& block = visibleTilesResult.visibleBlocks;
     int tileX_start = block.tileX_start;
     int tileX_end = block.tileX_end;
@@ -1319,11 +1284,7 @@ void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f p
             if(geometryHeapIndex < Style::maxGeometryHeaps) {
                 Geometry<float, unsigned int>& polygonsGeometry = tile->resultPolygons[geometryHeapIndex];
                 Geometry<float, unsigned int>& linesGeometry = tile->resultLines[geometryHeapIndex];
-                if(polygonsGeometry.isEmpty() && linesGeometry.isEmpty())
-                    continue;
-
-                float lineWidth = tile->style.getLineWidthOfHeap(geometryHeapIndex);
-                glLineWidth(lineWidth);
+                Geometry<float, unsigned int>& wideLinesGeometry = tile->resultWideLines[geometryHeapIndex];
 
                 CSSColorParser::Color colorOfStyle = tile->style.getColorOfGeometryHeap(geometryHeapIndex);
                 GLfloat red   = static_cast<GLfloat>(colorOfStyle.r) / 255;
@@ -1332,7 +1293,6 @@ void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f p
                 GLfloat alpha = static_cast<GLfloat>(colorOfStyle.a);
                 const GLfloat color[] = { red, green, blue, alpha};
                 glUniform4fv(plainShader->getColorLocation(), 1, color);
-
 
                 if (!polygonsGeometry.isEmpty()) {
                     glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
@@ -1343,11 +1303,27 @@ void Renderer::renderTiles(std::vector<TileCords> renderTiles, Eigen::Matrix4f p
                 }
 
                 if (!linesGeometry.isEmpty()) {
+                    float lineWidth = tile->style.getLineWidthOfHeap(geometryHeapIndex);
+                    glLineWidth(lineWidth);
                     glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
                                           GL_FALSE, 0, linesGeometry.points
                     );
                     glEnableVertexAttribArray(plainShader->getPosLocation());
                     glDrawElements(GL_LINES, linesGeometry.indicesCount, GL_UNSIGNED_INT, linesGeometry.indices);
+
+//                    glUniform1f(plainShader->getPointSizeLocation(), 50.0f);
+//                    glDrawArrays(GL_POINTS, 0, linesGeometry.pointsCount);
+                }
+
+                auto wideLinesGeometryBlockList = tile->widePolygonedLinesFeatureGeomBlockList[geometryHeapIndex];
+                if (!wideLinesGeometryBlockList.empty()) {
+                    for (auto& geom : wideLinesGeometryBlockList) {
+                        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
+                                              GL_FALSE, 0, geom.data->points
+                        );
+                        glEnableVertexAttribArray(plainShader->getPosLocation());
+                        glDrawArrays(GL_TRIANGLE_STRIP, 0, geom.data->pointsCount);
+                    }
                 }
 
                 continue;

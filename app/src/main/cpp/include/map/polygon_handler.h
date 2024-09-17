@@ -9,10 +9,10 @@
 
 class PolygonHandler {
 public:
-    std::vector<PolygonPoint> points;
-    std::vector<std::vector<PolygonPoint>> polygon;
-    std::vector<std::vector<std::vector<PolygonPoint>>> polygons;
-    std::vector<PolygonPoint> featurePoints = {};
+    std::vector<std::array<float, 2>> points;
+    std::vector<std::vector<std::array<float, 2>>> polygon;
+    std::vector<std::vector<std::vector<std::array<float, 2>>>> polygons;
+    std::vector<std::array<float, 2>> featurePoints = {};
     int pointsCount = 0;
 
     void ring_begin(uint32_t count) {
@@ -21,8 +21,8 @@ public:
     }
 
     void ring_point(vtzero::point point) {
-        points.push_back({(PolygonCoord)point.x, (PolygonCoord)point.y});
-        featurePoints.push_back({(PolygonCoord)point.x, (PolygonCoord)point.y});
+        points.push_back({(float)point.x, (float)point.y});
+        featurePoints.push_back({(float)point.x, (float)point.y});
         pointsCount++;
     }
 

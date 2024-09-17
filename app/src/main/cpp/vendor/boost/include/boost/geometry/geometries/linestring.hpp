@@ -88,7 +88,7 @@ public :
 //// Without this workaround in MSVC the assignment operator is ambiguous
 //#ifndef BOOST_MSVC
 //    /// \assignment_initializer_list{linestring}
-//    inline linestring & operator=(std::initializer_list<PolygonPoint> l)
+//    inline linestring & operator=(std::initializer_list<float> l)
 //    {
 //        base_type::assign(l.begin(), l.end());
 //        return *this;

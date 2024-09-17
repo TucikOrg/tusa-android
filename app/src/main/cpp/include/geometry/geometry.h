@@ -17,6 +17,7 @@ public:
     size_t indicesCount = 0;
 
     bool isEmpty() { return pointsCount == 0 || indicesCount == 0; }
+    bool isPointsEmpty() { return pointsCount == 0; }
 };
 
 template<class Coord, class Indic>

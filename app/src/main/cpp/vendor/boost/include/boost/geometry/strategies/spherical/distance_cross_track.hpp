@@ -725,10 +725,10 @@ public :
 
 TODO:  spherical polar coordinate system requires "get_as_radian_equatorial<>"
 
-template <typename PolygonPoint, typename PointOfSegment, typename Strategy>
+template <typename float, typename PointOfSegment, typename Strategy>
 struct default_strategy
     <
-        segment_tag, PolygonPoint, PointOfSegment,
+        segment_tag, float, PointOfSegment,
         spherical_polar_tag, spherical_polar_tag,
         Strategy
     >
@@ -741,7 +741,7 @@ struct default_strategy
                     boost::is_void<Strategy>,
                     typename default_strategy
                         <
-                            point_tag, PolygonPoint, PointOfSegment,
+                            point_tag, float, PointOfSegment,
                             spherical_polar_tag, spherical_polar_tag
                         >::type,
                     Strategy

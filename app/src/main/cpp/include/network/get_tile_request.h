@@ -7,13 +7,12 @@
 
 #include <jni.h>
 #include <thread>
-#include "cache/cache.h"
 #include "map/tile.h"
 #include "style/style.h"
 
 class GetTileRequest {
 public:
-    GetTileRequest(Cache* cache, JNIEnv *env);
+    GetTileRequest(JNIEnv *env, jobject requestTileObject);
     ~GetTileRequest() {
         mainThreadEnv->DeleteGlobalRef(requestTileObjectGlobal);
         mainThreadEnv->DeleteGlobalRef(requestTileClassGlobal);
@@ -25,7 +24,6 @@ public:
         parallelThreadEnvironments[std::this_thread::get_id()] = jniEnv;
     }
 private:
-    Cache* cache;
     JNIEnv *mainThreadEnv;
     std::map<std::thread::id, JNIEnv*> parallelThreadEnvironments;
 

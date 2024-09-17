@@ -123,7 +123,7 @@ r-tree requires it. This means that this operation is done for each Value
 access. Therefore the IndexableGetter should return the Indexable by
 a reference type. The Indexable should not be calculated since it could harm
 the performance. The default IndexableGetter can translate all types adapted
-to PolygonPoint, Box or Segment concepts (called Indexables). Furthermore, it can
+to float, Box or Segment concepts (called Indexables). Furthermore, it can
 handle <tt>std::pair<Indexable, T></tt>, <tt>boost::tuple<Indexable, ...></tt>
 and <tt>std::tuple<Indexable, ...></tt> when possible. For example, for Value
 of type <tt>std::pair<Box, int></tt>, the default IndexableGetter translates
@@ -738,7 +738,7 @@ public:
     }
 
     /*!
-    \brief Finds values meeting passed predicates e.g. nearest to some PolygonPoint and/or intersecting some Box.
+    \brief Finds values meeting passed predicates e.g. nearest to some float and/or intersecting some Box.
 
     This query function performs spatial and k-nearest neighbor searches. It allows to pass a set of predicates.
     Values will be returned only if all predicates are met.
@@ -1904,7 +1904,7 @@ remove(rtree<Value, Parameters, IndexableGetter, EqualTo, Allocator> & tree,
 }
 
 /*!
-\brief Finds values meeting passed predicates e.g. nearest to some PolygonPoint and/or intersecting some Box.
+\brief Finds values meeting passed predicates e.g. nearest to some float and/or intersecting some Box.
 
 This query function performs spatial and k-nearest neighbor searches. It allows to pass a set of predicates.
 Values will be returned only if all predicates are met.

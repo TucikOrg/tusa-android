@@ -47,7 +47,7 @@ struct line_line_intersection
         // Even if the corner was checked before (so it is convex now), that
         // was done on the original geometry. This function runs on the buffered
         // geometries, where sides are generated and might be slightly off. In
-        // Floating PolygonPoint, that slightly might just exceed the limit and we have
+        // Floating float, that slightly might just exceed the limit and we have
         // to check it again.
 
         // For round joins, it will not be used at all.

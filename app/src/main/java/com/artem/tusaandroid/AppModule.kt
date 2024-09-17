@@ -1,5 +1,6 @@
 package com.artem.tusaandroid
 
+import android.content.Context
 import com.artem.tusaandroid.api.AuthenticationControllerApi
 import com.artem.tusaandroid.api.AvatarControllerApi
 import com.artem.tusaandroid.api.LegalControllerApi
@@ -14,6 +15,8 @@ import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ActivityContext
+import dagger.hilt.android.scopes.ActivityScoped
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import javax.inject.Singleton

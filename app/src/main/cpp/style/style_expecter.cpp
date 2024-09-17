@@ -17,11 +17,13 @@ void StyleExpecter::registerLayer(std::vector<std::string> expectedLayerName,
     if(layerNameCondition && classCondition) {
         colors[currentIndex] = color;
         lineWidth[currentIndex] = useLineWidth;
+        trianglesStripLineWidth[currentIndex] = useTrianglesStripLineWidth;
         selectedIndex = currentIndex;
         styleRegistered = true;
     }
     currentIndex++;
 
+    useTrianglesStripLineWidth = -1;
     isFallbackByClassName = false;
     expectedClassName = "";
     useLineWidth = 0;
@@ -31,10 +33,12 @@ StyleExpecter::StyleExpecter(
         layer_map_type props,
         std::string layerName,
         CSSColorParser::Color (&colors)[Style::maxGeometryHeaps],
-        float (&lineWidth)[Style::maxGeometryHeaps]
+        float (&lineWidth)[Style::maxGeometryHeaps],
+        float (&trianglesStripLineWidth)[Style::maxGeometryHeaps]
 ) :
     layerName(layerName),
     colors(colors),
+    trianglesStripLineWidth(trianglesStripLineWidth),
     lineWidth(lineWidth) {
     for(auto prop : props) {
         if(prop.first == "class") {

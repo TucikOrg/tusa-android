@@ -21,7 +21,39 @@ public:
 
     TileCords tile;
 
-    TileNode* searchAndCreate(TileCords tileCords, bool& isReplacement, TileNode* ifNoData, TilesStorage storage) {
+    void findNotNullChilds(std::vector<TileNode*>& result, short currentDepth, short maxDepth, short maxResultSize) {
+        currentDepth++;
+        if (currentDepth >= maxDepth) {
+            return;
+        }
+
+        if (result.size() >= maxResultSize) {
+            return;
+        }
+
+        if (child00 != nullptr) {
+            result.push_back(child00);
+            child00->findNotNullChilds(result, currentDepth, maxDepth, maxResultSize);
+        }
+        if (child01 != nullptr) {
+            result.push_back(child01);
+            child01->findNotNullChilds(result, currentDepth, maxDepth, maxResultSize);
+        }
+        if (child10 != nullptr) {
+            result.push_back(child10);
+            child10->findNotNullChilds(result, currentDepth, maxDepth, maxResultSize);
+        }
+        if (child11 != nullptr) {
+            result.push_back(child11);
+            child11->findNotNullChilds(result, currentDepth, maxDepth, maxResultSize);
+        }
+
+        result.erase(std::remove_if(result.begin(), result.end(), [](TileNode* node) {
+            return !node->containsData();
+        }), result.end());
+    }
+
+    std::vector<TileNode*> searchAndCreate(TileCords tileCords, bool& isReplacement, TileNode* ifNoData, TilesStorage storage) {
         if (tile.is(tileCords)) {
             if (tile.isEmpty()) {
 
@@ -29,16 +61,26 @@ public:
                 auto tileData = storage.getTile(tile.getTileZ(), tile.getTileX(), tile.getTileY());
                 if (tileData != nullptr) {
                     tile.setData(tileData);
-                    return this;
+                    return { this };
                 }
 
                 isReplacement = true;
                 if (ifNoData == nullptr) {
                     throw std::runtime_error("ifNoData is nullptr.");
                 }
-                return ifNoData;
+
+                int zDelta = ifNoData->tile.getTileZ() - tile.getTileZ();
+                // Ищем тайлы уточняющие этот тайл
+                // тайлы котоорые внутри этого тайла могут представлять более актуальные данные
+                if (zDelta < -4) { // если толлько хотим заменить на тайл выше текущего на несколько зумов
+                    std::vector<TileNode*> result;
+                    findNotNullChilds(result, 0, 4, 6);
+                    return std::move(result);
+                }
+
+                return {ifNoData};
             }
-            return this;
+            return {this};
         }
 
         TileNode* useIfNoData = nullptr;
@@ -85,7 +127,7 @@ public:
         }
 
         isReplacement = true;
-        return useIfNoData;
+        return {useIfNoData};
     }
 
     bool containsData() {

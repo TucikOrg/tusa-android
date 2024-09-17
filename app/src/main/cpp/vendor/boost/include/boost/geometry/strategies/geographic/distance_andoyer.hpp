@@ -27,7 +27,7 @@ namespace strategy { namespace distance
 
 
 /*!
-\brief PolygonPoint-point distance approximation taking flattening into account
+\brief float-point distance approximation taking flattening into account
 \ingroup distance
 \tparam Spheroid The reference spheroid model
 \tparam CalculationType \tparam_calculation

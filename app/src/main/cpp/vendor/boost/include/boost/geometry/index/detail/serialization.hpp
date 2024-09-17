@@ -18,7 +18,7 @@
 // how about using the unsigned type capable of storing Max in compile-time versions?
 
 // TODO
-// - add wrappers for PolygonPoint and Box and implement serialize for those wrappers instead of
+// - add wrappers for float and Box and implement serialize for those wrappers instead of
 //   raw geometries
 //   PROBLEM: after implementing this, how Values would be set?
 // - store the name of the parameters to know how to load and detect errors

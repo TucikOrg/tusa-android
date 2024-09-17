@@ -34,7 +34,7 @@
 
 class Renderer {
 public:
-    Renderer(Cache* cache);
+    Renderer();
     ~Renderer() = default;
 private:
     // Camera functions
@@ -53,7 +53,7 @@ private:
     [[nodiscard]] Eigen::Vector3f getCameraPosition() const {
         return {camWorldX, camWorldY, camWorldZ};
     }
-    void updateCameraPosition();
+    void updateCameraDistance();
     void updateFrustum();
     CornersCords evaluateCorners(Eigen::Matrix4f& pvm, bool isFlat);
 
@@ -79,7 +79,7 @@ public:
     void onSurfaceChanged(int w, int h);
     void onSurfaceCreated(AAssetManager *assetManager);
     void renderFrame();
-    void setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env);
+    void setupNoOpenGLMapState(AAssetManager *assetManager, JNIEnv *env, jobject request_tile);
     void onStop();
 private:
     Eigen::Matrix4f evaluatePVM(bool isFlat, float camWorldX, float camWorldY, float camWorldZ);
@@ -91,20 +91,21 @@ private:
     void glViewPortDefaultSize() { glViewport(0, 0, screenW, screenH); }
     GLuint loadTextureFromAsset(const char* assetName, AAssetManager *assetManager);
     GLuint loadTextureFromBytes(unsigned char* imageData, off_t fileSize);
+    void updatMapGeometry(VisibleTilesResult visibleTilesResult);
 
     // Switch render modes code
     void switchFlatAndSphereRender();
     void updateSphereCurrentCameraRadians(); // если например сейчас рендерится плоская карта, то нужно обновить текущие радианы камеры для сферы
     void updateFlatCurrentCoordinates(); // если например сейчас рендерится сфера, то нужно обновить текущие координаты для плоскости
+    void checkShouldSwitchRenderMode(short mapZ);
 
     // Planet map
     void drawPlanet(Eigen::Matrix4f);
-    void updatePlanetGeometry(VisibleTilesResult visibleTilesResult);
     float getSphereLonRad();
     float getSphereLatRad() { return cameraLatitudeRad; }
     float getPlanetCurrentLongitudeDeg() { return RAD2DEG(getSphereLonRad()); }
     float getPlanetCurrentLatitudeDeg() { return RAD2DEG(getSphereLatRad()); }
-    void evaluateLatLonByIntersectionPlanes_Sphere(Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane, Eigen::Matrix4f pvm, double& longitudeRad, double& latitudeRad, bool& has);
+    void evaluateLatLonByIntersectionPlanes_Sphere(Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane, Eigen::Matrix4f pvm, float& longitudeRad, float& latitudeRad, bool& has);
     void setPlanetLongitudeDeg(float longitudeDeg) {  cameraLongitudeRad = -DEG2RAD(longitudeDeg); }
     void setPlanetLatitudeDeg(float latitudeDeg) {  cameraLatitudeRad = DEG2RAD(latitudeDeg); }
 
@@ -114,6 +115,7 @@ private:
     float getFlatLongitude();
     float getFlatLatitude();
     void drawFlat(Eigen::Matrix4f);
+    void updateFlatInitSize();
     void evaluateLatLonByIntersectionPlanes_Flat(Eigen::Vector4f firstPlane, Eigen::Vector4f secondPlane, Eigen::Matrix4f pvm, float& x, float& y);
 
     // Tiles
@@ -153,7 +155,7 @@ private:
 private:
     // Changed parameters
     short drawStarsToZoom = 3;
-    short networkTilesThreads = 3;
+    short networkTilesThreads = 2;
     short mapZTileCordMax = 19;
     float planetRadius = 1000000;
     float cameraScaleOneUnitSphere = 5; // число больше, планета меньше
@@ -217,8 +219,7 @@ private:
     float maxScale = 0;
     float scaleFactorRaw = 0;
 
-    Cache* cache;
-    TilesStorage tilesStorage = TilesStorage(cache);
+    TilesStorage tilesStorage = TilesStorage();
     GLuint renderMapTexture;
     GLuint renderMapFrameBuffer;
     std::string currentVisibleTilesKey;
@@ -230,9 +231,7 @@ private:
     float camWorldZ = 0;
 
 
-    float flatTileSizeInit = 2.0f * planetRadius * (M_PI / 2);
-    //float flatTileSizeInit = 2.0f * planetRadius;
-    //float flatTileSizeInit = 1999865.0f;
+    float flatTileSizeInit;
 };
 
 

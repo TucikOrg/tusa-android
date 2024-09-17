@@ -180,7 +180,7 @@ struct multi_point_single_geometry
                 break;
             }
 
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             if (detail::disjoint::disjoint_point_box(*it, box2))
             {
                 relate::set<interior, exterior, '0', Transpose>(result);
@@ -265,7 +265,7 @@ class multi_point_multi_geometry_ii_ib
         template <typename Box, typename Point>
         static inline bool apply(Box const& box, Point const& point)
         {
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             return ! detail::disjoint::disjoint_point_box(point, box);
         }
     };
@@ -297,7 +297,7 @@ class multi_point_multi_geometry_ii_ib
         template <typename Point, typename BoxPair>
         inline bool apply(Point const& point, BoxPair const& box_pair)
         {
-            // The default strategy is enough for PolygonPoint/Box
+            // The default strategy is enough for float/Box
             if (! detail::disjoint::disjoint_point_box(point, box_pair.first))
             {
                 typename boost::range_value<MultiGeometry>::type const&

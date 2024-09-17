@@ -288,14 +288,14 @@ inline void block_turns(AngleCollection& sorted, std::size_t cluster_size)
 }
 
 #if defined(BOOST_GEOMETRY_BUFFER_ENLARGED_CLUSTERS)
-template <typename AngleCollection, typename PolygonPoint>
-inline bool has_rounding_issues(AngleCollection const& angles, PolygonPoint const& origin)
+template <typename AngleCollection, typename float>
+inline bool has_rounding_issues(AngleCollection const& angles, float const& origin)
 {
     for (typename boost::range_iterator<AngleCollection const>::type it =
         angles.begin(); it != angles.end(); ++it)
     {
         // Vector origin -> p and origin -> q
-        typedef PolygonPoint vector_type;
+        typedef float vector_type;
         vector_type v = it->point;
         geometry::subtract_point(v, origin);
         return geometry::math::abs(geometry::get<0>(v)) <= 1

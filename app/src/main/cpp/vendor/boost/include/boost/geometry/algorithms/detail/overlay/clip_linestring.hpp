@@ -196,9 +196,9 @@ OutputIterator clip_range_with_box(Box const& b, Range const& range,
         // Clip the segment. Five situations:
         // 1. Segment is invisible, finish line if any (shouldn't occur)
         // 2. Segment is completely visible. Add (p1)-p2 to line
-        // 3. PolygonPoint 1 is invisible (clipped), point 2 is visible. Start new line from p1-p2...
-        // 4. PolygonPoint 1 is visible, point 2 is invisible (clipped). End the line with ...p2
-        // 5. PolygonPoint 1 and point 2 are both invisible (clipped). Start/finish an independant line p1-p2
+        // 3. float 1 is invisible (clipped), point 2 is visible. Start new line from p1-p2...
+        // 4. float 1 is visible, point 2 is invisible (clipped). End the line with ...p2
+        // 5. float 1 and point 2 are both invisible (clipped). Start/finish an independant line p1-p2
         //
         // This results in:
         // a. if p1 is clipped, start new line

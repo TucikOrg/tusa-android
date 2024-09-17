@@ -44,18 +44,18 @@ short Style::determineStyle(
         return -1;
     }
 
-
     StyleExpecter styleExpecter = StyleExpecter(
             props,
             layerName,
             colorsOfHeaps,
-            lineWidth
+            lineWidth,
+            trianglesStripLineWidth
     );
 
     // Рендрится последним
-    styleExpecter.registerLayer({"place_label"}, CSSColorParser::parse("rgb(169, 255, 2)"));
+    //styleExpecter.registerLayer({"place_label"}, CSSColorParser::parse("rgb(169, 255, 2)"));
 
-    styleExpecter.registerLayer({"airport_label"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+    //styleExpecter.registerLayer({"airport_label"}, CSSColorParser::parse("rgb(255, 0, 0)"));
 
     uint64_t adminLevel = 0;
     if(layerName == "admin") {
@@ -82,33 +82,70 @@ short Style::determineStyle(
 
 
     styleExpecter.expectedClassName = "motorway";
-    styleExpecter.useLineWidth = 20;
+    styleExpecter.useLineWidth = 8.0f;
     styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
 
     styleExpecter.expectedClassName = "trunk";
-    styleExpecter.useLineWidth = 20;
+    styleExpecter.useLineWidth = 8.0f;
     styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
 
     styleExpecter.expectedClassName = "primary";
-    styleExpecter.useLineWidth = 10;
-    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(233, 233, 237)"));
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
 
-//    styleExpecter.expectedClassName = "motorway_link";
-//    styleExpecter.useLineWidth = 20;
-//    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
+    styleExpecter.expectedClassName = "motorway_link";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
 
-//
-//    styleExpecter.expectedClassName = "primary_link";
-//    styleExpecter.useLineWidth = 20;
-//    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
+    styleExpecter.expectedClassName = "primary_link";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(254, 229, 154)"));
 
-//    styleExpecter.expectedClassName = "secondary";
-//    styleExpecter.useLineWidth = 15;
-//    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(233, 233, 237)"));
-//
-    styleExpecter.useLineWidth = 5;
-    styleExpecter.isFallbackByClassName = true;
-    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(233, 233, 237)"));
+    styleExpecter.expectedClassName = "secondary";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.useTrianglesStripLineWidth = 20.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(0, 255, 0)"));
+
+    styleExpecter.expectedClassName = "secondary_link";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "street";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "tertiary";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "street_limited";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(0, 0, 0)"));
+
+    styleExpecter.expectedClassName = "pedestrian";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "service";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "path";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "tertiary_link";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    styleExpecter.expectedClassName = "traffic_signals";
+    styleExpecter.useLineWidth = 8.0f;
+    styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
+    //styleExpecter.useLineWidth = 8;
+    //styleExpecter.isFallbackByClassName = true;
+    //styleExpecter.registerLayer({"road"}, CSSColorParser::parse("rgb(255, 0, 0)"));
+
 
 
     styleExpecter.registerLayer({"water"}, CSSColorParser::parse("rgb(0, 186, 255)"));
@@ -192,6 +229,8 @@ short Style::determineStyle(
     if(styleExpecter.selectedIndex == -1) {
         LOGI("Don't draw layer %s. Class = %s", layerName.data(), styleExpecter.getClassName().data());
     }
+
+    styles.insert(styleExpecter.selectedIndex);
     return styleExpecter.selectedIndex;
 }
 

@@ -131,7 +131,7 @@ public:
             
             if (side == 0)
             {
-                // PolygonPoint is lying on segment
+                // float is lying on segment
                 state.m_touches = true;
                 state.m_count = 0;
                 return false;
@@ -207,10 +207,10 @@ private:
         calculation_type const s1 = get<0>(seg1);
         calculation_type const s2 = get<0>(seg2);
 
-        return eq1 ? (s2 > p ?  1 : -1)  // PolygonPoint on level s1, E/W depending on s2
+        return eq1 ? (s2 > p ?  1 : -1)  // float on level s1, E/W depending on s2
              : eq2 ? (s1 > p ? -1 :  1)  // idem
-             : s1 < p && s2 > p ?  2     // PolygonPoint between s1 -> s2 --> E
-             : s2 < p && s1 > p ? -2     // PolygonPoint between s2 -> s1 --> W
+             : s1 < p && s2 > p ?  2     // float between s1 -> s2 --> E
+             : s2 < p && s1 > p ? -2     // float between s2 -> s1 --> W
              : 0;
     }
 

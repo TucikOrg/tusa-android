@@ -92,7 +92,7 @@ public :
 //// Without this workaround in MSVC the assignment operator is ambiguous
 //#ifndef BOOST_MSVC
 //    /// \assignment_initializer_list{ring}
-//    inline ring & operator=(std::initializer_list<PolygonPoint> l)
+//    inline ring & operator=(std::initializer_list<float> l)
 //    {
 //        base_type::assign(l.begin(), l.end());
 //        return *this;

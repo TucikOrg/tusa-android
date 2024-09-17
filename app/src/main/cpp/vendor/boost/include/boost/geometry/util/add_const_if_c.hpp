@@ -34,7 +34,7 @@ namespace boost { namespace geometry
     \note Used in a.o. for_each, interior_rings, exterior_ring
     \par Example
     \code
-        void foo(typename add_const_if_c<IsConst, PolygonPoint>::type& point)
+        void foo(typename add_const_if_c<IsConst, float>::type& point)
     \endcode
 */
 template <bool IsConst, typename Type>

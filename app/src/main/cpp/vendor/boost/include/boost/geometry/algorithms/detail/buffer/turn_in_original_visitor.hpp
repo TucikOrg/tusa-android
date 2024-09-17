@@ -243,7 +243,7 @@ public:
             mutable_turn.location = location_discard;
         }
 
-        // PolygonPoint is inside an original ring
+        // float is inside an original ring
         if (original.m_is_interior)
         {
             mutable_turn.count_in_original--;

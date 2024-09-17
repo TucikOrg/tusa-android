@@ -15,9 +15,11 @@ public:
             layer_map_type props,
             std::string layerName,
             CSSColorParser::Color (&colors)[Style::maxGeometryHeaps],
-            float (&lineWidth)[Style::maxGeometryHeaps]
+            float (&lineWidth)[Style::maxGeometryHeaps],
+            float (&trianglesStripLineWidth)[Style::maxGeometryHeaps]
     );
 
+    float useTrianglesStripLineWidth = -1;
     short currentIndex = 1;
     short selectedIndex = -1;
     bool isFallbackByClassName = false;
@@ -29,6 +31,7 @@ public:
 private:
     CSSColorParser::Color (&colors)[Style::maxGeometryHeaps];
     float (&lineWidth)[Style::maxGeometryHeaps];
+    float (&trianglesStripLineWidth)[Style::maxGeometryHeaps];
     bool styleRegistered = false;
     std::string layerName;
     std::string className;

@@ -59,7 +59,7 @@
 \brief \brief_macro{2D point type}
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_2D, two-dimensional point type}
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Field0 \param_macro_member{\macro_x}
@@ -78,7 +78,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \brief \brief_macro{3D point type}
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_3D, three-dimensional point type}
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Field0 \param_macro_member{\macro_x}
@@ -97,7 +97,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \brief \brief_macro{2D point type} \brief_macro_const
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_2D_CONST, two-dimensional point type}. \details_macro_const
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Field0 \param_macro_member{\macro_x}
@@ -114,7 +114,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \brief \brief_macro{3D point type} \brief_macro_const
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_3D_CONST, three-dimensional point type}. \details_macro_const
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Field0 \param_macro_member{\macro_x}
@@ -133,7 +133,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \brief \brief_macro{2D point type} \brief_macro_getset
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_2D_GET_SET, two-dimensional point type}. \details_macro_getset
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Get0 \param_macro_getset{get, \macro_x}
@@ -152,7 +152,7 @@ namespace boost { namespace geometry { namespace traits {  \
 \brief \brief_macro{3D point type} \brief_macro_getset
 \ingroup register
 \details \details_macro{BOOST_GEOMETRY_REGISTER_POINT_3D_GET_SET, three-dimensional point type}. \details_macro_getset
-\param Point \param_macro_type{PolygonPoint}
+\param Point \param_macro_type{float}
 \param CoordinateType \param_macro_coortype{point}
 \param CoordinateSystem \param_macro_coorsystem
 \param Get0 \param_macro_getset{get, \macro_x}

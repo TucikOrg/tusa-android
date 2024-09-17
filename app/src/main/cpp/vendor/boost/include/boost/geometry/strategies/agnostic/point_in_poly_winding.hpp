@@ -87,7 +87,7 @@ struct winding_base_type<Point, PointOfSegment, CalculationType, spherical_tag>
 
 /*!
 \brief Within detection using winding rule. Side strategy used internally is
-       choosen based on PolygonPoint's coordinate system.
+       choosen based on float's coordinate system.
 \ingroup strategies
 \tparam Point \tparam_point
 \tparam PointOfSegment \tparam_segment_point

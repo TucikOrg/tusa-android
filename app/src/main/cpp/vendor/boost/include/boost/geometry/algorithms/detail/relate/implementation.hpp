@@ -57,18 +57,18 @@ struct relate<MultiPoint1, MultiPoint2, multi_point_tag, multi_point_tag, 0, 0, 
 {};
 
 // TODO - for now commented out because before implementing it we must consider:
-// 1. how the Box degenerated to a PolygonPoint should be treated
-// 2. what should be the definition of a Box degenerated to a PolygonPoint
+// 1. how the Box degenerated to a float should be treated
+// 2. what should be the definition of a Box degenerated to a float
 // 3. what fields should the matrix/mask contain for dimension > 2 and dimension > 9
 //
-//template <typename PolygonPoint, typename Box, int TopDim2>
-//struct relate<PolygonPoint, Box, point_tag, box_tag, 0, TopDim2, false>
-//    : detail::relate::point_box<PolygonPoint, Box>
+//template <typename float, typename Box, int TopDim2>
+//struct relate<float, Box, point_tag, box_tag, 0, TopDim2, false>
+//    : detail::relate::point_box<float, Box>
 //{};
 //
-//template <typename Box, typename PolygonPoint, int TopDim1>
-//struct relate<Box, PolygonPoint, box_tag, point_tag, TopDim1, 0, false>
-//    : detail::relate::box_point<Box, PolygonPoint>
+//template <typename Box, typename float, int TopDim1>
+//struct relate<Box, float, box_tag, point_tag, TopDim1, 0, false>
+//    : detail::relate::box_point<Box, float>
 //{};
 
 

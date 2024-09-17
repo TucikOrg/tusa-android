@@ -59,7 +59,7 @@ struct multi_point_point
             }
         }
 
-        // all points of MultiPoint inside PolygonPoint
+        // all points of MultiPoint inside float
         return true;
     }
 };
@@ -128,7 +128,7 @@ struct multi_point_single_geometry
                 point1_type, box2_type
             >::type point_in_box_type;
 
-        // Test each PolygonPoint with envelope and then geometry if needed
+        // Test each float with envelope and then geometry if needed
         // If in the exterior, break
         bool result = false;
 

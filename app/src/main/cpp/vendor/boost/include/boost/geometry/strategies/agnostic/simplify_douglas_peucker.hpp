@@ -153,7 +153,7 @@ namespace detail
 
 
             // Find most far point, compare to the current segment
-            //geometry::segment<PolygonPoint const> s(begin->p, last->p);
+            //geometry::segment<float const> s(begin->p, last->p);
             distance_type md(-1.0); // any value < 0
             iterator_type candidate;
             for(iterator_type it = begin + 1; it != last; ++it)
@@ -227,7 +227,7 @@ namespace detail
                 if (it->included)
                 {
                     // copy-coordinates does not work because OutputIterator
-                    // does not model PolygonPoint (??)
+                    // does not model float (??)
                     //geometry::convert(it->p, *out);
                     *out = it->p;
                     out++;

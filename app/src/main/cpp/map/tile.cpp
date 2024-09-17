@@ -21,7 +21,7 @@
 
 bool DEBUG_TILE_PARSE = false;
 
-double shoelace(std::vector<PolygonPoint> points) {
+double shoelace(std::vector<std::array<float, 2>> points) {
     double leftSum = 0.0;
     double rightSum = 0.0;
 
@@ -50,26 +50,72 @@ std::string Tile::makeKey(int zoom, int x, int y) {
     return std::to_string(zoom) + std::to_string(x) + std::to_string(y);
 }
 
+void Tile::decodeLines(
+        size_t (&linesPointsCount)[Style::maxGeometryHeaps],
+        size_t (&linesResultIndicesCount)[Style::maxGeometryHeaps],
+        std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&linesFeatureGeomBlockList)[Style::maxGeometryHeaps],
+        vtzero::feature& feature,
+        short styleIndex
+) {
+    auto lineHandler = LineStringHandler();
+    vtzero::decode_linestring_geometry(feature.geometry(), lineHandler);
+    size_t geomSize = lineHandler.lines.size();
+    Geometry<LineCoord, LineIndic> *featureGeometry = new Geometry<LineCoord, LineIndic>[geomSize];
+    for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
+        const auto& point_array = lineHandler.lines[geomIndex];
+        const size_t pointsSize = point_array.size();
+        linesPointsCount[styleIndex] += pointsSize;
+        LineCoord* lines = new LineCoord[pointsSize * 2];
+        for(int pointIndex = 0; pointIndex < pointsSize; ++pointIndex) {
+            auto point = point_array[pointIndex];
+            lines[pointIndex * 2] = point.x;
+            lines[pointIndex * 2 + 1] = -1 * point.y;
+        }
+
+        short amountOfInserts = 0;
+        if(pointsSize > 2) {
+            amountOfInserts = pointsSize - 2;
+        }
+        size_t indicesAmount = pointsSize + amountOfInserts;
+        LineIndic *indices = new LineIndic[indicesAmount];
+        for(int indicesIndex = 0; indicesIndex < indicesAmount; indicesIndex += 2) {
+            indices[indicesIndex] = indicesIndex / 2;
+            indices[indicesIndex + 1] = indicesIndex / 2 + 1;
+        }
+        linesResultIndicesCount[styleIndex] += indicesAmount;
+        featureGeometry[geomIndex] = Geometry<LineCoord, LineIndic>(lines, pointsSize, indices, indicesAmount);
+    }
+
+    linesFeatureGeomBlockList[styleIndex].push_front(FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>(featureGeometry, geomSize));
+}
+
+
+
+
 void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
 
-//    auto currentTime = std::chrono::system_clock::now();
-//    auto wakeupTime = currentTime + std::chrono::seconds(5);
-//    std::this_thread::sleep_until(wakeupTime);
+    // жирные линии
+    size_t wideLinesPointsCount[Style::maxGeometryHeaps] = {};
+    size_t wideLinesResultIndicesCount[Style::maxGeometryHeaps] = {};
+//    std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> widePolygonedLinesFeatureGeomBlockList[Style::maxGeometryHeaps];
+    std::fill(wideLinesPointsCount, wideLinesPointsCount + Style::maxGeometryHeaps, 0);
+    std::fill(wideLinesResultIndicesCount, wideLinesResultIndicesCount + Style::maxGeometryHeaps, 0);
 
-    std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> linesFeatureGeomBlockList[Style::maxGeometryHeaps];
-    std::forward_list<std::pair<std::vector<std::vector<PolygonPoint>>, std::vector<PolygonIndic>>> polygonsFeatureGeomBlockList[Style::maxGeometryHeaps];
-
-    size_t linesPointsCount[Style::maxGeometryHeaps] = {};
-    size_t linesResultIndicesCount[Style::maxGeometryHeaps] = {};
-
+    // Полигоны
     size_t polygonsPointsCount[Style::maxGeometryHeaps] = {};
     size_t polygonsIndicesCount[Style::maxGeometryHeaps] = {};
+    std::forward_list<std::pair<std::vector<std::vector<std::array<float, 2>>>, std::vector<PolygonIndic>>> polygonsFeatureGeomBlockList[Style::maxGeometryHeaps];
+    std::fill(polygonsIndicesCount, polygonsIndicesCount + Style::maxGeometryHeaps, 0);
+    std::fill(polygonsPointsCount, polygonsPointsCount + Style::maxGeometryHeaps, 0);
 
+
+    // простые линии
+    std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> linesFeatureGeomBlockList[Style::maxGeometryHeaps];
+    size_t linesPointsCount[Style::maxGeometryHeaps] = {};
+    size_t linesResultIndicesCount[Style::maxGeometryHeaps] = {};
     std::fill(linesPointsCount, linesPointsCount + Style::maxGeometryHeaps, 0);
     std::fill(linesResultIndicesCount, linesResultIndicesCount + Style::maxGeometryHeaps, 0);
 
-    std::fill(polygonsIndicesCount, polygonsIndicesCount + Style::maxGeometryHeaps, 0);
-    std::fill(polygonsPointsCount, polygonsPointsCount + Style::maxGeometryHeaps, 0);
 
     while (auto layer = tile->next_layer()) {
         auto name = layer.name().to_string();
@@ -84,43 +130,28 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
             }
 
             if(geomType == vtzero::GeomType::LINESTRING) {
-                auto lineHandler = LineStringHandler();
-                vtzero::decode_linestring_geometry(feature.geometry(), lineHandler);
-                size_t geomSize = lineHandler.lines.size();
-                Geometry<LineCoord, LineIndic> *featureGeometry = new Geometry<LineCoord, LineIndic>[geomSize];
-                for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
-                    const auto& point_array = lineHandler.lines[geomIndex];
-                    const size_t pointsSize = point_array.size();
-                    linesPointsCount[styleIndex] += pointsSize;
-                    LineCoord* lines = new LineCoord[pointsSize * 2];
-                    for(int pointIndex = 0; pointIndex < pointsSize; ++pointIndex) {
-                        auto point = point_array[pointIndex];
-                        lines[pointIndex * 2] = point.x;
-                        lines[pointIndex * 2 + 1] = -1 * point.y;
-                    }
-
-                    short amountOfInserts = 0;
-                    if(pointsSize > 2) {
-                        amountOfInserts = pointsSize - 2;
-                    }
-                    size_t indicesAmount = pointsSize + amountOfInserts;
-                    LineIndic *indices = new LineIndic[indicesAmount];
-                    for(int indicesIndex = 0; indicesIndex < indicesAmount; indicesIndex += 2) {
-                        indices[indicesIndex] = indicesIndex / 2;
-                        indices[indicesIndex + 1] = indicesIndex / 2 + 1;
-                    }
-                    linesResultIndicesCount[styleIndex] += indicesAmount;
-                    featureGeometry[geomIndex] = Geometry<LineCoord, LineIndic>(lines, pointsSize, indices, indicesAmount);
+                float useLineTriangleStrip = style.getTrianglesStripLineWidthOfHeap(styleIndex);
+                if (useLineTriangleStrip != -1) {
+                    // это широкие линиии
+                    // их нужно рисовать как полигоны потому что open gl es не поддерживает тостые линии
+                    decodeWideLines(wideLinesPointsCount,
+                                    wideLinesResultIndicesCount,
+                                    feature,
+                                    styleIndex,
+                                    widePolygonedLinesFeatureGeomBlockList,
+                                    useLineTriangleStrip
+                                    );
+                } else {
+                    // Это обычные линии
+                    decodeLines(linesPointsCount, linesResultIndicesCount, linesFeatureGeomBlockList, feature, styleIndex);
                 }
-
-                linesFeatureGeomBlockList[styleIndex].push_front(FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>(featureGeometry, geomSize));
             } else if(geomType == vtzero::GeomType::POLYGON) {
                 auto polygonHandler = PolygonHandler();
                 vtzero::decode_polygon_geometry(feature.geometry(), polygonHandler);
                 auto& polygons = polygonHandler.polygons;
                 polygons.push_back(polygonHandler.polygon);
                 polygonsPointsCount[styleIndex] += polygonHandler.pointsCount;
-                for(std::vector<std::vector<PolygonPoint>>& polygon : polygons) {
+                for(std::vector<std::vector<std::array<float, 2>>>& polygon : polygons) {
                     std::vector<PolygonIndic> indices = mapbox::earcut<PolygonIndic>(polygon);
                     polygonsIndicesCount[styleIndex] += indices.size();
                     polygonsFeatureGeomBlockList[styleIndex].push_front({polygon, indices});
@@ -129,7 +160,11 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
         }
     }
 
+
+    // Проходимся по стилям и создаем результирующие суммы координат
     for(short useStyleIndex = 0; useStyleIndex < Style::maxGeometryHeaps; ++useStyleIndex) {
+
+        // простые линии
         size_t indicesShift = 0;
         size_t pointsShift = 0;
         LineIndic *resultLinesIndices = new LineIndic[linesResultIndicesCount[useStyleIndex]];
@@ -150,6 +185,18 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
                 pointsShift += geometry.pointsCount;
             }
         }
+        resultLines[useStyleIndex] = Geometry<LineCoord, LineIndic>(
+                resultLinesPoints, linesPointsCount[useStyleIndex],
+                resultLinesIndices, linesResultIndicesCount[useStyleIndex]
+        );
+
+        // жирные линии
+//        makeWidthLinesResult(
+//            wideLinesPointsCount,
+//            wideLinesResultIndicesCount,
+//            useStyleIndex,
+//            widePolygonedLinesFeatureGeomBlockList
+//        );
 
 
         if(DEBUG_TILE_PARSE) {
@@ -166,15 +213,10 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
             LOGI("%s", resultInfo.data());
         }
 
-        resultLines[useStyleIndex] = Geometry<LineCoord, LineIndic>(
-                resultLinesPoints, linesPointsCount[useStyleIndex],
-                resultLinesIndices, linesResultIndicesCount[useStyleIndex]
-        );
-
         PolygonIndic currentPointIndex = 0;
         PolygonIndic currentIndicIndex = 0;
         PolygonIndic currentIndicShift = 0;
-        PolygonCoord *resultPolygonPoints = new PolygonCoord[polygonsPointsCount[useStyleIndex] * 2];
+        float *resultfloats = new float[polygonsPointsCount[useStyleIndex] * 2];
         PolygonIndic *resultPolygonIndices = new PolygonIndic[polygonsIndicesCount[useStyleIndex]];
         for(auto& polygonPair : polygonsFeatureGeomBlockList[useStyleIndex]) {
             auto rings = polygonPair.first;
@@ -182,8 +224,8 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
             for(auto ring : rings) {
                 useShiftIndices += ring.size();
                 for(auto& point : ring) {
-                    resultPolygonPoints[currentPointIndex] = point[0];
-                    resultPolygonPoints[currentPointIndex + 1] = -1 * point[1];
+                    resultfloats[currentPointIndex] = point[0];
+                    resultfloats[currentPointIndex + 1] = -1 * point[1];
                     currentPointIndex += 2;
                 }
             }
@@ -200,7 +242,7 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
             std::stringstream ss;
             ss << "Polygon End geometry: ";
             for(int i = 0; i < polygonsPointsCount[useStyleIndex] * 2; ++i) {
-                ss << i / 2 << ":" << resultPolygonPoints[i] << ", ";
+                ss << i / 2 << ":" << resultfloats[i] << ", ";
             }
             ss << "Polygon End indices: ";
             for(int i = 0; i < polygonsIndicesCount[useStyleIndex]; ++i) {
@@ -210,9 +252,103 @@ void Tile::parseMethod1(int zoom, int x, int y, vtzero::vector_tile *tile) {
             LOGI("%s", resultInfo.data());
         }
 
-        resultPolygons[useStyleIndex] = Geometry<PolygonCoord, PolygonIndic>(
-                resultPolygonPoints, polygonsPointsCount[useStyleIndex],
+        resultPolygons[useStyleIndex] = Geometry<float, PolygonIndic>(
+                resultfloats, polygonsPointsCount[useStyleIndex],
                 resultPolygonIndices, polygonsIndicesCount[useStyleIndex]
         );
     }
+}
+
+void Tile::decodeWideLines(
+        size_t (&wideLinesPointsCount)[Style::maxGeometryHeaps],
+        size_t (&wideLinesResultIndicesCount)[Style::maxGeometryHeaps],
+        vtzero::feature& feature,
+        short styleIndex,
+        std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&widePolygonedLinesFeatureGeomBlockList)[Style::maxGeometryHeaps],
+        float width
+) {
+    auto lineHandler = LineStringHandler();
+    vtzero::decode_linestring_geometry(feature.geometry(), lineHandler);
+    size_t geomSize = lineHandler.lines.size();
+    Geometry<LineCoord, LineIndic> *featureGeometry = new Geometry<LineCoord, LineIndic>[geomSize];
+    for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
+        const auto& point_array = lineHandler.lines[geomIndex];
+        const size_t pointsSize = point_array.size();
+        const size_t widePointsSize = pointsSize * 2;
+        wideLinesPointsCount[styleIndex] += widePointsSize;
+        LineCoord* lines = new LineCoord[widePointsSize * 2];
+        float nx;
+        float ny;
+        for(int pointIndex = 0; pointIndex < pointsSize; ++pointIndex) {
+            auto point = point_array[pointIndex];
+            if (pointIndex + 1 < pointsSize) {
+                auto nextPoint = point_array[pointIndex + 1];
+                float dx = nextPoint.x - point.x;
+                float dy = nextPoint.y - point.y;
+                nx = -dy;
+                ny = dx;
+                float len = sqrt(pow(nx, 2.0) + pow(ny, 2.0));
+                nx = nx / len;
+                ny = ny / len;
+            }
+
+            float x1 = point.x + nx * width;
+            float y1 = point.y + ny * width;
+            float x2 = point.x - nx * width;
+            float y2 = point.y - ny * width;
+
+            lines[pointIndex * 4] = x1;
+            lines[pointIndex * 4 + 1] = -y1;
+            lines[pointIndex * 4 + 2] = x2;
+            lines[pointIndex * 4 + 3] = -y2;
+        }
+
+        short amountOfInserts = 0;
+        if(pointsSize > 2) {
+            amountOfInserts = pointsSize - 2;
+        }
+        size_t indicesAmount = pointsSize + amountOfInserts;
+        LineIndic *indices = new LineIndic[indicesAmount];
+        for(int indicesIndex = 0; indicesIndex < indicesAmount; indicesIndex += 2) {
+            indices[indicesIndex] = indicesIndex / 2;
+            indices[indicesIndex + 1] = indicesIndex / 2 + 1;
+        }
+        wideLinesResultIndicesCount[styleIndex] += indicesAmount;
+        featureGeometry[geomIndex] = Geometry<LineCoord, LineIndic>(lines, widePointsSize, indices, indicesAmount);
+    }
+
+    widePolygonedLinesFeatureGeomBlockList[styleIndex].push_front(FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>(featureGeometry, geomSize));
+}
+
+void Tile::makeWidthLinesResult(
+        size_t (&wideLinesPointsCount)[Style::maxGeometryHeaps],
+        size_t (&wideLinesResultIndicesCount)[Style::maxGeometryHeaps],
+        short useStyleIndex,
+        std::forward_list<FeatureGeometryBlock<Geometry<LineCoord, LineIndic>>> (&widePolygonedLinesFeatureGeomBlockList)[Style::maxGeometryHeaps]
+) {
+    size_t indicesShift = 0;
+    size_t pointsShift = 0;
+    LineIndic *resultLinesIndices = new LineIndic[wideLinesResultIndicesCount[useStyleIndex]];
+    LineCoord *resultLinesPoints = new LineCoord[wideLinesPointsCount[useStyleIndex] * 2];
+    auto& listOfGeometries = widePolygonedLinesFeatureGeomBlockList[useStyleIndex];
+    for(auto& arrayOfGeometries : listOfGeometries) {
+        for(int useGeometry = 0; useGeometry < arrayOfGeometries.size; ++useGeometry) {
+            auto& geometry = arrayOfGeometries.data[useGeometry];
+            for(int pointIndex = 0; pointIndex < geometry.pointsCount * 2; ++pointIndex) {
+                auto& coordinate = geometry.points[pointIndex];
+                resultLinesPoints[pointIndex + pointsShift * 2] = coordinate;
+            }
+            for(int indicesIndex = 0; indicesIndex < geometry.indicesCount; ++indicesIndex) {
+                LineIndic in = geometry.indices[indicesIndex] + pointsShift;
+                resultLinesIndices[indicesIndex + indicesShift] = in;
+            }
+            indicesShift += geometry.indicesCount;
+            pointsShift += geometry.pointsCount;
+        }
+    }
+
+    resultWideLines[useStyleIndex] = Geometry<LineCoord, LineIndic>(
+            resultLinesPoints, wideLinesPointsCount[useStyleIndex],
+            resultLinesIndices, wideLinesResultIndicesCount[useStyleIndex]
+    );
 }

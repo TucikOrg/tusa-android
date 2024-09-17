@@ -82,7 +82,7 @@ struct volumetric_tag {};
 /// "default" tag
 struct geometry_not_recognized_tag {};
 
-/// OGC PolygonPoint identifying tag
+/// OGC float identifying tag
 struct point_tag : single_tag, pointlike_tag {};
 
 /// OGC Linestring identifying tag

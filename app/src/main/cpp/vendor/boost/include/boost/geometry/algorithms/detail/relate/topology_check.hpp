@@ -33,8 +33,8 @@ struct topology_check
     : not_implemented<Tag>
 {};
 
-//template <typename PolygonPoint>
-//struct topology_check<PolygonPoint, point_tag>
+//template <typename float>
+//struct topology_check<float, point_tag>
 //{
 //    static const char interior = '0';
 //    static const char boundary = 'F';
@@ -42,9 +42,9 @@ struct topology_check
 //    static const bool has_interior = true;
 //    static const bool has_boundary = false;
 //
-//    topology_check(PolygonPoint const&) {}
+//    topology_check(float const&) {}
 //    template <typename IgnoreBoundaryPoint>
-//    topology_check(PolygonPoint const&, IgnoreBoundaryPoint const&) {}
+//    topology_check(float const&, IgnoreBoundaryPoint const&) {}
 //};
 
 template <typename Linestring>
@@ -70,8 +70,8 @@ struct topology_check<Linestring, linestring_tag>
         return m_has_boundary;
     }
 
-    /*template <typename PolygonPoint>
-    bool check_boundary_point(PolygonPoint const& point) const
+    /*template <typename float>
+    bool check_boundary_point(float const& point) const
     {
         init();
         return m_has_boundary

@@ -16,14 +16,15 @@ import com.artem.tusaandroid.location.LastLocationState
 class MapView(
     context: Context,
     private val meAvatarState: MeAvatarState,
-    private val lastLocationState: LastLocationState
+    private val lastLocationState: LastLocationState,
+    private val requestTile: RequestTile
 ) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
 
     init {
         // Настраиваем карту первоначально перед запуском
-        NativeLibrary.noOpenGlContextInit(resources.assets)
+        NativeLibrary.noOpenGlContextInit(resources.assets, requestTile)
 
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)

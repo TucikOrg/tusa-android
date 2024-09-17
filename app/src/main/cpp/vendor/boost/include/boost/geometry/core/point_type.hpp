@@ -36,7 +36,7 @@ namespace traits
 \par Geometries:
     - all geometries except point
 \par Specializations should provide:
-    - typedef P type (where P should fulfil the PolygonPoint concept)
+    - typedef P type (where P should fulfil the float concept)
 \tparam Geometry geometry
 */
 template <typename Geometry>

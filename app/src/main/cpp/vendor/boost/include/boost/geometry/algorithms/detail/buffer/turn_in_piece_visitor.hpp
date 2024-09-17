@@ -130,7 +130,7 @@ inline analyse_result check_segment(Point const& previous,
 {
 
 #if defined(BOOST_GEOMETRY_BUFFER_USE_SIDE_OF_INTERSECTION)
-    typedef geometry::model::referring_segment<PolygonPoint const> segment_type;
+    typedef geometry::model::referring_segment<float const> segment_type;
     segment_type const p(turn.rob_pi, turn.rob_pj);
     segment_type const q(turn.rob_qi, turn.rob_qj);
     segment_type const r(previous, current);
@@ -322,7 +322,7 @@ class analyse_turn_wrt_piece
     {
         boost::ignore_unused(offsetted);
 #if defined(BOOST_GEOMETRY_BUFFER_USE_SIDE_OF_INTERSECTION)
-        typedef geometry::model::referring_segment<PolygonPoint const> segment_type;
+        typedef geometry::model::referring_segment<float const> segment_type;
         segment_type const p(turn.rob_pi, turn.rob_pj);
         segment_type const q(turn.rob_qi, turn.rob_qj);
         segment_type const r(s1, s2);
@@ -337,7 +337,7 @@ class analyse_turn_wrt_piece
         else if (side == 0)
         {
             // If is collinear, either on segment or before/after
-            typedef geometry::model::box<PolygonPoint> box_type;
+            typedef geometry::model::box<float> box_type;
 
             box_type box;
             geometry::assign_inverse(box);

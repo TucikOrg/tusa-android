@@ -14,12 +14,21 @@
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <string>
+#include "csscolorparser/csscolorparser.h"
 #define LOG_TAG "GL_ARTEM"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
 class CommonUtils {
 public:
+
+    static std::vector<GLfloat> toOpenGlColor(CSSColorParser::Color color) {
+        GLfloat red   = static_cast<GLfloat>(color.r) / 255;
+        GLfloat green = static_cast<GLfloat>(color.g) / 255;
+        GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
+        GLfloat alpha = static_cast<GLfloat>(color.a);
+        return { red, green, blue, alpha };
+    }
 
     static float longitudeToFlatCameraZ(float longitude, float planetRadius) {
         return -(longitude / M_PI) * planetRadius;
@@ -153,6 +162,14 @@ public:
         char buffer[10]; // Buffer to hold the formatted string
         std::snprintf(buffer, sizeof(buffer), "%.1f", value); // Format the float to one decimal place
         return std::string(buffer); // Convert to std::string and return
+    }
+
+    static float latitudeToSphere(float latitudeRad) {
+        float lowerStackRad = (float) DEG2RAD(-degLatitudeConstraint);
+        float highStackRad = (float) DEG2RAD(degLatitudeConstraint);
+        float stackRadClipped = std::max(lowerStackRad, std::min(latitudeRad, highStackRad));
+        float stackCord = (std::log(std::tan(stackRadClipped) + 1.0 / std::cos(stackRadClipped)));
+        return stackCord;
     }
 
     // преобразует угол в радианах в позицию от 0 до 1 сферы

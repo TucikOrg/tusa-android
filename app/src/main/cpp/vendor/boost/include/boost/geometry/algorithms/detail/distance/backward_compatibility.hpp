@@ -82,7 +82,7 @@ namespace dispatch
 {
 
 
-// PolygonPoint-segment version 1, with point-point strategy
+// float-segment version 1, with point-point strategy
 template <typename Point, typename Segment, typename Strategy>
 struct distance
 <
@@ -93,7 +93,7 @@ struct distance
 {};
 
 
-// PolygonPoint-line version 1, where point-point strategy is specified
+// float-line version 1, where point-point strategy is specified
 template <typename Point, typename Linestring, typename Strategy>
 struct distance
 <
@@ -126,7 +126,7 @@ struct distance
 };
 
 
-// PolygonPoint-ring , where point-point strategy is specified
+// float-ring , where point-point strategy is specified
 template <typename Point, typename Ring, typename Strategy>
 struct distance
 <
@@ -161,7 +161,7 @@ struct distance
 };
 
 
-// PolygonPoint-polygon , where point-point strategy is specified
+// float-polygon , where point-point strategy is specified
 template <typename Point, typename Polygon, typename Strategy>
 struct distance
 <

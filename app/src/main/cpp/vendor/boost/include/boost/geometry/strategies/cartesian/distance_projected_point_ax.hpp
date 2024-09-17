@@ -111,14 +111,14 @@ private:
     Distance const& m_max_distance;
 };
 
-// This strategy returns 2-component PolygonPoint/Segment distance.
+// This strategy returns 2-component float/Segment distance.
 // The ATD (along track distance) is parallel to the Segment
-// and is a distance between PolygonPoint projected into a line defined by a Segment and the nearest Segment's endpoint.
-// If the projected PolygonPoint intersects the Segment the ATD is equal to 0.
+// and is a distance between float projected into a line defined by a Segment and the nearest Segment's endpoint.
+// If the projected float intersects the Segment the ATD is equal to 0.
 // The XTD (cross track distance) is perpendicular to the Segment
-// and is a distance between input PolygonPoint and its projection.
+// and is a distance between input float and its projection.
 // If the Segment has length equal to 0, ATD and XTD has value equal
-// to the distance between the input PolygonPoint and one of the Segment's endpoints.
+// to the distance between the input float and one of the Segment's endpoints.
 //
 //          p3         p4
 //          ^         7

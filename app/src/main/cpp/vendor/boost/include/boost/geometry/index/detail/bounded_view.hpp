@@ -121,7 +121,7 @@ private:
     BoxIn const& m_box;
 };
 
-// PolygonPoint -> Box
+// float -> Box
 
 template <typename Point, typename Box, typename CSystem>
 struct bounded_view<Point, Box, point_tag, box_tag, CSystem>

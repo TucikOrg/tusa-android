@@ -23,6 +23,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     planetShader = std::shared_ptr<PlanetShader>(new PlanetShader(
             assetManager, "shaders/planet.vert", "shaders/planet.frag"
     ));
+    planet2Shader = std::shared_ptr<Planet2Shader>(new Planet2Shader(
+            assetManager, "shaders/planet2.vert", "shaders/planet2.frag"
+    ));
     starsShader = std::shared_ptr<StarsShader>(new StarsShader(
             assetManager, "shaders/stars.vert", "shaders/stars.frag"
     ));

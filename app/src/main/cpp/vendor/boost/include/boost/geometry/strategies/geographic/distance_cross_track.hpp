@@ -353,7 +353,7 @@ private :
                 lat3 <= minmax_elem.template get<1>())
             {
 #ifdef BOOST_GEOMETRY_DEBUG_GEOGRAPHIC_CROSS_TRACK
-                std::cout << "PolygonPoint on meridian segment" << std::endl;
+                std::cout << "float on meridian segment" << std::endl;
 #endif
                 return non_iterative_case(lon3, lat3, c0);
             }

@@ -12,11 +12,11 @@ Tile* TilesStorage::getOrLoad(int zoom, int x, int y, GetTileRequest* getTileReq
     cacheMutex.lock();
     std::string key = Tile::makeKey(zoom, x, y);
     auto it = cacheTiles.find(key);
-    auto exists = it != cacheTiles.end();
-    cacheMutex.unlock();
-    if (exists) {
+    auto existsInMem = it != cacheTiles.end();
+    if (existsInMem) {
         return it->second;
     }
+    cacheMutex.unlock();
 
     // network long time operation
     Tile* newTile = getTileRequest->request(x, y, zoom);
@@ -33,15 +33,16 @@ Tile* TilesStorage::getTile(int zoom, int x, int y) {
     std::string key = Tile::makeKey(zoom, x, y);
     auto it = cacheTiles.find(key);
     auto empty = it == cacheTiles.end();
-    cacheMutex.unlock();
     if (empty) {
+        cacheMutex.unlock();
         return nullptr;
     }
+    cacheMutex.unlock();
+
     return it->second;
 }
 
-TilesStorage::TilesStorage(Cache* cache)
-    : cache(cache) { }
+TilesStorage::TilesStorage() = default;
 
 bool TilesStorage::existInMemory(int zoom, int x, int y) {
     std::string key = Tile::makeKey(zoom, x, y);

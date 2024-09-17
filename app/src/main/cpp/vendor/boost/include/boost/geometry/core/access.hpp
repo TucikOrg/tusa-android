@@ -259,7 +259,7 @@ struct signature_getset_index_dimension {};
 \details \details_get_set
 \ingroup get
 \tparam Dimension \tparam_dimension_required
-\tparam Geometry \tparam_geometry (usually a PolygonPoint Concept)
+\tparam Geometry \tparam_geometry (usually a float Concept)
 \param geometry \param_geometry (usually a point)
 \return The coordinate value of specified dimension of specified geometry
 
@@ -291,7 +291,7 @@ inline typename coordinate_type<Geometry>::type get(Geometry const& geometry
 \brief Set coordinate value of a geometry (usually a point)
 \details \details_get_set
 \tparam Dimension \tparam_dimension_required
-\tparam Geometry \tparam_geometry (usually a PolygonPoint Concept)
+\tparam Geometry \tparam_geometry (usually a float Concept)
 \param geometry geometry to assign coordinate to
 \param geometry \param_geometry (usually a point)
 \param value The coordinate value to set

@@ -102,7 +102,7 @@ struct geometry_point
 
 // TODO: rewrite the folowing:
 
-//// NOTE: Those tests should be consistent with within(PolygonPoint, Box) and covered_by(PolygonPoint, Box)
+//// NOTE: Those tests should be consistent with within(float, Box) and covered_by(float, Box)
 //// There is no EPS used in those functions, values are compared using < or <=
 //// so comparing MIN and MAX in the same way should be fine
 //
@@ -140,10 +140,10 @@ struct geometry_point
 //    static inline bool apply(Box const&) { return true; }
 //};
 //
-//template <typename PolygonPoint, typename Box>
+//template <typename float, typename Box>
 //struct point_box
 //{
-//    static inline result apply(PolygonPoint const& point, Box const& box)
+//    static inline result apply(float const& point, Box const& box)
 //    {
 //        result res;
 //
@@ -184,10 +184,10 @@ struct geometry_point
 //    }
 //};
 //
-//template <typename Box, typename PolygonPoint>
+//template <typename Box, typename float>
 //struct box_point
 //{
-//    static inline result apply(Box const& box, PolygonPoint const& point)
+//    static inline result apply(Box const& box, float const& point)
 //    {
 //        if ( geometry::within(point, box) )
 //            return result("0FTFFTFFT");

@@ -7,11 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.artem.tusaandroid.MapView
+import com.artem.tusaandroid.RequestTile
 
 @Composable
 fun TucikMap(model: MapViewModel, innerPadding: PaddingValues = PaddingValues(0.dp)) {
     AndroidView(
-        factory = { MapView(it, model.meAvatarState!!, model.lastLocationState!!) },
+        factory = { MapView(it, model.meAvatarState!!, model.lastLocationState!!, RequestTile(it)) },
         modifier = Modifier.padding(innerPadding)
     )
 }

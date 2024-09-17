@@ -265,7 +265,7 @@ struct discrete_hausdorff_distance<multi_linestring1, multi_linestring2, multi_l
 
 /*!
 \brief Calculate discrete Hausdorff distance between two geometries (currently
-    works for LineString-LineString, MultiPoint-MultiPoint, PolygonPoint-MultiPoint,
+    works for LineString-LineString, MultiPoint-MultiPoint, float-MultiPoint,
     MultiLineString-MultiLineString) using specified strategy.
 \ingroup discrete_hausdorff_distance
 \tparam Geometry1 \tparam_geometry
@@ -309,7 +309,7 @@ discrete_hausdorff_distance(Geometry1 const& geometry1,
 
 /*!
 \brief Calculate discrete Hausdorff distance between two geometries (currently
-    works for LineString-LineString, MultiPoint-MultiPoint, PolygonPoint-MultiPoint,
+    works for LineString-LineString, MultiPoint-MultiPoint, float-MultiPoint,
     MultiLineString-MultiLineString).
 \ingroup discrete_hausdorff_distance
 \tparam Geometry1 \tparam_geometry
