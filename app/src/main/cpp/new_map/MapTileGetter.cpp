@@ -63,7 +63,7 @@ void MapTileGetter::networkTilesFunction(JavaVM* gJvm) {
 }
 
 MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
-    std::string key = MapTile::makeKey(x, y, z);
+    auto key = MapTile::makeKey(x, y, z);
 
     auto makeTileRequest = parallelThreadEnv->GetMethodID(requestTileClassGlobal, "request", "(III)[B");
     jbyteArray byteArray = (jbyteArray) parallelThreadEnv->CallObjectMethod(requestTileGlobal, makeTileRequest, z, x, y);
@@ -84,7 +84,7 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
 
 MapTile *MapTileGetter::getOrRequest(int x, int y, int z) {
     cacheMutex2.lock();
-    std::string key = MapTile::makeKey(x, y, z);
+    auto key = MapTile::makeKey(x, y, z);
     auto req = pushedToNetwork.find(key);
     auto reqExists = req != pushedToNetwork.end();
     auto it = cacheTiles.find(key);

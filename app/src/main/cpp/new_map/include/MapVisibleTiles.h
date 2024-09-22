@@ -21,12 +21,11 @@ public:
 
     std::array<float, 2> getYTilesVisibleEdges(int tilesZoom, float planeWidth, MapControls &mapControls, Eigen::Matrix4f pvForPlane);
 
-    std::array<float, 2> getXTilesVisibleEdges(int tilesZoom, MapControls& mapControls) {
-        float shiftXCam = mapControls.getShiftX();
+    std::array<float, 2> getXTilesVisibleEdges(float shiftX) {
         // от границы до границы
         // 1 - 3 означает 1 и 2 тайл
         // 3 тайл это конец видимой области
-        float xStart = shiftXCam;
+        float xStart = shiftX;
         float xEnd = xStart + 2;
         return { xStart, xEnd };
     }

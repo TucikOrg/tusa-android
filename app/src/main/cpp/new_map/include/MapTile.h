@@ -22,8 +22,8 @@ public:
 
     bool cover(std::array<int, 3> otherTile);
 
-    static std::string makeKey(int x, int y, int z) {
-        return std::to_string(x) + std::to_string(y) + std::to_string(z);
+    static uint64_t makeKey(int x, int y, int z) {
+        return (static_cast<uint64_t>(x) << 32) | (static_cast<uint32_t>(y) << 16) | static_cast<uint16_t>(z);
     }
 
     bool isRoot() {
@@ -36,10 +36,6 @@ public:
 
     bool isEmpty() {
         return empty;
-    }
-
-    std::string key() {
-        return makeKey(x, y, z);
     }
 
     uint32_t getExtent() {

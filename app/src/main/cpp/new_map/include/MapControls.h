@@ -19,6 +19,7 @@ public:
     void doubleTap();
     void initStartZoom(float startZoom);
     void checkZoomUpdated();
+    float getShiftForZoom(int zoom);
 
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }
@@ -66,7 +67,7 @@ private:
     short newMapTilesZoom;
     float ySpeed = -1500.0f;
     float shiftXSpeed = 0.0005f;
-    float camOneUnitScale = 10.0f;
+    float camOneUnitScale = 7.0f;
     float camYLimit = 0.0f;
 
 };

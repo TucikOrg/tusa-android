@@ -19,7 +19,7 @@ public:
     ~MapTileGetter();
     MapTile* getOrRequest(int x, int y, int z);
 private:
-    std::map<std::string, MapTile> cacheTiles = {};
+    std::map<uint64_t, MapTile> cacheTiles = {};
     MapStyle& style;
 
     jclass requestTileClassGlobal;
@@ -27,7 +27,7 @@ private:
     JNIEnv *mainEnv;
     MapTile emptyTile = MapTile(-1, -1, -1);
 
-    std::map<std::string, void*> pushedToNetwork;
+    std::map<uint64_t, void*> pushedToNetwork;
     std::stack<std::array<int, 3>> networkTilesStack = {};
 
     MapTile* load(int x, int y, int z, JNIEnv* parallelThreadEnv);

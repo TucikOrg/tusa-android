@@ -95,6 +95,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         new_map/MapControls.cpp
         new_map/MapVisibleTiles.cpp
         new_map/MapSymbols.cpp
+        new_map/MapTileNode.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

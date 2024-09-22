@@ -37,11 +37,12 @@ void MapRenderer::productionRender() {
     Eigen::Matrix4f viewToPlane   = mapCamera.createView(0, cameraY, cameraDistance, 0, cameraY, 0);
     Eigen::Matrix4f pvForPlane    = projection * viewToPlane;
 
-    std::array<float, 2> visibleXEdges  = mapVisibleTiles.getXTilesVisibleEdges(zTiles, mapControls);
+    std::array<float, 2> visibleXEdges  = mapVisibleTiles.getXTilesVisibleEdges(shiftXCam);
     std::vector<int> visibleX           = mapVisibleTiles.getVisibleXTiles(visibleXEdges, zTiles);
     std::array<float, 2> visibleYEdges  = mapVisibleTiles.getYTilesVisibleEdges(zTiles, planeWidth, mapControls, pvForPlane);
     std::vector<int> visibleY           = mapVisibleTiles.getVisibleYTiles(visibleYEdges, zTiles);
-    mapTileRender.renderMainTexture(shadersBucket, mapCamera, mapTileGetter, visibleX, visibleY, zTiles, shiftXCam);
+    mapTileRender.renderMainTexture(shadersBucket, mapCamera, mapTileGetter, visibleX, visibleY,  zTiles, shiftXCam);
+
 
 
     std::vector<float> uv = {};
@@ -80,6 +81,7 @@ void MapRenderer::productionRender() {
     mapTest.drawPoints3D(shadersBucket, vertices, 5.0f, pvForPlane);
     mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
     mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTileRender.getTilesTexture(), zTiles == 0 ? 1 : 2, visibleY.size());
+    auto error = CommonUtils::getGLErrorString();
 }
 
 void MapRenderer::onSurfaceChanged(int screenW, int screenH) {

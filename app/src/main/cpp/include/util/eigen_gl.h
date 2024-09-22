@@ -74,6 +74,12 @@ public:
         return translationMatrix;
     }
 
+    static Eigen::Matrix4f createScaleMatrix(float scaleX, float scaleY, float scaleZ) {
+        Eigen::Affine3f scaleMatrix = Eigen::Affine3f::Identity();
+        scaleMatrix.scale(Eigen::Vector3f(scaleX, scaleY, scaleZ));
+        return scaleMatrix.matrix();
+    }
+
     static Eigen::Matrix4f createPerspectiveProjectionMatrix(float fovY, float aspectRatio, float near, float far) {
         // Convert field of view from degrees to radians
         float fovYRad = fovY * (M_PI / 180.0f);

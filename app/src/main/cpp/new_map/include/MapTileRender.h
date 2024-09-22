@@ -21,12 +21,6 @@ class MapTileRender {
 public:
     void initTilesTexture();
 
-    void renderTile(
-            ShadersBucket& shadersBucket,
-            MapTile* tile,
-            MapCamera& mapCamera
-    );
-
     void renderMainTexture(
             ShadersBucket& shadersBucket,
             MapCamera& mapCamera,
@@ -37,14 +31,6 @@ public:
             float shiftX
     );
 
-    GLuint getTileTexture(MapTile* tile, ShadersBucket& shadersBucket, MapCamera& mapCamera);
-
-    GLuint renderTileToTexture(
-            ShadersBucket& shadersBucket,
-            MapTile* tile,
-            MapCamera& mapCamera
-    );
-
     MapStyle& getStyle() {
         return style;
     }
@@ -52,14 +38,22 @@ public:
     GLuint getTilesTexture() {
         return tilesTexture;
     }
-
 private:
+    void renderTile(
+            ShadersBucket& shadersBucket,
+            MapTile* tile,
+            MapCamera& mapCamera,
+            Eigen::Matrix4f matrix
+    );
+
     MapStyle style = MapStyle();
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
     GLuint tileFrameBuffer;
-    int textureSizeForTile = 2024;
-    std::map<std::string, GLuint> textures;
+    int textureSizeForTile = 1024;
+
+
+    std::unordered_map<std::string, GLuint> textures;
 };
 
 

@@ -104,3 +104,8 @@ void MapControls::checkZoomUpdated() {
     }
 }
 
+float MapControls::getShiftForZoom(int zoom) {
+    int xFactor = pow(2, zoom);
+    return shiftX * xFactor + (zoom >= 2);
+}
+
