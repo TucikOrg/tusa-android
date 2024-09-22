@@ -1,16 +1,11 @@
 //
-// Created by Artem on 30.03.2024.
+// Created by Artem on 22.09.2024.
 //
 
-#include "symbols/symbols.h"
-#include "GLES2/gl2.h"
-#include "util/matrices.h"
-#include "csscolorparser/csscolorparser.h"
-#include <Eigen/Core>
-#include <Eigen/StdVector>
-#include <Eigen/Dense>
+#include "MapSymbols.h"
 
-void Symbols::loadFont(AAssetManager *assetManager) {
+
+void MapSymbols::loadFont(AAssetManager *assetManager) {
     if (FT_Init_FreeType(&ft)) {
         return;
     }
@@ -28,7 +23,7 @@ void Symbols::loadFont(AAssetManager *assetManager) {
     FT_Set_Pixel_Sizes(face, 0, 40);
 }
 
-void Symbols::createFontTextures() {
+void MapSymbols::createFontTextures() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     if(loadOnlySelectedCharCodes) {
@@ -43,17 +38,14 @@ void Symbols::createFontTextures() {
     }
 }
 
-Symbol Symbols::getSymbol(char c) {
-    return symbols[c];
-}
-
-void Symbols::prepareCharForRendering(unsigned short charcode) {
+void MapSymbols::prepareCharForRendering(unsigned short charcode) {
     if(FT_Load_Char(face, charcode, FT_LOAD_RENDER)) {
         return;
     }
 
     unsigned int texture;
     glGenTextures(1, &texture);
+
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexImage2D(
             GL_TEXTURE_2D,
@@ -84,8 +76,15 @@ void Symbols::prepareCharForRendering(unsigned short charcode) {
     symbols.insert(std::pair<char, Symbol>(charcode, symbol));
 }
 
-void Symbols::renderText(std::string text, float x, float y,
-                         Eigen::Matrix4f translate, float symbolScale, CSSColorParser::Color color) {
+void MapSymbols::renderText2D(
+    std::string text,
+    float x,
+    float y,
+    float symbolScale,
+    CSSColorParser::Color color,
+    Eigen::Matrix4f matrix,
+    ShadersBucket &shadersBucket
+) {
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
 
     float textWidth = 0;
@@ -108,12 +107,10 @@ void Symbols::renderText(std::string text, float x, float y,
     x = x - textWidth / 2;
     y -= averageHeight / 2;
 
-    auto symbolShader = shadersBucket->symbolShader;
-    glUseProgram(symbolShader->program);
+    auto symbolShader = shadersBucket.symbolShader;
     GLfloat red   = static_cast<GLfloat>(color.r) / 255;
     GLfloat green = static_cast<GLfloat>(color.g) / 255;
     GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
-    glUniform3f(symbolShader->getColorLocation(), red, green, blue);
 
     for(auto& charRender : forRender) {
         Symbol symbol = std::get<0>(charRender);
@@ -144,9 +141,13 @@ void Symbols::renderText(std::string text, float x, float y,
                 0, 1, 2
         };
 
-        glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, translate.data());
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glUseProgram(symbolShader->program);
 
+        glUniform3f(symbolShader->getColorLocation(), red, green, blue);
+        glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glUniform1i(symbolShader->getTextureLocation(), 0);
 
         glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords);
@@ -154,86 +155,12 @@ void Symbols::renderText(std::string text, float x, float y,
 
         glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, points);
         glEnableVertexAttribArray(symbolShader->getPosLocation());
-
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
 
         x += pixelsShift;
     }
 }
 
-Symbols::Symbols(std::shared_ptr<ShadersBucket> shadersBucket): shadersBucket(shadersBucket){
-
-}
-
-void
-Symbols::renderText2(std::string text, Matrix4 m, float x, float y, float z, float symbolScale) {
-    std::vector<std::tuple<Symbol, float, float, float>> forRender {};
-
-    float textWidth = 0;
-    float sumHeight = 0;
-    std::string::const_iterator iterator;
-    for(iterator = text.begin(); iterator != text.end(); iterator++) {
-        auto symbol = getSymbol(*iterator);
-
-        float w = symbol.width * symbolScale;
-        float h = symbol.rows * symbolScale;
-
-        float xPixelsShift = (symbol.advance >> 6) * symbolScale;
-        textWidth += xPixelsShift;
-        sumHeight += h;
-
-        forRender.push_back({symbol, w, h, xPixelsShift});
-    }
-
-    float averageHeight = sumHeight / text.length();
-    x = x - textWidth / 2;
-    y -= averageHeight / 2;
-
-    auto symbolShader = shadersBucket->symbolShader;
-    glUseProgram(symbolShader->program);
-
-    for(auto& charRender : forRender) {
-        Symbol symbol = std::get<0>(charRender);
-        unsigned int textureId = symbol.textureId;
-        float w = std::get<1>(charRender);
-        float h = std::get<2>(charRender);
-        float pixelsShift = std::get<3>(charRender);
-
-        float xPos = x + symbol.bitmapLeft * symbolScale;
-        float yPos = y - (symbol.rows - symbol.bitmapTop ) * symbolScale;
-
-        float points[] = {
-                xPos, (yPos + h), z,
-                xPos, yPos, z,
-                xPos + w, yPos, z,
-                xPos + w, (yPos + h), z
-        };
-
-        GLfloat textureCords[] = {
-                0.0f, 0.0f,
-                0.0f, 1.0f,
-                1.0f, 1.0f,
-                1.0f, 0.0f
-        };
-
-        unsigned int indices[6] = {
-                2, 3, 0,
-                0, 1, 2
-        };
-
-        glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, m.get());
-        glBindTexture(GL_TEXTURE_2D, textureId);
-
-        glUniform1i(symbolShader->getTextureLocation(), 0);
-
-        glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords);
-        glEnableVertexAttribArray(symbolShader->getTextureCord());
-
-        glVertexAttribPointer(symbolShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, points);
-        glEnableVertexAttribArray(symbolShader->getPosLocation());
-        glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0f, 1.0f);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);
-
-        x += pixelsShift;
-    }
+Symbol MapSymbols::getSymbol(char c) {
+    return symbols[c];
 }

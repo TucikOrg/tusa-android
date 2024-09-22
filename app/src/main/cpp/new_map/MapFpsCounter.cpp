@@ -16,7 +16,6 @@ float MapFpsCounter::newFrame() {
         fps = frameCount / fpsTimeSpan.count();
         frameCount = 0;
         fpsRenderFrameTime = currentTime;
-        LOGI("FPS: %f", fps);
     }
     timeElapsed = currentTime - startTime;
 

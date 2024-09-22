@@ -10,12 +10,16 @@
 class MapGeometry {
 public:
     std::vector<float> generatePlainGeometry(
-            float size,
-            int segments,
-            float radius,
             std::vector<float>& uv,
-            std::vector<unsigned int>& indices
+            std::vector<float>& planetUV,
+            std::vector<unsigned int>& indices,
+            std::vector<int> visibleY,
+            int z,
+            float planeWidth,
+            int lod,
+            float planeZ
     );
+
 };
 
 

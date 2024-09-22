@@ -55,38 +55,16 @@ void MapTileGetter::networkTilesFunction(JavaVM* gJvm) {
 
         if (shouldLoadTile) {
             // Загружаем тайл
-            getOrLoad(tileToNetwork[0], tileToNetwork[1], tileToNetwork[2], threadEnv);
+            auto loaded = load(tileToNetwork[0], tileToNetwork[1], tileToNetwork[2], threadEnv);
         }
     }
 
     gJvm->DetachCurrentThread();
 }
 
-MapTile& MapTileGetter::getTile(int x, int y, int z) {
-    cacheMutex2.lock();
+MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     std::string key = MapTile::makeKey(x, y, z);
-    auto it = cacheTiles.find(key);
-    auto empty = it == cacheTiles.end();
-    if (empty) {
-        cacheMutex2.unlock();
-        return emptyTile;
-    }
-    cacheMutex2.unlock();
 
-    return it->second;
-}
-
-MapTile& MapTileGetter::getOrLoad(int x, int y, int z, JNIEnv *parallelThreadEnv) {
-    cacheMutex2.lock();
-    std::string key = MapTile::makeKey(x, y, z);
-    auto it = cacheTiles.find(key);
-    auto existsInMem = it != cacheTiles.end();
-    if (existsInMem) {
-        return it->second;
-    }
-    cacheMutex2.unlock();
-
-    // network long time operation
     auto makeTileRequest = parallelThreadEnv->GetMethodID(requestTileClassGlobal, "request", "(III)[B");
     jbyteArray byteArray = (jbyteArray) parallelThreadEnv->CallObjectMethod(requestTileGlobal, makeTileRequest, z, x, y);
     jsize length = parallelThreadEnv->GetArrayLength(byteArray);
@@ -101,5 +79,31 @@ MapTile& MapTileGetter::getOrLoad(int x, int y, int z, JNIEnv *parallelThreadEnv
     cacheTiles.insert({key, std::move(mapTile)});
     cacheMutex2.unlock();
 
-    return mapTile;
+    return &cacheTiles.find(key)->second;
+}
+
+MapTile *MapTileGetter::getOrRequest(int x, int y, int z) {
+    cacheMutex2.lock();
+    std::string key = MapTile::makeKey(x, y, z);
+    auto req = pushedToNetwork.find(key);
+    auto reqExists = req != pushedToNetwork.end();
+    auto it = cacheTiles.find(key);
+    auto existsInMem = it != cacheTiles.end();
+    if (existsInMem) {
+        if (reqExists) {
+            pushedToNetwork.erase(req);
+        }
+        cacheMutex2.unlock();
+        return &it->second;
+    }
+    cacheMutex2.unlock();
+
+    if (!reqExists) {
+        pushedToNetwork.insert({key, nullptr });
+        networkTileStackMutex2.lock();
+        networkTilesStack.push({x, y, z});
+        networkTileStackMutex2.unlock();
+    }
+
+    return &emptyTile;
 }

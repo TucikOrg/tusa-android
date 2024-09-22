@@ -7,6 +7,7 @@
 #include "map/polygon_handler.h"
 #include "map/linestring_handler.h"
 
+MapTile::MapTile(int x, int y, int z): empty(true), x(x), y(y), z(z) {}
 
 MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style)
         :  x(x), y(y), z(z), empty(false) {
@@ -142,6 +143,24 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style
     }
 }
 
-MapTile::MapTile(): empty(true) {}
+bool MapTile::cover(std::array<int, 3> otherTile) {
+    if (z > otherTile[2]) {
+        return false;
+    }
+
+    // Коэффициент масштаба между уровнями зума
+    int scale = 1 << (otherTile[2] - z);
+
+    // Преобразуем координаты тайла1 на уровень зума тайла2
+    int transformed_x1 = x * scale;
+    int transformed_y1 = y * scale;
+
+    // Проверяем, покрывает ли тайл1 тайл2
+    return (transformed_x1 <= otherTile[0] && otherTile[0] < transformed_x1 + scale) &&
+           (transformed_y1 <= otherTile[1] && otherTile[1] < transformed_y1 + scale);
+
+}
+
+
 
 

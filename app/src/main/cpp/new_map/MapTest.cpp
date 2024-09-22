@@ -5,128 +5,45 @@
 #include "MapTest.h"
 #include <GLES2/gl2.h>
 
-void MapTest::drawPlainGeometryTest(
+void MapTest::drawTilesTextureTest(
         ShadersBucket& shadersBucket,
         MapCamera& mapCamera,
-        MapGeometry& mapGeometry
+        GLuint renderMapTexture,
+        int xSize,
+        int ySize
 ) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-
-    std::shared_ptr<PlainShader> plainShader = shadersBucket.plainShader;
-    glUseProgram(plainShader->program);
-
-    auto projection = mapCamera.createPerspectiveProjection(0.1, 10.0f);
-    auto view = mapCamera.createView(0, 0, 5, 0, 0, 0);
-    Eigen::Matrix4f pv = projection * view;
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-
-    const GLfloat color[] = { 1.0, 0.0, 0.0, 1.0};
-    glUniform4fv(plainShader->getColorLocation(), 1, color);
-
-    float width = 0.5f;
-    float halfWidth = width / 2.0f;
-    std::vector<float> uv = {};
-    std::vector<unsigned int> indices = {};
-    auto vertices = mapGeometry.generatePlainGeometry(width, 1, halfWidth, uv, indices);
-    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                          GL_FALSE, 0, vertices.data()
-    );
-    glEnableVertexAttribArray(plainShader->getPosLocation());
-
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, vertices.size() / 2);
-}
-
-
-void MapTest::drawTileGeometryTest(
-        ShadersBucket& shadersBucket,
-        MapCamera& mapCamera,
-        MapGeometry& mapGeometry,
-        MapTile& mapTile,
-        MapTileRender& mapTileRender
-) {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-
-    float distance = 11000;
-    auto projection = mapCamera.createPerspectiveProjection(distance, distance + 10);
-    auto view = mapCamera.createView(2000, -2000, distance, 2000, -2000, 0);
-
-    Eigen::Matrix4f pv = projection * view;
-    std::vector<MapTile*> tiles = { &mapTile };
-    mapTileRender.renderTiles(shadersBucket, tiles, pv);
-}
-
-void MapTest::drawRootTileGeometryTest(ShadersBucket &shadersBucket,
-                                       MapCamera &mapCamera,
-                                       MapGeometry &mapGeometry,
-                                       MapTileGetter &mapTileGetter,
-                                       MapTileRender &mapTileRender
-                                       ) {
-    auto& tile = mapTileGetter.getTile(0, 0, 0);
-    if (tile.isEmpty())
-        return;
-    drawTileGeometryTest(shadersBucket, mapCamera, mapGeometry, tile, mapTileRender);
-}
-
-
-
-void MapTest::drawTilesToTextureTest(ShadersBucket &shadersBucket, MapCamera &mapCamera,
-                                 MapGeometry &mapGeometry, MapTileGetter &mapTileGetter,
-                                 MapTileRender &mapTileRender) {
-    auto& tile = mapTileGetter.getTile(0, 0, 0);
-    if (tile.isEmpty())
-        return;
-
-    float extent = 4096;
-    auto projection = mapCamera.createOrthoProjection(0, extent, -extent, 0, 0.1, 1);
+    auto textureShader = shadersBucket.textureShader;
     auto view = mapCamera.createView();
+    auto ratio = mapCamera.getRatio();
+    auto projection = mapCamera.createOrthoProjection(-ratio, ratio, -1, 1, 0.0, 1.0);
     Eigen::Matrix4f pv = projection * view;
-    mapTileRender.renderTilesToTexture(shadersBucket, mapCamera, { &tile }, pv);
 
-    drawPlainTilesTextureTest(shadersBucket, mapCamera, mapGeometry, mapTileRender);
-}
+    float sizeOfUnit = 0.2;
+    float width = sizeOfUnit * xSize;
+    float height = sizeOfUnit * ySize;
+    std::vector<float> vertices = {
+            -ratio, -1,
+            -ratio + width, -1,
+            -ratio + width, -1 + height,
+            -ratio, -1 + height
+    };
+    std::vector<float> uv = {
+            0, 0,
+            1, 0,
+            1, 1,
+            0, 1
+    };
 
-void MapTest::drawPlainTilesTextureTest(
-        ShadersBucket& shadersBucket,
-        MapCamera& mapCamera,
-        MapGeometry& mapGeometry,
-        MapTileRender& mapTileRender
-) {
-    glEnable(GL_DEPTH_TEST);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glClearColor(1.0, 1.0, 1.0, 1.0);
-
-    auto planet2Shader = shadersBucket.planet2Shader;
-    glUseProgram(planet2Shader->program);
-
-    auto projection = mapCamera.createPerspectiveProjection(0.1, 10.0f);
-    auto view = mapCamera.createView(0, 0, 5, 0, 0, 0);
-    Eigen::Matrix4f pv = projection * view;
-    glUniformMatrix4fv(planet2Shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-
-    float width = 2.0f;
-    float radius = width / 2.0f;
-    std::vector<float> uv = {};
-    std::vector<unsigned int> indices = {};
-    auto vertices = mapGeometry.generatePlainGeometry(width, 20, radius, uv, indices);
-    glVertexAttribPointer(planet2Shader->getPosLocation(), 3, GL_FLOAT,
-                          GL_FALSE, 0, vertices.data()
-    );
-    glEnableVertexAttribArray(planet2Shader->getPosLocation());
-
-    glVertexAttribPointer(planet2Shader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
-    glEnableVertexAttribArray(planet2Shader->getUVLocation());
-
-    glBindTexture(GL_TEXTURE_2D, mapTileRender.getTilesTexture());
-    glUniform1i(planet2Shader->getTileTextureLocation(), 0);
-
-    glUniform1f(planet2Shader->getAnimationLocation(), 0.0f);
-
-    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.data());
-
-    glDisable(GL_DEPTH_TEST);
-    //drawPoints2D(shadersBucket, vertices, 20.0f, pv);
+    glUseProgram(textureShader->program);
+    glUniformMatrix4fv(textureShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+    //glUniform4fv(textureShader->getColorLocation(), 1, new GLfloat[4]{0, 0, 0, 1});
+    glBindTexture(GL_TEXTURE_2D, renderMapTexture);
+    glUniform1i(textureShader->getTileTextureLocation0(), 0);
+    glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
+    glEnableVertexAttribArray(textureShader->getTextureCord());
+    glVertexAttribPointer(textureShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(textureShader->getPosLocation());
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 void MapTest::drawPoints2D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix) {
@@ -139,4 +56,60 @@ void MapTest::drawPoints2D(ShadersBucket& shadersBucket, std::vector<float>& ver
     glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices.data());
     glEnableVertexAttribArray(plainShader->getPosLocation());
     glDrawArrays(GL_POINTS, 0, vertices.size() / 2);
+}
+
+void MapTest::drawPoints3D(
+        ShadersBucket &shadersBucket,
+        std::vector<float> &vertices,
+        float pointSize,
+        Eigen::Matrix4f &matrix
+) {
+    auto plainShader = shadersBucket.plainShader;
+    const GLfloat color[] = { 1, 0, 0, 1};
+    glUseProgram(plainShader->program);
+    glUniform1f(plainShader->getPointSizeLocation(), pointSize);
+    glUniform4fv(plainShader->getColorLocation(), 1, color);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
+
+}
+
+void MapTest::drawLines3D(
+        ShadersBucket &shadersBucket,
+        std::vector<float> &vertices,
+        std::vector<unsigned int> &indices,
+        float lineWidth,
+        Eigen::Matrix4f &matrix
+) {
+    auto plainShader = shadersBucket.plainShader;
+    const GLfloat color[] = { 1, 0, 0, 1};
+    glUseProgram(plainShader->program);
+    glLineWidth(lineWidth);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, indices.data());
+}
+
+void MapTest::drawFPS(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, float fps) {
+    CSSColorParser::Color color = CSSColorParser::parse("rgb(255, 0, 0)");
+    float aspectRatio = mapCamera.getRatio();
+    float left        = -aspectRatio;
+    float right       = aspectRatio;
+    float bottom      = -1;
+    float top         = 1;
+    mapSymbols.renderText2D("FPS " + std::to_string((int)fps), left + 0.1, top - 0.05, 0.001, color, pvUI, shadersBucket);
+}
+
+void MapTest::init(MapCamera& mapCamera) {
+    float aspectRatio = mapCamera.getRatio();
+    float left        = -aspectRatio;
+    float right       = aspectRatio;
+    float bottom      = -1;
+    float top         = 1;
+    auto projectionUI = mapCamera.createOrthoProjection(left, right, bottom, top, 0.1, 1);
+    auto viewUI = mapCamera.createView();
+    pvUI = projectionUI * viewUI;
 }

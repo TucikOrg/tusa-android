@@ -72,6 +72,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_doubleTap(JNIEnv *env, jclass clazz) {
     //renderer.doubleTap();
+    renderer.doubleTap();
 }
 
 extern "C"

@@ -19,6 +19,19 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+class Utils {
+public:
+    // Функция для округления до определенного количества знаков после запятой
+    static float round(float value, int precision) {
+        float scale = std::pow(10.0f, precision);
+        return std::round(value * scale) / scale;
+    }
+
+    static float fract(float num) {
+        return num - std::floor(num);  // Using floor to get the integer part
+    }
+};
+
 class CommonUtils {
 public:
 
@@ -49,11 +62,7 @@ public:
         return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min)));
     }
 
-    // Функция для округления до определенного количества знаков после запятой
-    static float roundToPrecision(float value, int precision) {
-        float scale = std::pow(10.0f, precision);
-        return std::round(value * scale) / scale;
-    }
+
 
     static float latitudeToTile(int zoom, float latitude) {
         return pow(2, zoom) * (1 - (std::log(std::tan(latitude) + (1 / std::cos(latitude))) / M_PI)) / 2;

@@ -6,37 +6,69 @@
 #define TUSA_ANDROID_MAPCONTROLS_H
 
 #include "map/mercator.h"
+#include "util/android_log.h"
+#include <array>
+#include <string>
 
 class MapControls {
 public:
+    MapControls();
+
     void drag(float dx, float dy);
+    void scale(float detector);
+    void doubleTap();
+    void initStartZoom(float startZoom);
+    void checkZoomUpdated();
 
-    float getScreenXDragged() {
-        return screenXDragged;
+    short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
+    short getZoomFloor() { return (short) scaleFactorZoom; }
+    float getDistanceToMap();
+    float getCameraSphereLatitude(float planeWidth);
+    float getTransition();
+    float getAnimatedTransition(float time) { return abs(cos(time * 0.1)); }
+
+
+    void setCamYLimit(float limit) {
+        camYLimit = limit;
     }
 
-    float getScreenYDragged() {
-        return screenYDragged;
+    float getZoom() {
+        return scaleFactorZoom;
     }
 
-    float geTextureUShift() {
-        return screenXDragged * 0.00015f;
+    float getCameraY() {
+        return cameraY;
     }
 
-    float getCameraLatitudeRad() {
-        float rad = -screenYDragged * 0.001f;
-        float limit = DEG2RAD(85);
-        if (rad > limit) {
-            rad = limit;
-        } else if (rad < -limit) {
-            rad = -limit;
-        }
-        return rad;
+    float getShiftX() {
+        return shiftX;
     }
 
+    float transitionTest = 0.0;
 private:
+    int maxTilesZoom = 16;
     float screenXDragged = 0;
     float screenYDragged = 0;
+
+    float cameraY = 0;
+    float shiftX = 0;
+
+    float onAppStartMapZoom = 0.0f;
+    float scaleFactorRaw = 0;
+    float maxZoom = 19.0f;
+    float maxScale = 0;
+    float scaleSpeed = 0.5f;
+    float scaleShift = 1.0f;
+    float scaleFactorZoom = 0;
+    short currentMapZoomFloor;
+    short newMapZoomFloor;
+    short currentMapTilesZoom;
+    short newMapTilesZoom;
+    float ySpeed = -1500.0f;
+    float shiftXSpeed = 0.0005f;
+    float camOneUnitScale = 10.0f;
+    float camYLimit = 0.0f;
+
 };
 
 

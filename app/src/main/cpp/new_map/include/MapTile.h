@@ -17,11 +17,21 @@
 
 class MapTile {
 public:
-    MapTile();
+    MapTile(int x, int y, int z);
     MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style);
+
+    bool cover(std::array<int, 3> otherTile);
 
     static std::string makeKey(int x, int y, int z) {
         return std::to_string(x) + std::to_string(y) + std::to_string(z);
+    }
+
+    bool isRoot() {
+        return x == 0 && y == 0 && z == 0;
+    }
+
+    bool is(std::array<int, 3> tileCords) {
+        return x == tileCords[0] && y == tileCords[1] && z == tileCords[3];
     }
 
     bool isEmpty() {
@@ -35,6 +45,13 @@ public:
     uint32_t getExtent() {
         return extent;
     }
+
+    std::array<int,3> getTileCords() {
+        return {x, y, z};
+    }
+    int getX() {return x; };
+    int getY() {return y; };
+    int getZ() {return z; };
 
     std::map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
     std::map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;

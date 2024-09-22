@@ -14,46 +14,29 @@
 #include "MapTileRender.h"
 #include "util/android_log.h"
 #include "MapStyle.h"
+#include "MapSymbols.h"
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
 class MapTest {
 public:
-    void drawPlainGeometryTest(
+    void drawTilesTextureTest(
             ShadersBucket& shadersBucket,
             MapCamera& mapCamera,
-            MapGeometry& mapGeometry
-    );
-    void drawTileGeometryTest(
-            ShadersBucket& shadersBucket,
-            MapCamera& mapCamera,
-            MapGeometry& mapGeometry,
-            MapTile& mapTile,
-            MapTileRender& mapTileRender
-    );
-    void drawRootTileGeometryTest(
-            ShadersBucket& shadersBucket,
-            MapCamera& mapCamera,
-            MapGeometry& mapGeometry,
-            MapTileGetter &mapTileGetter,
-            MapTileRender &mapTileRender
-    );
-    void drawTilesToTextureTest(
-            ShadersBucket& shadersBucket,
-            MapCamera& mapCamera,
-            MapGeometry& mapGeometry,
-            MapTileGetter &mapTileGetter,
-            MapTileRender &mapTileRender
-    );
-    void drawPlainTilesTextureTest(
-            ShadersBucket& shadersBucket,
-            MapCamera& mapCamera,
-            MapGeometry& mapGeometry,
-            MapTileRender& mapTileRender
+            GLuint renderMapTexture,
+            int xSize,
+            int ySize
     );
 
+    void drawFPS(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, float fps);
     void drawPoints2D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix);
+    void drawPoints3D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix);
+    void drawLines3D(ShadersBucket& shadersBucket, std::vector<float>& vertices, std::vector<unsigned int> &indices, float lineWidth, Eigen::Matrix4f& matrix);
+
+    void init(MapCamera& mapCamera);
+private:
+    Eigen::Matrix4f pvUI;
 };
 
 

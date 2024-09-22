@@ -16,12 +16,15 @@
 #include "MapTileGetter.h"
 #include "MapTileRender.h"
 #include "MapControls.h"
+#include "MapVisibleTiles.h"
+#include "MapSymbols.h"
 #include <vector>
 
 
 class MapRenderer {
 
 public:
+    MapRenderer();
     ~MapRenderer();
 
     void renderFrame();
@@ -30,6 +33,7 @@ public:
     void onSurfaceCreated(AAssetManager* assetManager);
     void drag(float dx, float dy);
     void scale(float scaleFactor);
+    void doubleTap();
 private:
     void productionRender();
 
@@ -40,8 +44,13 @@ private:
     MapCamera mapCamera;
     MapTest mapTest;
     MapFpsCounter mapFpsCounter = MapFpsCounter();
+    MapVisibleTiles mapVisibleTiles = MapVisibleTiles();
     MapTileRender mapTileRender;
     MapTileGetter* mapTileGetter;
+    MapSymbols mapSymbols = MapSymbols();
+
+    float planeWidth = 3000000.0f;
+    float radius = planeWidth / 6.0;
 };
 
 

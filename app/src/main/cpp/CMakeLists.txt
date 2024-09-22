@@ -93,6 +93,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         new_map/MapStyle.cpp
         new_map/MapFpsCounter.cpp
         new_map/MapControls.cpp
+        new_map/MapVisibleTiles.cpp
+        new_map/MapSymbols.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

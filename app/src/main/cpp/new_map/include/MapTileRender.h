@@ -10,6 +10,8 @@
 #include "MapTile.h"
 #include "MapCamera.h"
 #include "MapStyle.h"
+#include "MapTileGetter.h"
+#include "renderer/render_tile_hash.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -19,17 +21,28 @@ class MapTileRender {
 public:
     void initTilesTexture();
 
-    void renderTilesToTexture(
-            ShadersBucket &shadersBucket,
-            MapCamera &mapCamera,
-            std::vector<MapTile *> tiles,
-            Eigen::Matrix4f &pv
+    void renderTile(
+            ShadersBucket& shadersBucket,
+            MapTile* tile,
+            MapCamera& mapCamera
     );
 
-    void renderTiles(
+    void renderMainTexture(
             ShadersBucket& shadersBucket,
-            std::vector<MapTile*> tiles,
-            Eigen::Matrix4f& pv
+            MapCamera& mapCamera,
+            MapTileGetter* mapTileGetter,
+            std::vector<int> xTiles,
+            std::vector<int> yTiles,
+            int tilesZoom,
+            float shiftX
+    );
+
+    GLuint getTileTexture(MapTile* tile, ShadersBucket& shadersBucket, MapCamera& mapCamera);
+
+    GLuint renderTileToTexture(
+            ShadersBucket& shadersBucket,
+            MapTile* tile,
+            MapCamera& mapCamera
     );
 
     MapStyle& getStyle() {
@@ -44,8 +57,9 @@ private:
     MapStyle style = MapStyle();
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
-    int tilesTextureWidth = 2024;
-    int tilesTextureHeight = 2024;
+    GLuint tileFrameBuffer;
+    int textureSizeForTile = 2024;
+    std::map<std::string, GLuint> textures;
 };
 
 

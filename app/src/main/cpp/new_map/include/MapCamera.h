@@ -23,6 +23,7 @@ public:
     std::array<float, 3> createSphericalCameraPosition(float distance, float cameraLatitudeRad);
 
     void glViewportDeviceSize();
+    float getRatio();
 
 private:
     int screenW;

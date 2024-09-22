@@ -8,7 +8,7 @@
 Eigen::Matrix4f MapCamera::createPerspectiveProjection(float near, float far) {
     Eigen::Matrix4f projectionMatrix = EigenGL::createPerspectiveProjectionMatrix(
             fovy,
-            (float) screenW / (float) screenH,
+            getRatio(),
             near,
             far
     );
@@ -50,4 +50,8 @@ std::array<float, 3> MapCamera::createSphericalCameraPosition(float distance, fl
     float camWorldY = distance * sin(cameraLatitudeRad);
     float camWorldZ = distance * cos(cameraLatitudeRad);
     return {camWorldX, camWorldY, camWorldZ};
+}
+
+float MapCamera::getRatio() {
+    return (float) screenW / (float) screenH;
 }

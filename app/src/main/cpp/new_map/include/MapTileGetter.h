@@ -17,10 +17,7 @@ class MapTileGetter {
 public:
     MapTileGetter(JNIEnv *env, jobject& request_tile, MapStyle& style);
     ~MapTileGetter();
-
-    MapTile& getTile(int x, int y, int z);
-
-    std::stack<std::array<int, 3>> networkTilesStack = {};
+    MapTile* getOrRequest(int x, int y, int z);
 private:
     std::map<std::string, MapTile> cacheTiles = {};
     MapStyle& style;
@@ -28,9 +25,12 @@ private:
     jclass requestTileClassGlobal;
     jobject requestTileGlobal;
     JNIEnv *mainEnv;
-    MapTile emptyTile = MapTile();
+    MapTile emptyTile = MapTile(-1, -1, -1);
 
-    MapTile& getOrLoad(int x, int y, int z, JNIEnv* parallelThreadEnv);
+    std::map<std::string, void*> pushedToNetwork;
+    std::stack<std::array<int, 3>> networkTilesStack = {};
+
+    MapTile* load(int x, int y, int z, JNIEnv* parallelThreadEnv);
     void networkTilesFunction(JavaVM* gJvm);
 };
 
