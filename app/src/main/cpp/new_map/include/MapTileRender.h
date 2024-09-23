@@ -43,7 +43,7 @@ private:
             ShadersBucket& shadersBucket,
             MapTile* tile,
             MapCamera& mapCamera,
-            Eigen::Matrix4f matrix
+            Eigen::Matrix4f pv
     );
 
     MapStyle style = MapStyle();

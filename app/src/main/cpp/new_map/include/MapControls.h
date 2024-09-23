@@ -19,7 +19,6 @@ public:
     void doubleTap();
     void initStartZoom(float startZoom);
     void checkZoomUpdated();
-    float getShiftForZoom(int zoom);
 
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }

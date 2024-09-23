@@ -82,7 +82,7 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     return &cacheTiles.find(key)->second;
 }
 
-MapTile *MapTileGetter::getOrRequest(int x, int y, int z) {
+MapTile *MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
     cacheMutex2.lock();
     auto key = MapTile::makeKey(x, y, z);
     auto req = pushedToNetwork.find(key);
@@ -98,7 +98,7 @@ MapTile *MapTileGetter::getOrRequest(int x, int y, int z) {
     }
     cacheMutex2.unlock();
 
-    if (!reqExists) {
+    if (!reqExists && !forceMem) {
         pushedToNetwork.insert({key, nullptr });
         networkTileStackMutex2.lock();
         networkTilesStack.push({x, y, z});
@@ -107,3 +107,5 @@ MapTile *MapTileGetter::getOrRequest(int x, int y, int z) {
 
     return &emptyTile;
 }
+
+

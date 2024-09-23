@@ -17,7 +17,7 @@ class MapTileGetter {
 public:
     MapTileGetter(JNIEnv *env, jobject& request_tile, MapStyle& style);
     ~MapTileGetter();
-    MapTile* getOrRequest(int x, int y, int z);
+    MapTile* getOrRequest(int x, int y, int z, bool forceMem = false);
 private:
     std::map<uint64_t, MapTile> cacheTiles = {};
     MapStyle& style;
