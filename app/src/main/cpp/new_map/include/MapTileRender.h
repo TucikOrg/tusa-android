@@ -11,6 +11,7 @@
 #include "MapCamera.h"
 #include "MapStyle.h"
 #include "MapTileGetter.h"
+#include "MapControls.h"
 #include "renderer/render_tile_hash.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
@@ -25,10 +26,11 @@ public:
             ShadersBucket& shadersBucket,
             MapCamera& mapCamera,
             MapTileGetter* mapTileGetter,
-            std::vector<int> xTiles,
             std::vector<int> yTiles,
             int tilesZoom,
-            float shiftX
+            float shiftX,
+            float planeWidth,
+            MapControls& mapControls
     );
 
     MapStyle& getStyle() {

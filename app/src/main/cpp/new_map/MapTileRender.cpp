@@ -23,10 +23,11 @@ void MapTileRender::renderMainTexture(
         ShadersBucket& shadersBucket,
         MapCamera& mapCamera,
         MapTileGetter* mapTileGetter,
-        std::vector<int> xTiles,
         std::vector<int> yTiles,
         int tilesZoom,
-        float shiftX
+        float shiftX,
+        float planeWidth,
+        MapControls& mapControls
 ) {
     float windowXLen = tilesZoom == 0 ? 1 : 2;
     float windowYLen = yTiles.size();
@@ -44,75 +45,108 @@ void MapTileRender::renderMainTexture(
     glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0, 0, textureWidth, textureHeight);
     glEnable(GL_SCISSOR_TEST);
-
-    auto projectionTileTexture = mapCamera.createOrthoProjection(0, windowXLen * extent, -windowYLen * extent, 0, 0.1, 1);
-    auto viewTileTexture = mapCamera.createView();
-    Eigen::Matrix4f pv = projectionTileTexture * viewTileTexture;
     auto textureShader = shadersBucket.textureShader;
 
-    {
-        glDisable(GL_SCISSOR_TEST);
+    int n                           = pow(2, tilesZoom);
+    float tileSize                  = planeWidth / n;
+    float shiftCameraCenterInTiles  = shiftX / tileSize; // сдвиг камеры в тайлах
+    float viewXInTilesDelta         = windowXLen / 2;
+    float startShiftCameraInTiles   = shiftCameraCenterInTiles - viewXInTilesDelta;
+    float endShiftCameraInTiles     = shiftCameraCenterInTiles + viewXInTilesDelta;
 
-        std::vector<int> backgroundXTiles = { 1, 2 };
-        std::vector<int> backgroundYTiles = { 1, 2 };
-        int backgroundZTiles = 2;
-        int xTilesSize = backgroundXTiles.size();
-        float zDelta = tilesZoom - backgroundZTiles;
-        float portionOfBackgroundTile = pow(2, zDelta);
+    Eigen::Matrix4f projectionTileTexture        = mapCamera.createOrthoProjection(0, windowXLen * extent, -windowYLen * extent, 0, 0.1, 1);
+    float cameraX                                = shiftCameraCenterInTiles * extent - windowXLen * (extent / 2);
+    Eigen::Matrix4f viewTileTexture              = mapCamera.createView(cameraX, 0, 1, cameraX, 0, 0);
+    Eigen::Matrix4f pv                           = projectionTileTexture * viewTileTexture;
+
+    {
+        std::vector<int> backgroundXTiles = { 2 };
+        std::vector<int> backgroundYTiles = { 2 };
+        int backgroundZTiles            = 2;
+        int bgN                         = pow(2, backgroundZTiles);
+        int bgTileSize                  = planeWidth / bgN;
+        float shiftBgCameraInTiles      = shiftX / bgTileSize;
+        float shiftBgInTile             = fmod(shiftBgCameraInTiles, 1);
+        int xTilesSize                  = backgroundXTiles.size();
+        float zDelta                    = tilesZoom - backgroundZTiles;
+        float portionOfBackgroundTile   = pow(2, zDelta);
+        float bgTileTexSize             = tileTexSize * portionOfBackgroundTile;
 
         int yActualTop = yTiles[0];
         int yBackgroundTop = backgroundYTiles[0];
         float yDelta = (yBackgroundTop * portionOfBackgroundTile) - yActualTop;
 
-        int xActualLeft = xTiles[0];
-        int swipedXTiles = shiftX / portionOfBackgroundTile;
-        for (int i = 0; i < backgroundXTiles.size(); i++) {
-            backgroundXTiles[i] += swipedXTiles;
-            backgroundXTiles[i] = backgroundXTiles[i] % (int) pow(2, backgroundZTiles);
-        }
+        float bgLeftInTiles = shiftBgCameraInTiles - bgN / 2.0f;
+        float bgLeftTileShift = fmod(bgLeftInTiles, bgN);
+        int mapSwipedAmount   = (bgLeftInTiles) / bgN;
 
         int xBackgroundLeft = backgroundXTiles[0];
-        float xDelta = xBackgroundLeft * portionOfBackgroundTile - xActualLeft;
+        float xBgDelta = xBackgroundLeft - fmod(fmod(startShiftCameraInTiles, n) / portionOfBackgroundTile, bgN);
+        //xBgDelta = fmod(xBgDelta, bgN * 2);
+        //LOGI("xBgDelta %f z %d", xBgDelta, tilesZoom);
 
-        float moveInTileX = fmod(shiftX, portionOfBackgroundTile);
-        for (float xTileIndex = 0; xTileIndex < xTilesSize; xTileIndex++) {
-            int xTile = backgroundXTiles[xTileIndex];
-            float xTileShift = (xTileIndex + 1) * portionOfBackgroundTile - moveInTileX;
-            float translateX = xTileShift * extent;
+        float bgOneTileWidth = extent * portionOfBackgroundTile;
+        float bgMapWidth = bgOneTileWidth * bgN;
 
-            for (int yTileIndex = 0; yTileIndex < backgroundYTiles.size(); yTileIndex++) {
-                int yTile = backgroundYTiles[yTileIndex];
-                auto tile = mapTileGetter->getOrRequest(xTile, yTile, backgroundZTiles);
-                if (tile->isEmpty())
-                    continue;
+        for (int i = -1; i <= 1; i++) {
+            for (float xTileIndex = 0; xTileIndex < xTilesSize; xTileIndex++) {
+                int xTile = backgroundXTiles[xTileIndex];
+                float translateX = xTile * bgOneTileWidth + (i + mapSwipedAmount) * bgMapWidth;
 
-                float yTileShift = yTileIndex * portionOfBackgroundTile + yDelta;
-                float translateY = -yTileShift * extent;
-                Eigen::Matrix4f translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f scale = EigenGL::createScaleMatrix(portionOfBackgroundTile, portionOfBackgroundTile, 1);
-                Eigen::Matrix4f matrix = pv * translate * scale;
-                renderTile(shadersBucket, tile, mapCamera, matrix);
+                for (int yTileIndex = 0; yTileIndex < backgroundYTiles.size(); yTileIndex++) {
+                    int yTile = backgroundYTiles[yTileIndex];
+                    auto tile = mapTileGetter->getOrRequest(xTile, yTile, backgroundZTiles);
+                    if (tile->isEmpty())
+                        continue;
+
+                    float yTileShift = yTileIndex * portionOfBackgroundTile + yDelta;
+                    float translateY = -yTileShift * extent;
+                    Eigen::Matrix4f translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                    Eigen::Matrix4f scale = EigenGL::createScaleMatrix(portionOfBackgroundTile, portionOfBackgroundTile, 1);
+                    Eigen::Matrix4f matrix = pv * translate * scale;
+
+                    //float xScissor = (xTileIndex + i * bgN - bgLeftTileShift) * bgTileTexSize;
+                    float xScissor = (xTileIndex + i * bgN + xBgDelta) * bgTileTexSize;
+                    float yScissor = (windowYLen - yDelta - (yTileIndex + 1) * portionOfBackgroundTile) * tileTexSize;
+
+                    if (xScissor + bgTileTexSize > 0 && xScissor < textureWidth) {
+                        glScissor(xScissor, yScissor, bgTileTexSize, bgTileTexSize);
+                        renderTile(shadersBucket, tile, mapCamera, matrix);
+                    }
+
+                    if (i == 0) {
+                        LOGI("xScissor %f yScissor %f bgTileTexSize %f", xScissor, yScissor, bgTileTexSize);
+                    }
+                }
             }
         }
+
     }
 
 
-//    float moveShiftX = fmod(shiftX, 1.0);
-//    for (int xTileIndex = 0; xTileIndex < xTiles.size(); xTileIndex++) {
+//    int xTileIndex = 0;
+//    for (float camMercXCursor = startShiftCameraInTiles; Utils::round(camMercXCursor, 3) <= Utils::round(endShiftCameraInTiles, 3); camMercXCursor++, xTileIndex++) {
+//        float xTile = fmod(camMercXCursor, n);
+//        if (xTile < 0)
+//            xTile += n;
+//
 //        for (int yTileIndex = 0; yTileIndex < yTiles.size(); yTileIndex++) {
-//            auto xTile = xTiles[xTileIndex];
 //            auto yTile = yTiles[yTileIndex];
-//            float xi = xTileIndex - moveShiftX;
-//            float yi = yTileIndex;
 //            auto tile = mapTileGetter->getOrRequest(xTile, yTile, tilesZoom);
 //            if (tile->isEmpty())
 //                continue;
 //
-//            float translateX = xi * extent;
-//            float translateY = -yi * extent;
+//            float xTranslateByCamXCursor = camMercXCursor;
+//            if (xTranslateByCamXCursor < 0) {
+//                xTranslateByCamXCursor = -ceil(abs(xTranslateByCamXCursor));
+//            }
+//            float translateX = (int) xTranslateByCamXCursor * extent;
+//            float translateY = -yTileIndex * extent;
 //            Eigen::Matrix4f translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
 //            Eigen::Matrix4f matrix = pv * translate;
-//            glScissor(xi * tileTexSize, ((yTiles.size() - 1) - yi) * tileTexSize, tileTexSize, tileTexSize);
+//            float xScissor = (-fmod(xTile, 1.0) + xTileIndex) * tileTexSize;
+//            float yScissor = ((yTiles.size() - 1) - yTileIndex) * tileTexSize;
+//            glScissor(xScissor, yScissor, tileTexSize, tileTexSize);
 //            renderTile(shadersBucket, tile, mapCamera, matrix);
 //        }
 //    }

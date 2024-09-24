@@ -17,7 +17,7 @@ void MapRenderer::productionRender() {
 
     mapControls.checkZoomUpdated();
 
-    float shiftXCam               = mapControls.getShiftX();
+    float shiftX                  = mapControls.getShiftX();
     short zTiles                  = mapControls.getTilesZoom();
     float distanceToMap           = mapControls.getDistanceToMap();
     float projectionNearFarDelta  = distanceToMap / 2;
@@ -37,11 +37,10 @@ void MapRenderer::productionRender() {
     Eigen::Matrix4f viewToPlane   = mapCamera.createView(0, cameraY, cameraDistance, 0, cameraY, 0);
     Eigen::Matrix4f pvForPlane    = projection * viewToPlane;
 
-    std::array<float, 2> visibleXEdges  = mapVisibleTiles.getXTilesVisibleEdges(shiftXCam);
-    std::vector<int> visibleX           = mapVisibleTiles.getVisibleXTiles(visibleXEdges, zTiles);
     std::array<float, 2> visibleYEdges  = mapVisibleTiles.getYTilesVisibleEdges(zTiles, planeWidth, mapControls, pvForPlane);
     std::vector<int> visibleY           = mapVisibleTiles.getVisibleYTiles(visibleYEdges, zTiles);
-    mapTileRender.renderMainTexture(shadersBucket, mapCamera, mapTileGetter, visibleX, visibleY,  zTiles, shiftXCam);
+    mapTileRender.renderMainTexture(shadersBucket, mapCamera, mapTileGetter, visibleY,  zTiles, shiftX, planeWidth, mapControls);
+
 
 
 
@@ -80,7 +79,9 @@ void MapRenderer::productionRender() {
 
     mapTest.drawPoints3D(shadersBucket, vertices, 5.0f, pvForPlane);
     mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
-    mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTileRender.getTilesTexture(), zTiles == 0 ? 1 : 2, visibleY.size());
+    float unitX = zTiles == 0 ? 1 : 2;
+    float scale = 1;
+    mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTileRender.getTilesTexture(), unitX * scale, visibleY.size() * scale);
     auto error = CommonUtils::getGLErrorString();
 }
 
@@ -99,6 +100,7 @@ void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject& reques
     mapTileGetter = new MapTileGetter(env, request_tile, mapTileRender.getStyle());
     mapTileGetter->getOrRequest(0, 0, 0);
     mapSymbols.loadFont(assetManager);
+
 }
 
 void MapRenderer::drag(float dx, float dy) {
@@ -118,6 +120,7 @@ MapRenderer::~MapRenderer() {
 }
 
 MapRenderer::MapRenderer() {
+    mapControls.setShiftX(planeWidth / 2.0);
     mapControls.setCamYLimit(planeWidth / 2.0);
     mapControls.initStartZoom(0);
 }
