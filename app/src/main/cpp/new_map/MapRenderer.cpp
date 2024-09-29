@@ -13,17 +13,10 @@ void MapRenderer::renderFrame() {
 void MapRenderer::render2DMap() {
     float deltaTime               = mapFpsCounter.newFrame();
     float timeElapsed             = mapFpsCounter.getTimeElapsed();
-    float shiftX                  = mapControls.getShiftX();
     float tileTextureSize         = 1024;
-    float tileSize                = 1.0f; // Размер одного квадрата
+    float tileSize                = 1.0f;
     int zTile                     = mapControls.getTilesZoom();
     int n = pow(2.0, zTile);
-    float visibleWindowX = 2;
-    if (n == 1) {
-        visibleWindowX = 1;
-        tileTextureSize *= 2;
-    }
-
     float distanceToMap           = mapControls.getDistanceToMap();
     float projectionNearFarDelta  = distanceToMap / 2;
     float planeZ                  = radius;
@@ -34,12 +27,25 @@ void MapRenderer::render2DMap() {
     float aspectRatio             = mapCamera.getRatio();
     int lod                       = 20;
     float cameraLatitudeRad       = mapControls.getCameraSphereLatitude(planeWidth);
+
+    float visibleWindowX = 2;
+    if (zTile < 4 && zTile > 1) {
+        visibleWindowX = n;
+    }
+    mapControls.checkScale(visibleWindowX);
+    float shiftX = mapControls.getShiftX();
+    if (n == 1) {
+        visibleWindowX = 1;
+        tileTextureSize *= 2;
+    }
+
+
+
     Eigen::Matrix4f projectionPlanet   = mapCamera.createPerspectiveProjection(nearPlane, farPlane);
     Eigen::Matrix4f viewPlanet         = mapCamera.createView(0, cameraY, cameraDistance, 0, cameraY, 0);
     Eigen::Matrix4f pvPlanet           = projectionPlanet * viewPlanet;
     auto planet2Shader = shadersBucket.planet2Shader;
     float halfWidth         = planeWidth / 2.0;
-    int xTilesAmount        = visibleWindowX;
     float uTileDelta        = 1.0 / n;
     float uTileLodDelta     = uTileDelta / lod;
     float tileSizePlanet    = planeWidth / n;
@@ -53,8 +59,10 @@ void MapRenderer::render2DMap() {
     Eigen::Vector4f bottomMiddlePoint = pvInverse * ndcBottomMiddle;
     topMiddlePoint /= topMiddlePoint.w();
     bottomMiddlePoint /= bottomMiddlePoint.w();
-    float yTop = (topMiddlePoint.y() - halfPlane) / -planeWidth;
-    float yBottom = (bottomMiddlePoint.y() - halfPlane) / -planeWidth;
+
+    float yAdditional = zTile < 3 ? 1.0 : 0.0;
+    float yTop = (topMiddlePoint.y() - halfPlane) / -planeWidth - yAdditional;
+    float yBottom = (bottomMiddlePoint.y() - halfPlane) / -planeWidth + yAdditional;
     yTop = std::fmax(0.0, std::fmin(1.0, yTop));
     yBottom = std::fmax(0.0, std::fmin(1.0, yBottom));
     float yTileTop = floor(yTop * n);
@@ -70,13 +78,13 @@ void MapRenderer::render2DMap() {
 
 
 
-
     //////////////////////////////////
     ////                            //
     ////   Render 2d map texture    //
     ////                            //
     //////////////////////////////////
     std::vector<std::array<int, 2>> xTiles;
+
     float lefVisibleX = shiftX;
     float rightVisibleX = shiftX + xWorldWindowSize;
     for (int xTileWorld = floor(lefVisibleX / tileSize); xTileWorld <= floor(rightVisibleX / tileSize); xTileWorld += 1) {
@@ -301,13 +309,13 @@ void MapRenderer::render2DMap() {
     ////                            //
     //////////////////////////////////
     int yPointsAmount   = yTiles * lod + 1;
-    int xPointsAmount   = xTilesAmount * lod + 1;
+    int xPointsAmount   = visibleWindowX * lod + 1;
     int xPointLastIndex = xPointsAmount - 1;
     int yPointLastIndex = yPointsAmount - 1;
-    float uDeltaXTilesSize    = xTilesAmount * uTileDelta;
+    float uDeltaXTilesSize    = visibleWindowX * uTileDelta;
     float planetStartU        = 0.5 - uDeltaXTilesSize / 2.0;
-    int xiEnd                 = xTilesAmount - 1;
-    float xShift              = -xTilesAmount * tileSizePlanet / 2.0;
+    int xiEnd                 = visibleWindowX - 1;
+    float xShift              = -visibleWindowX * tileSizePlanet / 2.0;
     std::vector<float> uNowTest;
     std::vector<float> vNowTest;
     std::vector<float> planetVTest;
@@ -347,7 +355,7 @@ void MapRenderer::render2DMap() {
         }
     }
 
-    int xIndicesEnd = xTilesAmount * lod;
+    int xIndicesEnd = visibleWindowX * lod;
     for (int x = 0; x < xIndicesEnd; x++) {
         for (int y = 0; y < yPointsAmount - 1; y++) {
             int i = x * yPointsAmount + y;
@@ -371,7 +379,6 @@ void MapRenderer::render2DMap() {
     glEnableVertexAttribArray(planet2Shader->getTilesUVLocation());
     glBindTexture(GL_TEXTURE_2D, mapTextureForPlanet);
     glUniform1i(planet2Shader->getTileTextureLocation(), 0);
-    //glUniform1f(planet2Shader->getTransitionLocation(), mapControls.getAnimatedTransition(timeElapsed * 2.0));
     glUniform1f(planet2Shader->getTransitionLocation(), mapControls.getTransition());
     glUniform1f(planet2Shader->getCamAngleLocation(), cameraLatitudeRad);
     glUniform1f(planet2Shader->getCamDistanceLocation(), cameraDistance);
@@ -382,7 +389,7 @@ void MapRenderer::render2DMap() {
 
     mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
     mapTest.drawPoints3D(shadersBucket, verticesPlanet, 5.0f, pvPlanet);
-    mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTextureForPlanet, visibleWindowX, visibleWindowY);
+    //mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTextureForPlanet, visibleWindowX, visibleWindowY);
 
     auto error = CommonUtils::getGLErrorString();
 }

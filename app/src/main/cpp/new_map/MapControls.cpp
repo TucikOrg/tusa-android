@@ -34,29 +34,45 @@ float MapControls::getCameraSphereLatitude(float planeWidth) {
     return lat;
 }
 
+void MapControls::checkScale(int windowXSize) {
+    if (savedWindowXSize == -1) {
+        savedWindowXSize = windowXSize;
+    }
+    float previousWinXSize = savedWindowXSize;
+    float prevTilesZoom = checkSavedTilesZoom;
+
+    short newZoom = getTilesZoom();
+    if (prevTilesZoom != newZoom) {
+        float currentShiftX = shiftX;
+        if (newZoom > prevTilesZoom) {
+            float scale = pow(2, newZoom - prevTilesZoom);
+            float useShift = (windowXSize / 2.0f);
+            float windowChanged = abs(windowXSize - previousWinXSize);
+            useShift += abs(windowChanged);
+            float shiftValue = pow(2, newZoom) > windowXSize ? useShift : 0;
+            float newShiftX = currentShiftX * scale + shiftValue;
+            shiftX = newShiftX;
+        } else if (newZoom < prevTilesZoom) {
+            float scale = pow(2, prevTilesZoom - newZoom);
+            float useShift = (previousWinXSize / 2.0f);
+            float windowChanged = abs(windowXSize - previousWinXSize);
+            useShift += abs(windowChanged);
+            float shiftValue = pow(2, prevTilesZoom) > previousWinXSize ? useShift : 0;
+            float newShiftX = (currentShiftX - shiftValue) / scale;
+            shiftX = newShiftX;
+        }
+    }
+
+    checkSavedTilesZoom = newZoom;
+    savedWindowXSize = windowXSize;
+}
+
 void MapControls::scale(float detectorScale) {
     float realScale = (detectorScale - 1.0f);
     scaleFactorRaw *= (1 + realScale * scaleSpeed);
     scaleFactorRaw = std::fmax(scaleShift, std::fmin(scaleFactorRaw, maxScale));
     float factor = scaleFactorRaw - scaleShift;
-    short previousZoom = getTilesZoom();
     scaleFactorZoom = factor;
-    short newZoom = getTilesZoom();
-    int windowXSize = 2.0;
-    if (previousZoom != newZoom) {
-        float currentShiftX = shiftX;
-        if (newZoom > previousZoom) {
-            float scale = pow(2, newZoom - previousZoom);
-            float shiftValue = pow(2, newZoom) > windowXSize;
-            float newShiftX = currentShiftX * scale + shiftValue;
-            shiftX = newShiftX;
-        } else if (newZoom < previousZoom) {
-            float scale = pow(2, previousZoom - newZoom);
-            float shiftValue = pow(2, previousZoom) > windowXSize;
-            float newShiftX = (currentShiftX - shiftValue) / scale;
-            shiftX = newShiftX;
-        }
-    }
 }
 
 void MapControls::initStartZoom(float startZoom) {
@@ -66,6 +82,7 @@ void MapControls::initStartZoom(float startZoom) {
     scaleFactorZoom = factor;
 
     maxScale = maxZoom + scaleShift;
+    checkSavedTilesZoom = getTilesZoom();
 }
 
 float MapControls::getDistanceToMap() {
@@ -75,10 +92,10 @@ float MapControls::getDistanceToMap() {
 
 float MapControls::getTransition() {
     float transition = 1.0f;
-    float from = 4.0f;
-    float to = 8.0f;
+    float from = 3.0f;
+    float to = 10.0f;
     if (getZoom() > from && getZoom() < to) {
-        transition = (to - getZoom()) / from;
+        transition = (to - getZoom()) / (to - from);
     }
     if (getZoom() >= to) {
         transition = 0;

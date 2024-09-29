@@ -16,7 +16,7 @@ uniform float u_plane_camera_y;
 varying vec2 v_tiles_uv;
 
 const float M_PI = 3.1415926535897932384626433832795;
-const float M_PI_2= M_PI / 2.0;
+const float M_PI_2 = M_PI / 2.0;
 const float M_PI_4 = M_PI / 4.0;
 
 vec3 flatToSphere(float longitude, float latitude, float radius)

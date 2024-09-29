@@ -42,8 +42,13 @@ public:
         return shiftX;
     }
 
+    void checkScale(int windowXSize);
+
     float transitionTest = 0.0;
 private:
+    short checkSavedTilesZoom = 0;
+    int savedWindowXSize = -1;
+
     int maxTilesZoom = 16;
     float screenXDragged = 0;
     float screenYDragged = 0;
@@ -60,7 +65,7 @@ private:
     float scaleFactorZoom = 0;
     float ySpeed = -1500.0f;
     float shiftXSpeed = 0.0005f;
-    float camOneUnitScale = 7.0f;
+    float camOneUnitScale = 5.0f;
     float camYLimit = 0.0f;
 };
 
