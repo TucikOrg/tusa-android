@@ -14,14 +14,14 @@ public:
         key = MapTile::makeKey(x, y, z);
     }
 
-    std::vector<MapTileNode*> search(int x, int y, int z, MapTileGetter& storage) {
+    std::vector<MapTileNode*> search(int x, int y, int z, MapTileGetter& storage, bool& isBackground) {
         auto isTheSameOne = this->x == x && this->y == y && this->z == z;
         if (isTheSameOne) {
             if (tile == nullptr || tile->isEmpty()) {
                 // Cмотрим в хранилище если данных вектора нету в дереве
                 tile = storage.getOrRequest(x, y, z);
                 if (!tile->isEmpty()) {
-                    return {this};
+                    return { this };
                 }
             }
         }

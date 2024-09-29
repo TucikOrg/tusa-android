@@ -10,6 +10,7 @@
 #include <array>
 #include <jni.h>
 #include <thread>
+#include <cmath>
 #include "MapStyle.h"
 #include "MapTile.h"
 
@@ -18,8 +19,9 @@ public:
     MapTileGetter(JNIEnv *env, jobject& request_tile, MapStyle& style);
     ~MapTileGetter();
     MapTile* getOrRequest(int x, int y, int z, bool forceMem = false);
+    MapTile* findExistParent(int x, int y, int z);
 private:
-    std::map<uint64_t, MapTile> cacheTiles = {};
+    std::unordered_map<uint64_t, MapTile> cacheTiles = {};
     MapStyle& style;
 
     jclass requestTileClassGlobal;
@@ -27,7 +29,7 @@ private:
     JNIEnv *mainEnv;
     MapTile emptyTile = MapTile(-1, -1, -1);
 
-    std::map<uint64_t, void*> pushedToNetwork;
+    std::unordered_map<uint64_t, void*> pushedToNetwork;
     std::stack<std::array<int, 3>> networkTilesStack = {};
 
     MapTile* load(int x, int y, int z, JNIEnv* parallelThreadEnv);

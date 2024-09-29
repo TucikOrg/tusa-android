@@ -5,47 +5,6 @@
 #include "MapTest.h"
 #include <GLES2/gl2.h>
 
-void MapTest::drawTilesTextureTest(
-        ShadersBucket& shadersBucket,
-        MapCamera& mapCamera,
-        GLuint renderMapTexture,
-        int xSize,
-        int ySize
-) {
-    auto textureShader = shadersBucket.textureShader;
-    auto view = mapCamera.createView();
-    auto ratio = mapCamera.getRatio();
-    auto projection = mapCamera.createOrthoProjection(-ratio, ratio, -1, 1, 0.0, 1.0);
-    Eigen::Matrix4f pv = projection * view;
-
-    float sizeOfUnit = 0.2;
-    float width = sizeOfUnit * xSize;
-    float height = sizeOfUnit * ySize;
-    std::vector<float> vertices = {
-            -ratio, -1,
-            -ratio + width, -1,
-            -ratio + width, -1 + height,
-            -ratio, -1 + height
-    };
-    std::vector<float> uv = {
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 1
-    };
-
-    glUseProgram(textureShader->program);
-    glUniformMatrix4fv(textureShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    //glUniform4fv(textureShader->getColorLocation(), 1, new GLfloat[4]{0, 0, 0, 1});
-    glBindTexture(GL_TEXTURE_2D, renderMapTexture);
-    glUniform1i(textureShader->getTileTextureLocation0(), 0);
-    glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
-    glEnableVertexAttribArray(textureShader->getTextureCord());
-    glVertexAttribPointer(textureShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices.data());
-    glEnableVertexAttribArray(textureShader->getPosLocation());
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-}
-
 void MapTest::drawPoints2D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix) {
     auto plainShader = shadersBucket.plainShader;
     const GLfloat color[] = { 1, 0, 0, 1};
@@ -73,7 +32,6 @@ void MapTest::drawPoints3D(
     glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
     glEnableVertexAttribArray(plainShader->getPosLocation());
     glDrawArrays(GL_POINTS, 0, vertices.size() / 3);
-
 }
 
 void MapTest::drawLines3D(

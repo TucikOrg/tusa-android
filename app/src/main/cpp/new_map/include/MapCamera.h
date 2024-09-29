@@ -24,7 +24,12 @@ public:
 
     void glViewportDeviceSize();
     float getRatio();
-
+    float getScreenW() {
+        return screenW;
+    }
+    float getScreenH() {
+        return screenH;
+    }
 private:
     int screenW;
     int screenH;

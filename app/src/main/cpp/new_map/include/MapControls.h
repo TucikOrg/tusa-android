@@ -18,7 +18,6 @@ public:
     void scale(float detector);
     void doubleTap();
     void initStartZoom(float startZoom);
-    void checkZoomUpdated();
 
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }
@@ -26,10 +25,6 @@ public:
     float getCameraSphereLatitude(float planeWidth);
     float getTransition();
     float getAnimatedTransition(float time) { return abs(cos(time * 0.1)); }
-
-    void setShiftX(float x) {
-        shiftX = x;
-    }
 
     void setCamYLimit(float limit) {
         camYLimit = limit;
@@ -48,8 +43,6 @@ public:
     }
 
     float transitionTest = 0.0;
-    float test = 0;
-    bool testBool = false;
 private:
     int maxTilesZoom = 16;
     float screenXDragged = 0;
@@ -65,15 +58,10 @@ private:
     float scaleSpeed = 0.5f;
     float scaleShift = 1.0f;
     float scaleFactorZoom = 0;
-    short currentMapZoomFloor;
-    short newMapZoomFloor;
-    short currentMapTilesZoom;
-    short newMapTilesZoom;
     float ySpeed = -1500.0f;
-    float shiftXSpeed = 1500.0f;
+    float shiftXSpeed = 0.0005f;
     float camOneUnitScale = 7.0f;
     float camYLimit = 0.0f;
-
 };
 
 

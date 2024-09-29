@@ -8,11 +8,14 @@
 #include "csscolorparser/csscolorparser.h"
 #include "shader/shaders_bucket.h"
 #include "MapTile.h"
+#include "MapTest.h"
 #include "MapCamera.h"
 #include "MapStyle.h"
 #include "MapTileGetter.h"
 #include "MapControls.h"
-#include "renderer/render_tile_hash.h"
+#include "MapTilePos.h"
+#include "util/eigen_gl.h"
+#include "MapTest.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -22,25 +25,6 @@ class MapTileRender {
 public:
     void initTilesTexture();
 
-    void renderMainTexture(
-            ShadersBucket& shadersBucket,
-            MapCamera& mapCamera,
-            MapTileGetter* mapTileGetter,
-            std::vector<int> yTiles,
-            int tilesZoom,
-            float shiftX,
-            float planeWidth,
-            MapControls& mapControls
-    );
-
-    MapStyle& getStyle() {
-        return style;
-    }
-
-    GLuint getTilesTexture() {
-        return tilesTexture;
-    }
-private:
     void renderTile(
             ShadersBucket& shadersBucket,
             MapTile* tile,
@@ -48,14 +32,13 @@ private:
             Eigen::Matrix4f pv
     );
 
-    MapStyle style = MapStyle();
+    MapStyle& getStyle();
+    GLuint getTilesTexture();
+private:
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
-    GLuint tileFrameBuffer;
-    int textureSizeForTile = 1024;
 
-
-    std::unordered_map<std::string, GLuint> textures;
+    MapStyle style = MapStyle();
 };
 
 

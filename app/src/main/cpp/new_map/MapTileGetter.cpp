@@ -4,6 +4,8 @@
 
 #include "MapTileGetter.h"
 
+#include "util/android_log.h"
+
 std::mutex cacheMutex2;
 std::mutex networkTileStackMutex2;
 
@@ -47,11 +49,6 @@ void MapTileGetter::networkTilesFunction(JavaVM* gJvm) {
         //            shouldLoadTile = false;
         //        }
         //        visibleTilesResultMutex.unlock();
-
-        // Рутовый тайл тоже не грузим. Он грузится в другом потоке
-        //        if (tileToNetwork[0] == 0 && tileToNetwork[1] == 0 && tileToNetwork[2] == 0) {
-        //            shouldLoadTile = false;
-        //        }
 
         if (shouldLoadTile) {
             // Загружаем тайл
@@ -106,6 +103,38 @@ MapTile *MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
     }
 
     return &emptyTile;
+}
+
+MapTile *MapTileGetter::findExistParent(int x, int y, int z) {
+    cacheMutex2.lock();
+    auto rootKey = MapTile::makeKey(0, 0, 0);
+    auto root = cacheTiles.find(rootKey);
+    if (root == cacheTiles.end()) {
+        cacheMutex2.unlock();
+        return &emptyTile;
+    }
+    MapTile* parent = &root->second;
+    int parentX = x;
+    int parentY = y;
+    int parentZ = z;
+    while (parent->isRoot()) {
+        parentX = floor(FLOAT(parentX) / 2.0f);
+        parentY = floor(FLOAT(parentY) / 2.0f);
+        parentZ = parentZ - 1;
+        auto key = MapTile::makeKey(parentX, parentY, parentZ);
+        auto it = cacheTiles.find(key);
+        auto existsInMem = it != cacheTiles.end();
+        if (existsInMem) {
+            parent = &it->second;
+            break;
+        }
+
+        if (parentX <= 0 && parentY <= 0 && parentZ <= 0)
+            break;
+    }
+
+    cacheMutex2.unlock();
+    return parent;
 }
 
 

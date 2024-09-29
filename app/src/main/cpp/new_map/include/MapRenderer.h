@@ -16,7 +16,6 @@
 #include "MapTileGetter.h"
 #include "MapTileRender.h"
 #include "MapControls.h"
-#include "MapVisibleTiles.h"
 #include "MapSymbols.h"
 #include <vector>
 
@@ -34,9 +33,7 @@ public:
     void drag(float dx, float dy);
     void scale(float scaleFactor);
     void doubleTap();
-private:
-    void productionRender();
-
+    void render2DMap();
 private:
     ShadersBucket shadersBucket = ShadersBucket();
     MapGeometry mapGeometry = MapGeometry();
@@ -44,13 +41,25 @@ private:
     MapCamera mapCamera;
     MapTest mapTest;
     MapFpsCounter mapFpsCounter = MapFpsCounter();
-    MapVisibleTiles mapVisibleTiles = MapVisibleTiles();
     MapTileRender mapTileRender;
     MapTileGetter* mapTileGetter;
     MapSymbols mapSymbols = MapSymbols();
 
+
     float planeWidth = 3000000.0f;
-    float radius = planeWidth / 6.0;
+    float radius = planeWidth / 5.0;
+
+    float prTex2dWidth = 0;
+    float prTex2dHeight = 0;
+    float prTexPlanetWidth = 0;
+    float prTexPlanetHeight = 0;
+
+
+    std::string textureKey = "";
+    GLuint mapTexture2D;
+    GLuint mapTextureForPlanet;
+    GLuint mapFrameBuffer2D;
+    GLuint mapFrameBufferForPlanet;
 };
 
 

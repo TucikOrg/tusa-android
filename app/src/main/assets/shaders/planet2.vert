@@ -1,4 +1,4 @@
-precision lowp float;
+precision highp float;
 
 uniform mat4 u_matrix;
 uniform mat4 u_projection;
@@ -8,7 +8,6 @@ attribute vec2 a_planet_uv;
 attribute vec2 a_tiles_uv;
 
 uniform float u_transition;
-uniform float u_uv_shift_u;
 uniform float u_cam_angle;
 uniform float u_cam_distance;
 uniform float u_radius;
