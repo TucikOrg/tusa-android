@@ -41,6 +41,7 @@ private:
     int textureTileSizeUnit = 1024;
     int prTex2dHeight;
     int prTex2dWidth;
+    std::string textureKey;
 
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
