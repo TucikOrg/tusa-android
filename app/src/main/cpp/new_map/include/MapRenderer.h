@@ -2,7 +2,7 @@
 // Created by Artem on 16.09.2024.
 //
 
-#ifndef TUSA_ANDROID_MAPRENDERER_H
+#ifndef TUSA_ANDROID_MAPRENDERER2_H
 #define TUSA_ANDROID_MAPRENDERER_H
 
 
@@ -46,8 +46,12 @@ private:
     MapSymbols mapSymbols = MapSymbols();
 
 
+    float distortion(float latitudeRadians) {
+        return 1.0f / cosf(latitudeRadians);
+    }
+
     float planeWidth = 3000000.0f;
-    float radius = planeWidth / 5.0;
+    float radius = planeWidth / (distortion(DEG2RAD(85.0511)) / 2.0);
 
     float prTex2dWidth = 0;
     float prTex2dHeight = 0;
@@ -63,4 +67,4 @@ private:
 };
 
 
-#endif //TUSA_ANDROID_MAPRENDERER_H
+#endif //TUSA_ANDROID_MAPRENDERER2_H

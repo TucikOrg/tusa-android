@@ -20,12 +20,11 @@
 #include "gl/cube_example.h"
 #include "gl/triangle_example.h"
 #include "renderer/renderer.h"
-#include "MapRenderer.h"
+#include "MapRenderer2.h"
 
 #define LOG_TAG "GL_ARTEM"
 
-//Renderer renderer = Renderer();
-MapRenderer renderer = MapRenderer();
+MapRenderer2 renderer = MapRenderer2();
 
 extern "C"
 JNIEXPORT void JNICALL

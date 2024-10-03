@@ -16,6 +16,7 @@
 #include "texture_shader.h"
 #include "user_marker_shader.h"
 #include "planet2_shader.h"
+#include "planet3_shader.h"
 #include <boost/shared_ptr.hpp>
 
 class ShadersBucket {
@@ -33,6 +34,7 @@ public:
     std::shared_ptr<PlanetGlowShader> planetGlowShader;
     std::shared_ptr<TextureShader> textureShader;
     std::shared_ptr<UserMarkerShader> userMarkerShader;
+    std::shared_ptr<Planet3Shader> planet3Shader;
 };
 
 

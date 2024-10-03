@@ -3,6 +3,8 @@
 //
 
 #include "MapRenderer.h"
+#include "MapRenderer2.h"
+
 #include <GLES2/gl2.h>
 
 
@@ -18,7 +20,7 @@ void MapRenderer::render2DMap() {
     int zTile                     = mapControls.getTilesZoom();
     int n = pow(2.0, zTile);
     float distanceToMap           = mapControls.getDistanceToMap();
-    float projectionNearFarDelta  = distanceToMap / 2;
+    float projectionNearFarDelta  = distanceToMap / 1.1;
     float planeZ                  = radius;
     float cameraDistance          = distanceToMap + radius;
     float cameraY                 = mapControls.getCameraY();
@@ -27,10 +29,12 @@ void MapRenderer::render2DMap() {
     float aspectRatio             = mapCamera.getRatio();
     int lod                       = 20;
     float cameraLatitudeRad       = mapControls.getCameraSphereLatitude(planeWidth);
+    float distortionV = distortion(cameraLatitudeRad);
+    LOGI("distortion: %f", distortionV);
 
     float visibleWindowX = 2;
-    if (zTile < 4 && zTile > 1) {
-        visibleWindowX = n;
+    if (zTile == 2) {
+        visibleWindowX = 4;
     }
     mapControls.checkScale(visibleWindowX);
     float shiftX = mapControls.getShiftX();
@@ -40,10 +44,10 @@ void MapRenderer::render2DMap() {
     }
 
 
+    Eigen::Matrix4f viewToMapPlane = mapCamera.createView(0, cameraY, cameraDistance, 0, cameraY, 0);
+    Eigen::Matrix4f projectionToMapPlane = mapCamera.createPerspectiveProjection(distanceToMap - 1.0, distanceToMap);
+    Eigen::Matrix4f pvToMapPlane = projectionToMapPlane * viewToMapPlane;
 
-    Eigen::Matrix4f projectionPlanet   = mapCamera.createPerspectiveProjection(nearPlane, farPlane);
-    Eigen::Matrix4f viewPlanet         = mapCamera.createView(0, cameraY, cameraDistance, 0, cameraY, 0);
-    Eigen::Matrix4f pvPlanet           = projectionPlanet * viewPlanet;
     auto planet2Shader = shadersBucket.planet2Shader;
     float halfWidth         = planeWidth / 2.0;
     float uTileDelta        = 1.0 / n;
@@ -52,15 +56,19 @@ void MapRenderer::render2DMap() {
 
     float lodDelta          = tileSizePlanet / lod;
     float halfPlane         = planeWidth / 2.0;
-    Eigen::Matrix4f pvInverse = pvPlanet.inverse();
-    Eigen::Vector4f ndcTopMiddle(0.0f, 1.0f, 0.5, 1.0f);
+    Eigen::Matrix4f pvInverse = pvToMapPlane.inverse();
+    float w = 1.0f;
+    Eigen::Vector4f ndcTopMiddle(0.0f, 1.0f, w, 1.0f);
     Eigen::Vector4f topMiddlePoint = pvInverse * ndcTopMiddle;
-    Eigen::Vector4f ndcBottomMiddle(0.0f, -1.0f, 0.5, 1.0f);
+    Eigen::Vector4f ndcBottomMiddle(0.0f, -1.0f, w, 1.0f);
     Eigen::Vector4f bottomMiddlePoint = pvInverse * ndcBottomMiddle;
     topMiddlePoint /= topMiddlePoint.w();
     bottomMiddlePoint /= bottomMiddlePoint.w();
 
-    float yAdditional = zTile < 3 ? 1.0 : 0.0;
+    float yAdditional = 0.0;
+    if (zTile == 2 || zTile == 1) {
+        yAdditional = 1.0;
+    }
     float yTop = (topMiddlePoint.y() - halfPlane) / -planeWidth - yAdditional;
     float yBottom = (bottomMiddlePoint.y() - halfPlane) / -planeWidth + yAdditional;
     yTop = std::fmax(0.0, std::fmin(1.0, yTop));
@@ -367,6 +375,7 @@ void MapRenderer::render2DMap() {
             planetIndices.push_back(i + yPointsAmount + 1);
         }
     }
+    Eigen::Matrix4f projectionPlanet = mapCamera.createPerspectiveProjection(nearPlane, farPlane);
 
     glEnable(GL_DEPTH_TEST);
     glUseProgram(planet2Shader->program);
@@ -379,7 +388,8 @@ void MapRenderer::render2DMap() {
     glEnableVertexAttribArray(planet2Shader->getTilesUVLocation());
     glBindTexture(GL_TEXTURE_2D, mapTextureForPlanet);
     glUniform1i(planet2Shader->getTileTextureLocation(), 0);
-    glUniform1f(planet2Shader->getTransitionLocation(), mapControls.getTransition());
+    glUniform1f(planet2Shader->getTransitionLocation(), mapControls.getAnimatedTransition(timeElapsed * 2.0));
+    glUniform1f(planet2Shader->getUsePolesZoomingLocation(), 1.0f);
     glUniform1f(planet2Shader->getCamAngleLocation(), cameraLatitudeRad);
     glUniform1f(planet2Shader->getCamDistanceLocation(), cameraDistance);
     glUniform1f(planet2Shader->getRadiusLocation(), radius);
@@ -387,9 +397,10 @@ void MapRenderer::render2DMap() {
     glDrawElements(GL_TRIANGLES, planetIndices.size(), GL_UNSIGNED_INT, planetIndices.data());
     glDisable(GL_DEPTH_TEST);
 
+    Eigen::Matrix4f pvPlanet = projectionPlanet * viewToMapPlane;
     mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
     mapTest.drawPoints3D(shadersBucket, verticesPlanet, 5.0f, pvPlanet);
-    //mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTextureForPlanet, visibleWindowX, visibleWindowY);
+    mapTest.drawTilesTextureTest(shadersBucket, mapCamera, mapTextureForPlanet, visibleWindowX, visibleWindowY);
 
     auto error = CommonUtils::getGLErrorString();
 }
@@ -450,7 +461,5 @@ MapRenderer::MapRenderer() {
     mapControls.setCamYLimit(planeWidth / 2.0);
     mapControls.initStartZoom(0);
 }
-
-
 
 

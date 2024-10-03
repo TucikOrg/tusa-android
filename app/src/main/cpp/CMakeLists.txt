@@ -38,6 +38,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/planet_glow_shader.cpp
         shader/texture_shader.cpp
         shader/user_marker_shader.cpp
+        shader/planet3_shader.cpp
 
         renderer/renderer.cpp
         renderer/map_draw_call.cpp
@@ -96,12 +97,16 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         new_map/MapSymbols.cpp
         new_map/MapTileNode.cpp
         new_map/MapTilePos.cpp
+
+        new_map3/MapRenderer2.cpp
+        new_map3/MapControls2.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE new_map/include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE new_map3/include)
 
 include(${PROJECT_SOURCE_DIR}/vendor/protozero.cmake)
 #include(${PROJECT_SOURCE_DIR}/vendor/vector-tile.cmake)

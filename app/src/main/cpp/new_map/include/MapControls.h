@@ -65,7 +65,7 @@ private:
     float scaleFactorZoom = 0;
     float ySpeed = -1500.0f;
     float shiftXSpeed = 0.0005f;
-    float camOneUnitScale = 5.0f;
+    float camOneUnitScale = 7.0f;
     float camYLimit = 0.0f;
 };
 

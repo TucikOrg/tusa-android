@@ -24,4 +24,5 @@ Planet2Shader::Planet2Shader(AAssetManager *assetManager, const char *vertexShad
     u_plane_camera_y = glGetUniformLocation(program, "u_plane_camera_y");
     u_cam_distance = glGetUniformLocation(program, "u_cam_distance");
     u_radius = glGetUniformLocation(program, "u_radius");
+    u_use_poles_zooming = glGetUniformLocation(program, "u_use_poles_zooming");
 }

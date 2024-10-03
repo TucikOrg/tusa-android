@@ -38,6 +38,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     userMarkerShader = std::shared_ptr<UserMarkerShader>(new UserMarkerShader(
             assetManager, "shaders/user_marker.vert", "shaders/user_marker.frag"
     ));
+    planet3Shader = std::shared_ptr<Planet3Shader>(new Planet3Shader(
+            assetManager, "shaders/planet3.vert", "shaders/planet3.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {

@@ -12,12 +12,14 @@ uniform float u_cam_angle;
 uniform float u_cam_distance;
 uniform float u_radius;
 uniform float u_plane_camera_y;
+uniform float u_use_poles_zooming;
 
 varying vec2 v_tiles_uv;
 
 const float M_PI = 3.1415926535897932384626433832795;
 const float M_PI_2 = M_PI / 2.0;
 const float M_PI_4 = M_PI / 4.0;
+const float M_PI_8 = M_PI / 8.0;
 
 vec3 flatToSphere(float longitude, float latitude, float radius)
 {
@@ -93,7 +95,11 @@ void main() {
 
     // Calculate camera position
     // Camera Plane to Sphere transition
-    vec3 sphericalCamPos = createCamSphericalPosition(camAngle, cameraDistance);
+    float polesCamDistance = (cameraDistance - radius) * 0.3 + radius;
+    float latLimitRad = 85.011 * M_PI / 180.0;
+    float camSphereDistMix = smoothstep(0.0, latLimitRad, abs(camAngle)) * u_use_poles_zooming;
+    float sphereCamDistance = mix(cameraDistance, polesCamDistance, camSphereDistMix);
+    vec3 sphericalCamPos = createCamSphericalPosition(camAngle, sphereCamDistance);
     vec3 planeCamPos = createFlatCamPosition(planeCameraY, radius, cameraDistance);
 
     vec3 sphericalTarget = vec3(0.0, 0.0, 0.0);

@@ -22,6 +22,7 @@ public:
     GLuint getCamDistanceLocation() const {return u_cam_distance;}
     GLuint getRadiusLocation() const {return u_radius;}
     GLuint getPlaneCamYLocation() const {return u_plane_camera_y;}
+    GLuint getUsePolesZoomingLocation() const {return u_use_poles_zooming;}
 
 private:
     GLint a_pos;
@@ -34,6 +35,7 @@ private:
     GLint u_cam_distance;
     GLint u_radius;
     GLint u_plane_camera_y;
+    GLint u_use_poles_zooming;
 };
 
 
