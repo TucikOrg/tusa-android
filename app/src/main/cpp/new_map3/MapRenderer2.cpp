@@ -6,6 +6,7 @@
 
 #include <cmath>
 
+
 void MapRenderer2::renderFrame() {
     mapFpsCounter.newFrame();
 
@@ -84,8 +85,10 @@ void MapRenderer2::renderFrame() {
     double xTilesAmount = abs(visTileXEndInf - visTileXStartInf);
     float scaleUTex = visXTilesDelta * 2.0 / xTilesAmount;
     double tileUSize = (1.0 / xTilesAmount);
-    double tilesUSwiped = (EPSG3857LonNormInf / (2.0 * tileP)) * tileUSize;
-    float shiftUTex = fmod(tilesUSwiped, 1.0 / xTilesAmount) + (EPSG3857LonNormInf < 0) * tileUSize;
+    double tilesSwiped = (EPSG3857LonNormInf / (2.0 * tileP));
+    double tilesUSwiped = tilesSwiped * tileUSize;
+    double EPSGLonNormInfNegative = (EPSG3857LonNormInf < 0);
+    float shiftUTex = fmod(tilesUSwiped, 1.0 / xTilesAmount) + EPSGLonNormInfNegative * tileUSize;
 
     double planetVStart = visTileYStartInv * tileP;
     double planetVEnd = visTileYEndInv * tileP;
@@ -100,16 +103,25 @@ void MapRenderer2::renderFrame() {
     double planetUEnd = std::fmin(planetUCenter + planetUVDelta, 1.0);
     double planetUDelta = (planetUEnd - planetUStart) / segments;
 
+    float topYVertex = -1;
+    float leftXVertex = -1;
+    float bottomYVertex = -1;
+    float rightXVertex = -1;
     std::vector<float> planetEPSG3857;
     std::vector<float> planetTexUV;
     std::vector<float> planetVertices;
     for (int i = 0; i <= segments; i ++) {
         double planetV = planetVStart + i * planetVDelta;
         float y = planetV * planeSize - verticesShift;
+        if (bottomYVertex == -1.0) bottomYVertex = y;
+        topYVertex = y;
 
         for (int j = 0; j <= segments; j++) {
             double planetU = planetUStart + j * planetUDelta;
             float x = planetU * planeSize - verticesShift;
+            if (leftXVertex == -1.0) leftXVertex = x;
+            rightXVertex = x;
+
             planetVertices.push_back(x);
             planetVertices.push_back(y);
             planetEPSG3857.push_back((planetV * 2.0f - 1.0f) * M_PI);
@@ -134,9 +146,9 @@ void MapRenderer2::renderFrame() {
 
     // определяем тайлы и ключ
     int existTiles = 0;
-    std::vector<MapTile*> backgroundTiles;
-    std::unordered_map<uint64_t, void*> backgroundTileKeys;
-    std::unordered_map<uint64_t, MapTile*> tiles;
+    std::vector<MapTile*> backgroundTiles = {};
+    std::unordered_map<uint64_t, void*> backgroundTileKeys = {};
+    std::unordered_map<uint64_t, MapTile*> tiles = {};
     for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
         for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
             int tileX = normalizeXTile(tileXInf, n);
@@ -166,12 +178,14 @@ void MapRenderer2::renderFrame() {
             std::to_string(backgroundTiles.size()) +
             std::to_string(existTiles);
 
+
     //////////////////////////////////
     ////                            //
     ////       Render texture       //
     ////                            //
     //////////////////////////////////
     if (textureKey != newTextureKey) {
+        textureKey = newTextureKey;
         float topY = visTileYStart;
         float leftX = normalizeXTile(visTileXStartInf, n);
         float textureWidth = textureTileSize * xTilesAmount;
@@ -221,7 +235,7 @@ void MapRenderer2::renderFrame() {
             }
         }
 
-        // рисуем видимые тайлы
+        // рисуем актуальные тайлы
         for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
             for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
                 int tileX = normalizeXTile(tileXInf, n);
@@ -247,6 +261,8 @@ void MapRenderer2::renderFrame() {
     }
 
 
+    bool forwardRenderingToWorld = zoom >= 6;
+
     //////////////////////////////////
     ////                            //
     ////       Render planet        //
@@ -254,26 +270,84 @@ void MapRenderer2::renderFrame() {
     //////////////////////////////////
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glEnable(GL_DEPTH_TEST);
-    glUseProgram(planet3Shader->program);
-    glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glUniformMatrix4fv(planet3Shader->getPlaneMatrixLocation(), 1, GL_FALSE, planeModelMatrix.data());
-    glUniformMatrix4fv(planet3Shader->getSphereMatrixLocation(), 1, GL_FALSE, sphereModelMatrix.data());
-    glVertexAttribPointer(planet3Shader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
-    glEnableVertexAttribArray(planet3Shader->getPosLocation());
-    glVertexAttribPointer(planet3Shader->getPlanetEPSG3857Location(), 2, GL_FLOAT, GL_FALSE, 0, planetEPSG3857.data());
-    glEnableVertexAttribArray(planet3Shader->getPlanetEPSG3857Location());
-    glVertexAttribPointer(planet3Shader->getTextureUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetTexUV.data());
-    glEnableVertexAttribArray(planet3Shader->getTextureUVLocation());
-    glBindTexture(GL_TEXTURE_2D, mapTexture);
-    glUniform1i(planet3Shader->getTextureLocation(), 0);
-    glUniform1f(planet3Shader->getPlaneSizeLocation(), planeSize);
-    glUniform1f(planet3Shader->getTransitionLocation(), transition);
-    glUniform2f(planet3Shader->getCameraEPSG3857Location(), EPSG3857CamLat, 0.0f);
-    glUniform2f(planet3Shader->getUVOffsetLocation(), shiftUTex, 0.0f);
-    glUniform2f(planet3Shader->getUVScaleLocation(), scaleUTex, 1.0f);
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
-    glDisable(GL_DEPTH_TEST);
+
+    if (forwardRenderingToWorld) {
+        float shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
+        Eigen::Vector4f topLeftWorld4f = planeModelMatrix * Eigen::Vector4f(leftXVertex, topYVertex, 0, 1.0);
+        Eigen::Vector4f bottomRightWorld4f = planeModelMatrix * Eigen::Vector4f(rightXVertex, bottomYVertex, 0, 1.0);
+        Eigen::Vector3f topLeftWorld = topLeftWorld4f.head(3) / topLeftWorld4f.w();
+        Eigen::Vector3f bottomRightWorld = bottomRightWorld4f.head(3) / bottomRightWorld4f.w();
+        float worldTileSizeX = abs(bottomRightWorld.x() - topLeftWorld.x()) / (2.0 * visXTilesDelta);
+        float worldTileSizeY = abs(bottomRightWorld.y() - topLeftWorld.y()) / yTilesAmount;
+        float scaleTileX = worldTileSizeX / extent;
+        float scaleTileY = worldTileSizeY / extent;
+
+        // рисуем фоновые тайлы
+        for (int loop = -1; loop <= 1; loop++) {
+            for (auto backgroundTile : backgroundTiles) {
+                float deltaZ = tileZ - backgroundTile->getZ();
+                float scale = pow(2.0, deltaZ);
+
+                float translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX);
+                float translateYIndex = (backgroundTile->getY() * scale - topY);
+                float translateY = translateYIndex * -extent;
+                float translateX = translateXIndex * extent;
+                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0);
+                auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                Eigen::Matrix4f tileMatrix = pvTexture * translate * scaleM;
+                mapTileRender.renderTile(
+                        shadersBucket,
+                        backgroundTile,
+                        mapCamera,
+                        tileMatrix
+                );
+            }
+        }
+
+        std::vector<TileAndMatrix> actualTiles = {};
+        // рисуем актуальные тайлы
+        for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
+            for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
+                int tileX = normalizeXTile(tileXInf, n);
+                auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
+                if (tile->isEmpty()) {
+                    continue;
+                }
+                float translateXIndex = xPos;
+                float translateYIndex = tileY - visTileYStart;
+                float translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
+                float translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+                auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                Eigen::Matrix4f scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
+                Eigen::Matrix4f tileMatrix = pv * translateMatrix * scaleMatrix;
+                actualTiles.push_back({tile, tileMatrix});
+            }
+        }
+        mapTileRender.renderTilesByLayers(shadersBucket, actualTiles);
+
+    } else {
+        glEnable(GL_DEPTH_TEST);
+        glUseProgram(planet3Shader->program);
+        glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+        glUniformMatrix4fv(planet3Shader->getPlaneMatrixLocation(), 1, GL_FALSE, planeModelMatrix.data());
+        glUniformMatrix4fv(planet3Shader->getSphereMatrixLocation(), 1, GL_FALSE, sphereModelMatrix.data());
+        glVertexAttribPointer(planet3Shader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
+        glEnableVertexAttribArray(planet3Shader->getPosLocation());
+        glVertexAttribPointer(planet3Shader->getPlanetEPSG3857Location(), 2, GL_FLOAT, GL_FALSE, 0, planetEPSG3857.data());
+        glEnableVertexAttribArray(planet3Shader->getPlanetEPSG3857Location());
+        glVertexAttribPointer(planet3Shader->getTextureUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetTexUV.data());
+        glEnableVertexAttribArray(planet3Shader->getTextureUVLocation());
+        glBindTexture(GL_TEXTURE_2D, mapTexture);
+        glUniform1i(planet3Shader->getTextureLocation(), 0);
+        glUniform1f(planet3Shader->getPlaneSizeLocation(), planeSize);
+        glUniform1f(planet3Shader->getTransitionLocation(), transition);
+        glUniform2f(planet3Shader->getCameraEPSG3857Location(), EPSG3857CamLat, 0.0f);
+        glUniform2f(planet3Shader->getUVOffsetLocation(), shiftUTex, 0.0f);
+        glUniform2f(planet3Shader->getUVScaleLocation(), scaleUTex, 1.0f);
+        glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
+        glDisable(GL_DEPTH_TEST);
+    }
+
 
     // draw points
     glUseProgram(plainShader->program);
@@ -353,8 +427,6 @@ void MapRenderer2::onSurfaceCreated(AAssetManager *assetManager) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glGenFramebuffers(1, &mapTextureFramebuffer);
-
-
 }
 
 void MapRenderer2::drag(float dx, float dy) {
@@ -370,5 +442,10 @@ void MapRenderer2::doubleTap() {
 }
 
 MapRenderer2::MapRenderer2() {
-    mapControls.initStartZoom(0);
+    float moscowLat = DEG2RAD(55.7558);
+    float moscowLon = DEG2RAD(37.6176);
+    mapControls.setCamPos(moscowLat, moscowLon);
+    mapControls.setZoom(14);
 }
+
+

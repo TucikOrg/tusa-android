@@ -46,7 +46,6 @@ void main() {
 
     vec4 sphereVertexPos = u_sphere_matrix * vec4(getSpherePoint(epsg4326.x, epsg4326.y, radius), 1.0) - vec4(0.0, 0.0, radius, 0.0);
     vec4 planeVertexPos = u_plane_matrix * a_vertexPosition;
-
     vec4 vertexPos = mix(planeVertexPos, sphereVertexPos, u_transition);
     gl_Position = u_matrix * vertexPos;
 

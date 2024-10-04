@@ -6,6 +6,7 @@
 #define TUSA_ANDROID_MAPCONTROLS2_H
 
 #include <cmath>
+#include "util/android_log.h"
 
 class MapControls2 {
 public:
@@ -28,21 +29,25 @@ public:
         float factor = scaleFactorRaw - scaleShift;
         scaleFactorZoom = factor;
     };
+
     void doubleTap() {
 
     }
-    void initStartZoom(float startZoom) {
-        onAppStartMapZoom = startZoom;
-        scaleFactorRaw = onAppStartMapZoom + scaleShift;
+
+    void setZoom(float zoom) {
+        scaleFactorRaw = zoom + scaleShift;
         float factor = scaleFactorRaw - scaleShift;
         scaleFactorZoom = factor;
-
-        maxScale = maxZoom + scaleShift;
     }
 
     short getMaxTilesZoom() { return maxTilesZoom; }
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }
+
+    void setCamPos(float latitudeEPSG4326, float longitudeEPSG4326) {
+        epsg3857LatNorm = Utils::EPSG4326_to_EPSG3857_latitude(latitudeEPSG4326) / M_PI;
+        epsg3857LonNormInf = longitudeEPSG4326 / M_PI;
+    }
 
     float getDistanceToMap(float portion) {
         float scale = pow(2.0, maxZoom - scaleFactorZoom);
@@ -132,12 +137,11 @@ private:
     double epsg3857LatNorm = 0;
     double epsg3857LonNormInf = 0;
 
-    float onAppStartMapZoom = 0.0f;
     float scaleFactorRaw = 0;
     float maxZoom = 19.0f;
-    float maxScale = 0;
-    float scaleSpeed = 0.5f;
     float scaleShift = 1.0f;
+    float maxScale = maxZoom + scaleShift;
+    float scaleSpeed = 0.5f;
     float scaleFactorZoom = 0;
     float moveSpeed = 0.001f;
     float camOneUnitScale = 2.0f;

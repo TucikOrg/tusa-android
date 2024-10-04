@@ -22,6 +22,7 @@ public:
     GLint getSphereMatrixLocation() const {return u_sphere_matrix;}
     GLint getUVOffsetLocation() const {return u_uv_offset;}
     GLint getUVScaleLocation() const {return u_uv_scale;}
+    GLint getColorLocation() const {return u_color;}
 
 private:
     GLint a_pos;
@@ -35,6 +36,7 @@ private:
     GLint u_sphere_matrix;
     GLint u_uv_offset;
     GLint u_uv_scale;
+    GLint u_color;
 };
 
 

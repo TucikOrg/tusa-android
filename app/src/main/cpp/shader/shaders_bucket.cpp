@@ -3,7 +3,6 @@
 //
 
 #include "shader/shaders_bucket.h"
-#include "shader/shaders_bucket.h"
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -40,6 +39,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     ));
     planet3Shader = std::shared_ptr<Planet3Shader>(new Planet3Shader(
             assetManager, "shaders/planet3.vert", "shaders/planet3.frag"
+    ));
+    planet3FRendShader = std::shared_ptr<Planet3FRendShader>(new Planet3FRendShader(
+            assetManager, "shaders/planet3_f_rend.vert", "shaders/planet3_f_rend.frag"
     ));
 }
 

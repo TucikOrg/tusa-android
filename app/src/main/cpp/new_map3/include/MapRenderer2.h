@@ -11,6 +11,7 @@
 #include "MapFpsCounter.h"
 #include "MapTileRender.h"
 #include "MapControls2.h"
+#include "TileAndMatrix.h"
 
 class MapRenderer2 {
 public:

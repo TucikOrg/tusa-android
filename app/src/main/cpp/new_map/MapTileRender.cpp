@@ -24,45 +24,9 @@ void MapTileRender::renderTile(
         MapCamera &mapCamera,
         Eigen::Matrix4f pv
 ) {
-    float extent = 4096;
-    std::vector<float> vertices = {
-            0, 0,
-            0, -extent,
-            extent, -extent,
-            extent, 0,
-    };
-    auto& plainShader = shadersBucket.plainShader;
-    auto backgroundColor = CommonUtils::toOpenGlColor(CSSColorParser::parse("rgb(241, 255, 230)"));
-    glUseProgram(plainShader->program);
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glUniform4fv(plainShader->getColorLocation(), 1.0f, backgroundColor.data());
-    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices.data());
-    glEnableVertexAttribArray(plainShader->getPosLocation());
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
+    drawBackground(shadersBucket, pv);
     for (auto styleIndex : style.getStyles()) {
-        float lineWidth = style.getLineWidth(styleIndex);
-        auto color = CommonUtils::toOpenGlColor(style.getColor(styleIndex));
-        auto& polygons = tile->resultPolygonsAggregatedByStyles[styleIndex];
-        auto& lines = tile->resultLinesAggregatedByStyles[styleIndex];
-
-        glUniform4fv(plainShader->getColorLocation(), 1, color.data());
-        if (!polygons.vertices.empty()) {
-            glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                                  GL_FALSE, 0, polygons.vertices.data()
-            );
-            glEnableVertexAttribArray(plainShader->getPosLocation());
-            glDrawElements(GL_TRIANGLES, polygons.indices.size(), GL_UNSIGNED_INT, polygons.indices.data());
-        }
-
-        if (!lines.vertices.empty()) {
-            glLineWidth(lineWidth);
-            glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                                  GL_FALSE, 0, lines.vertices.data()
-            );
-            glEnableVertexAttribArray(plainShader->getPosLocation());
-            glDrawElements(GL_LINES, lines.indices.size(), GL_UNSIGNED_INT, lines.indices.data());
-        }
+        drawLayer(shadersBucket, tile, pv, styleIndex);
     }
 }
 
@@ -72,6 +36,75 @@ MapStyle &MapTileRender::getStyle() {
 
 GLuint MapTileRender::getTilesTexture() {
     return tilesTexture;
+}
+
+void MapTileRender::renderTilesByLayers(ShadersBucket &shadersBucket, std::vector<TileAndMatrix> tiles) {
+    auto& plainShader = shadersBucket.plainShader;
+    for (auto& tileAndMatrix : tiles) {
+        auto& matrix = tileAndMatrix.matrix;
+        drawBackground(shadersBucket, matrix);
+    }
+
+    for (auto styleIndex : style.getStyles()) {
+        for (auto& tileAndMatrix : tiles) {
+            auto& matrix = tileAndMatrix.matrix;
+            auto tile = tileAndMatrix.tile;
+            drawLayer(shadersBucket, tile, matrix, styleIndex);
+        }
+    }
+}
+
+void MapTileRender::drawLayer(
+        ShadersBucket& shadersBucket,
+        MapTile* tile,
+        Eigen::Matrix4f pv,
+        int styleIndex
+) {
+    auto plainShader = shadersBucket.plainShader;
+    float lineWidth = style.getLineWidth(styleIndex);
+    auto color = CommonUtils::toOpenGlColor(style.getColor(styleIndex));
+    auto& polygons = tile->resultPolygonsAggregatedByStyles[styleIndex];
+    auto& lines = tile->resultLinesAggregatedByStyles[styleIndex];
+
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+    glUniform4fv(plainShader->getColorLocation(), 1, color.data());
+    if (!polygons.vertices.empty()) {
+        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
+                              GL_FALSE, 0, polygons.vertices.data()
+        );
+        glEnableVertexAttribArray(plainShader->getPosLocation());
+        glDrawElements(GL_TRIANGLES, polygons.indices.size(), GL_UNSIGNED_INT, polygons.indices.data());
+    }
+
+    if (!lines.vertices.empty()) {
+        glLineWidth(lineWidth);
+        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
+                              GL_FALSE, 0, lines.vertices.data()
+        );
+        glEnableVertexAttribArray(plainShader->getPosLocation());
+        glDrawElements(GL_LINES, lines.indices.size(), GL_UNSIGNED_INT, lines.indices.data());
+    }
+}
+
+void MapTileRender::drawBackground(
+        ShadersBucket& shadersBucket,
+        Eigen::Matrix4f matrix
+) {
+    auto plainShader = shadersBucket.plainShader;
+    float extent = 4096;
+    std::vector<float> vertices = {
+            0, 0,
+            0, -extent,
+            extent, -extent,
+            extent, 0,
+    };
+    auto backgroundColor = CommonUtils::toOpenGlColor(CSSColorParser::parse("rgb(241, 255, 230)"));
+    glUseProgram(plainShader->program);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glUniform4fv(plainShader->getColorLocation(), 1.0f, backgroundColor.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
 

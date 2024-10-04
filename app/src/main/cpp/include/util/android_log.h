@@ -31,6 +31,14 @@ public:
     static float fract(float num) {
         return num - std::floor(num);  // Using floor to get the integer part
     }
+
+    static float EPSG4326_to_EPSG3857_latitude(float epsg4326Lat) {
+        return log(tan(epsg4326Lat) + 1.0 / cos(epsg4326Lat));
+    }
+
+    static float EPSG3857_to_EPSG4326_latitude(float epsg3857Lat) {
+        return atan(sinh(epsg3857Lat));
+    }
 };
 
 class CommonUtils {

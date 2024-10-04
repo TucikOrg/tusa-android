@@ -22,6 +22,7 @@ Planet3Shader::Planet3Shader(AAssetManager *assetManager, const char *vertexShad
     u_sphere_matrix = glGetUniformLocation(program, "u_sphere_matrix");
     u_uv_offset = glGetUniformLocation(program, "u_uv_offset");
     u_uv_scale = glGetUniformLocation(program, "u_uv_scale");
+    u_color = glGetUniformLocation(program, "u_color");
 
     a_pos = glGetAttribLocation(program, "a_vertexPosition");
     a_planet_epsg3857 = glGetAttribLocation(program, "a_planet_epsg3857");

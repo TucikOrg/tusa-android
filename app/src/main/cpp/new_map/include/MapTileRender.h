@@ -14,6 +14,7 @@
 #include "MapTileGetter.h"
 #include "MapControls.h"
 #include "MapTilePos.h"
+#include "TileAndMatrix.h"
 #include "util/eigen_gl.h"
 #include "MapTest.h"
 #include <GLES2/gl2.h>
@@ -32,9 +33,26 @@ public:
             Eigen::Matrix4f pv
     );
 
+    void renderTilesByLayers(
+            ShadersBucket& shadersBucket,
+            std::vector<TileAndMatrix> tiles
+    );
+
     MapStyle& getStyle();
     GLuint getTilesTexture();
 private:
+    void drawBackground(
+            ShadersBucket& shadersBucket,
+            Eigen::Matrix4f pv
+    );
+
+    void drawLayer(
+            ShadersBucket& shadersBucket,
+            MapTile* tile,
+            Eigen::Matrix4f pv,
+            int styleIndex
+    );
+
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
 

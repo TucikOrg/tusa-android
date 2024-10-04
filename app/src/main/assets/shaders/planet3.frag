@@ -1,5 +1,6 @@
 precision highp float;
 
+uniform vec4 u_color;
 uniform sampler2D u_tex;
 uniform vec2 u_uv_offset;
 uniform vec2 u_uv_scale;

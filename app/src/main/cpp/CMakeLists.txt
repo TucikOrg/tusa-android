@@ -39,6 +39,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/texture_shader.cpp
         shader/user_marker_shader.cpp
         shader/planet3_shader.cpp
+        shader/planet3_f_rend.cpp
 
         renderer/renderer.cpp
         renderer/map_draw_call.cpp
@@ -100,6 +101,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
         new_map3/MapRenderer2.cpp
         new_map3/MapControls2.cpp
+        new_map3/TileAndMatrix.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
