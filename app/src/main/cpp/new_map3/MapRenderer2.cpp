@@ -13,10 +13,10 @@ void MapRenderer2::renderFrame() {
     short tileZ = mapControls.getTilesZoom();
     int n = pow(2, tileZ);
     double EPSG3857LonNormInf = mapControls.getEPSG3857LongitudeNormInf();
-    double EPSG3857LatNorm = mapControls.getEPSG3857LatitudeNorm();
+    double EPSG3857CamLatNorm = mapControls.getEPSG3857LatitudeNorm();
     double EPSG3857CamLat = mapControls.getEPSG3857Latitude();
     double EPSG4326CamLat = mapControls.getEPSG4326Latitude();
-    float distortion = mapControls.getVisPointDistortion();
+    double distortion = mapControls.getVisPointDistortion();
     float transition = mapControls.getTransition();
     float invDistortion = 1.0 / distortion;
 
@@ -30,12 +30,11 @@ void MapRenderer2::renderFrame() {
     float extent = 4096;
 
 
-    float shiftPlaneY = -1.0f * (EPSG3857CamLat / M_PI) * (planeSize * 0.5f) * invDistortion;
+    double shiftPlaneY = -1.0 * EPSG3857CamLatNorm * (planeSize * 0.5 / distortion);
     Eigen::Matrix4f scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0f);
-    Eigen::Matrix4f translatePlane = EigenGL::createTranslationMatrix(0, shiftPlaneY, 0);
+    Eigen::Matrix4f translatePlane = EigenGL::createTranslationMatrix(0.0f, FLOAT(shiftPlaneY), 0.0f);
     Eigen::Matrix4f planeModelMatrix = translatePlane * scalePlane;
-    Eigen::Matrix4f sphereModelMatrix = EigenGL::createRotationMatrixAxis(EPSG4326CamLat, Eigen::Vector3f {1.0, 0.0, 0.0});
-    float scaledPlaneSize = planeSize * invDistortion;
+    Eigen::Matrix4f sphereModelMatrix = EigenGL::createRotationMatrixAxis(FLOAT(EPSG4326CamLat), Eigen::Vector3f {1.0, 0.0, 0.0});
 
     Eigen::Matrix4f projection = mapCamera.createPerspectiveProjection(nearPlane, farPlane);
     Eigen::Matrix4f view = mapCamera.createView(0, 0, distanceToMap, 0, 0, 0);
@@ -45,7 +44,7 @@ void MapRenderer2::renderFrame() {
     auto plainShader = shadersBucket.plainShader.get();
     auto planet3Shader = shadersBucket.planet3Shader.get();
 
-    float visYTilesDelta = 1.0;
+    double visYTilesDelta = 1.0;
     double visXTilesDelta = 1.0;
     if (n == 1) {
         visYTilesDelta = 0.5;
@@ -55,7 +54,10 @@ void MapRenderer2::renderFrame() {
         visXTilesDelta = 2.0;
         visYTilesDelta = 2.0;
     }
+
     float zoom = mapControls.getZoom();
+    bool forwardRenderingToWorld = zoom >= 6;
+
     float maxTilesZoom = mapControls.getMaxTilesZoom();
     if (zoom > maxTilesZoom) {
         visYTilesDelta = 0.5;
@@ -63,12 +65,11 @@ void MapRenderer2::renderFrame() {
         textureTileSize *= 2;
     }
 
-    double camYNorm = (EPSG3857LatNorm - 1.0) / -2.0;
-
+    double camYNorm = (EPSG3857CamLatNorm - 1.0) / -2.0;
     double tileP = 1.0 / n;
-    float camCenterYTile = camYNorm * n;
-    float camYStart = std::fmax(0.0, camCenterYTile - visYTilesDelta);
-    float camYEnd = std::fmin(n, camCenterYTile + visYTilesDelta);
+    double camCenterYTile = camYNorm * n;
+    double camYStart = std::fmax(0.0, camCenterYTile - visYTilesDelta);
+    double camYEnd = std::fmin(n, camCenterYTile + visYTilesDelta);
 
     int visTileYStart = floor(camYStart);
     int visTileYEnd = ceil(camYEnd);
@@ -79,7 +80,7 @@ void MapRenderer2::renderFrame() {
     int yTilesAmount = visTileYEnd - visTileYStart;
     double camCenterXTile = camXNorm * n;
     double camXStart = camCenterXTile - visXTilesDelta;
-    float camXEnd = camCenterXTile + visXTilesDelta;
+    double camXEnd = camCenterXTile + visXTilesDelta;
     int visTileXStartInf = floor(camXStart);
     int visTileXEndInf = ceil(camXEnd);
     double xTilesAmount = abs(visTileXEndInf - visTileXStartInf);
@@ -92,10 +93,9 @@ void MapRenderer2::renderFrame() {
 
     double planetVStart = visTileYStartInv * tileP;
     double planetVEnd = visTileYEndInv * tileP;
-    int segments = 40;
+    int segments = zoom > 6 ? 1 : 40;
     double planetVDelta = (planetVEnd - planetVStart) / segments;
     double verticesShift = planeSize / 2.0;
-    float squareSize = planeSize / segments;
 
     double planetUCenter = 0.5;
     double planetUVDelta = tileP * visXTilesDelta;
@@ -103,46 +103,15 @@ void MapRenderer2::renderFrame() {
     double planetUEnd = std::fmin(planetUCenter + planetUVDelta, 1.0);
     double planetUDelta = (planetUEnd - planetUStart) / segments;
 
-    float topYVertex = -1;
-    float leftXVertex = -1;
-    float bottomYVertex = -1;
-    float rightXVertex = -1;
-    std::vector<float> planetEPSG3857;
-    std::vector<float> planetTexUV;
-    std::vector<float> planetVertices;
-    for (int i = 0; i <= segments; i ++) {
-        double planetV = planetVStart + i * planetVDelta;
-        float y = planetV * planeSize - verticesShift;
-        if (bottomYVertex == -1.0) bottomYVertex = y;
-        topYVertex = y;
+    double topPlanetV = planetVStart + segments * planetVDelta;
+    double bottomPlanetV = planetVStart;
+    double leftPlanetU = planetUStart;
+    double rightPlanetU = planetUStart + segments * planetUDelta;
 
-        for (int j = 0; j <= segments; j++) {
-            double planetU = planetUStart + j * planetUDelta;
-            float x = planetU * planeSize - verticesShift;
-            if (leftXVertex == -1.0) leftXVertex = x;
-            rightXVertex = x;
-
-            planetVertices.push_back(x);
-            planetVertices.push_back(y);
-            planetEPSG3857.push_back((planetV * 2.0f - 1.0f) * M_PI);
-            planetEPSG3857.push_back((planetU * 2.0f - 1.0f) * M_PI);
-
-            planetTexUV.push_back(FLOAT(j) / segments);
-            planetTexUV.push_back(FLOAT(i) / segments);
-        }
-    }
-
-    std::vector<unsigned int> indices;
-    for (int i = 0; i < segments; i++) {
-        for (int j = 0; j <= segments; j++) {
-            indices.push_back(i * (segments + 1) + j);
-            indices.push_back((i + 1) * (segments + 1) + j);
-        }
-        if (i != segments - 1) {
-            indices.push_back((i + 1) * (segments + 1) + segments);
-            indices.push_back((i + 1) * (segments + 1));
-        }
-    }
+    float topYVertex = topPlanetV * planeSize - verticesShift;
+    float leftXVertex = leftPlanetU * planeSize - verticesShift;
+    float bottomYVertex = bottomPlanetV * planeSize - verticesShift;
+    float rightXVertex = rightPlanetU * planeSize - verticesShift;
 
     // определяем тайлы и ключ
     int existTiles = 0;
@@ -168,7 +137,6 @@ void MapRenderer2::renderFrame() {
             tiles.insert({MapTile::makeKey(tileX, tileY, tileZ), tile});
         }
     }
-
     std::string newTextureKey =
             std::to_string(visTileYStart) +
             std::to_string(visTileYEnd) +
@@ -179,6 +147,8 @@ void MapRenderer2::renderFrame() {
             std::to_string(existTiles);
 
 
+    float topY = visTileYStart;
+    float leftX = normalizeXTile(visTileXStartInf, n);
     //////////////////////////////////
     ////                            //
     ////       Render texture       //
@@ -186,8 +156,7 @@ void MapRenderer2::renderFrame() {
     //////////////////////////////////
     if (textureKey != newTextureKey) {
         textureKey = newTextureKey;
-        float topY = visTileYStart;
-        float leftX = normalizeXTile(visTileXStartInf, n);
+
         float textureWidth = textureTileSize * xTilesAmount;
         float textureHeight = textureTileSize * yTilesAmount;
         if (prTex2dHeight != textureHeight || prTex2dWidth != textureWidth) {
@@ -223,7 +192,7 @@ void MapRenderer2::renderFrame() {
                     continue;
                 }
                 glScissor(scissorX, scissorY, backgroundTileTexSize, backgroundTileTexSize);
-                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0);
+                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0f);
                 auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
                 Eigen::Matrix4f tileMatrix = pvTexture * translate * scaleM;
                 mapTileRender.renderTile(
@@ -261,8 +230,6 @@ void MapRenderer2::renderFrame() {
     }
 
 
-    bool forwardRenderingToWorld = zoom >= 6;
-
     //////////////////////////////////
     ////                            //
     ////       Render planet        //
@@ -270,7 +237,6 @@ void MapRenderer2::renderFrame() {
     //////////////////////////////////
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
     if (forwardRenderingToWorld) {
         float shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
         Eigen::Vector4f topLeftWorld4f = planeModelMatrix * Eigen::Vector4f(leftXVertex, topYVertex, 0, 1.0);
@@ -282,29 +248,54 @@ void MapRenderer2::renderFrame() {
         float scaleTileX = worldTileSizeX / extent;
         float scaleTileY = worldTileSizeY / extent;
 
+        Eigen::Vector4f bl = pv * planeModelMatrix * Eigen::Vector4f(leftXVertex, bottomYVertex, 0, 1.0);
+        Eigen::Vector3f blNDC = bl.head(3) / bl.w();
+
+        Eigen::Vector4f blNext = pv * planeModelMatrix * Eigen::Vector4f(rightXVertex, topYVertex, 0, 1.0);
+        Eigen::Vector3f blNextNDC = blNext.head(3) / blNext.w();
+
+        float halfScreenWidth = mapCamera.getScreenW() * 0.5f;
+        float halfScreenHeight = mapCamera.getScreenH() * 0.5f;
+        float viewportBLX = blNDC.x() * halfScreenWidth + halfScreenWidth;
+        float viewportBLY = blNDC.y() * halfScreenHeight + halfScreenHeight;
+        float viewportBLXNext = blNextNDC.x() * halfScreenWidth + halfScreenWidth;
+        float viewportBLYNext = blNextNDC.y() * halfScreenHeight + halfScreenHeight;
+        float viewportSizeX = viewportBLXNext - viewportBLX;
+        float viewportSizeY = viewportBLYNext - viewportBLY;
+        float viewportTileSizeX = viewportSizeX / (visXTilesDelta * 2.0);
+        float viewportTileSizeY = viewportSizeY / yTilesAmount;
+
+        glEnable(GL_SCISSOR_TEST);
         // рисуем фоновые тайлы
         for (int loop = -1; loop <= 1; loop++) {
             for (auto backgroundTile : backgroundTiles) {
                 float deltaZ = tileZ - backgroundTile->getZ();
                 float scale = pow(2.0, deltaZ);
 
-                float translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX);
+                float translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX) - shiftXTileP;
                 float translateYIndex = (backgroundTile->getY() * scale - topY);
-                float translateY = translateYIndex * -extent;
-                float translateX = translateXIndex * extent;
-                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0);
-                auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f tileMatrix = pvTexture * translate * scaleM;
-                mapTileRender.renderTile(
-                        shadersBucket,
-                        backgroundTile,
-                        mapCamera,
-                        tileMatrix
-                );
+
+                float translateX = translateXIndex * worldTileSizeX + topLeftWorld.x();
+                float translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+
+                float scaleTileBgX = scale * scaleTileX;
+                float scaleTileBgY = scale * scaleTileY;
+
+                float scissorX = translateXIndex * viewportTileSizeX + viewportBLX;
+                float scissorY = viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0 * scale) * viewportTileSizeY;
+                float bgTileViewportSize = viewportTileSizeX * scale;
+                if (scissorX + bgTileViewportSize < 0 || scissorX > mapCamera.getScreenW()) {
+                    continue;
+                }
+                glScissor(scissorX, scissorY, bgTileViewportSize, bgTileViewportSize);
+
+                auto scaleMatrix = EigenGL::createScaleMatrix(scaleTileBgX, scaleTileBgY, 1.0f);
+                auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                Eigen::Matrix4f tileMatrix = pv * translateMatrix * scaleMatrix;
+                mapTileRender.renderTile(shadersBucket, backgroundTile, mapCamera, tileMatrix);
             }
         }
 
-        std::vector<TileAndMatrix> actualTiles = {};
         // рисуем актуальные тайлы
         for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
             for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
@@ -318,14 +309,49 @@ void MapRenderer2::renderFrame() {
                 float translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
                 float translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
                 auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
+                Eigen::Matrix4f scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0f);
                 Eigen::Matrix4f tileMatrix = pv * translateMatrix * scaleMatrix;
-                actualTiles.push_back({tile, tileMatrix});
+                float scissorX = viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX;
+                float scissorY = viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY;
+                glScissor(scissorX, scissorY, viewportTileSizeX, viewportTileSizeY);
+                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix);
             }
         }
-        mapTileRender.renderTilesByLayers(shadersBucket, actualTiles);
-
+        glDisable(GL_SCISSOR_TEST);
     } else {
+        std::vector<float> planetEPSG3857;
+        std::vector<float> planetTexUV;
+        std::vector<float> planetVertices;
+        for (int i = 0; i <= segments; i ++) {
+            double planetV = planetVStart + i * planetVDelta;
+            float y = planetV * planeSize - verticesShift;
+
+            for (int j = 0; j <= segments; j++) {
+                double planetU = planetUStart + j * planetUDelta;
+                float x = planetU * planeSize - verticesShift;
+
+                planetVertices.push_back(x);
+                planetVertices.push_back(y);
+                planetEPSG3857.push_back((planetV * 2.0f - 1.0f) * M_PI);
+                planetEPSG3857.push_back((planetU * 2.0f - 1.0f) * M_PI);
+
+                planetTexUV.push_back(FLOAT(j) / segments);
+                planetTexUV.push_back(FLOAT(i) / segments);
+            }
+        }
+
+        std::vector<unsigned int> indices;
+        for (int i = 0; i < segments; i++) {
+            for (int j = 0; j <= segments; j++) {
+                indices.push_back(i * (segments + 1) + j);
+                indices.push_back((i + 1) * (segments + 1) + j);
+            }
+            if (i != segments - 1) {
+                indices.push_back((i + 1) * (segments + 1) + segments);
+                indices.push_back((i + 1) * (segments + 1));
+            }
+        }
+
         glEnable(GL_DEPTH_TEST);
         glUseProgram(planet3Shader->program);
         glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
@@ -350,12 +376,12 @@ void MapRenderer2::renderFrame() {
 
 
     // draw points
-    glUseProgram(plainShader->program);
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
-    glEnableVertexAttribArray(plainShader->getPosLocation());
-    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1f(plainShader->getPointSizeLocation(), 8.0f);
+//    glUseProgram(plainShader->program);
+//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
+//    glEnableVertexAttribArray(plainShader->getPosLocation());
+//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+//    glUniform1f(plainShader->getPointSizeLocation(), 8.0f);
     //glDrawArrays(GL_POINTS, 0, planetVertices.size() / 2);
 
     // draw center point
@@ -438,14 +464,22 @@ void MapRenderer2::scale(float scaleFactor) {
 }
 
 void MapRenderer2::doubleTap() {
-    mapControls.doubleTap();
+    //mapControls.doubleTap();
+    float moscowLat = DEG2RAD(55.7558);
+    float moscowLon = DEG2RAD(37.6176);
+    mapControls.setCamPos(moscowLat, moscowLon);
 }
 
 MapRenderer2::MapRenderer2() {
     float moscowLat = DEG2RAD(55.7558);
     float moscowLon = DEG2RAD(37.6176);
-    mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(14);
+    // 78.236812, 15.623110
+    float latitude = DEG2RAD(78.236812);
+    float longitude = DEG2RAD(15.623110);
+
+    mapControls.setCamPos(latitude, longitude);
+    mapControls.setZoom(0);
+    mapControls.initCamUnit(planeSize);
 }
 
 

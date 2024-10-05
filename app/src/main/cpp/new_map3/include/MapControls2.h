@@ -15,10 +15,10 @@ public:
     };
 
     void drag(float dx, float dy) {
-        float scale = pow(2.0, std::fmin(scaleFactorZoom, maxZoom));
-        float speed = moveSpeed / scale;
+        double scale = pow(2.0, std::fmin(scaleFactorZoom, maxZoom));
+        double speed = moveSpeed / scale;
         epsg3857LatNorm -= dy * speed;
-        epsg3857LatNorm = std::fmax(-1.0f, std::fmin(1.0f, epsg3857LatNorm));
+        epsg3857LatNorm = std::fmax(-1.0, std::fmin(1.0, epsg3857LatNorm));
         epsg3857LonNormInf += dx * speed;
     }
 
@@ -101,7 +101,6 @@ public:
             return impact1;
         }
 
-
         if (zoom > secondFrom && zoom < secondTo) {
             float size = secondTo - secondFrom;
             float p = 1.0 - (secondTo - zoom) / size;
@@ -130,6 +129,10 @@ public:
         return scaleFactorZoom;
     }
 
+    void initCamUnit(float planeSize) {
+        camOneUnitScale = planeSize / 500000.0f;
+    }
+
     float transitionTest = 0.0;
 private:
     int maxTilesZoom = 16;
@@ -143,8 +146,8 @@ private:
     float maxScale = maxZoom + scaleShift;
     float scaleSpeed = 0.5f;
     float scaleFactorZoom = 0;
-    float moveSpeed = 0.001f;
-    float camOneUnitScale = 2.0f;
+    double moveSpeed = 0.001;
+    float camOneUnitScale;
 };
 
 

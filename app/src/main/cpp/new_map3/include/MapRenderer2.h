@@ -38,7 +38,9 @@ private:
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
     }
 
-    float planeSize = 1000000.0f;
+
+
+    float planeSize = 10000000;
     int textureTileSizeUnit = 1024;
     int prTex2dHeight;
     int prTex2dWidth;
@@ -46,6 +48,7 @@ private:
 
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
+
 };
 
 

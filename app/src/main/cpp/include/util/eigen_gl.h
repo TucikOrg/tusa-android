@@ -74,9 +74,27 @@ public:
         return translationMatrix;
     }
 
+    static Eigen::Matrix4d createTranslationMatrix(double tx, double ty, double tz) {
+        // Start with an identity matrix
+        Eigen::Matrix4d translationMatrix = Eigen::Matrix4d::Identity();
+
+        // Set the translation components
+        translationMatrix(0, 3) = tx;
+        translationMatrix(1, 3) = ty;
+        translationMatrix(2, 3) = tz;
+
+        return translationMatrix;
+    }
+
     static Eigen::Matrix4f createScaleMatrix(float scaleX, float scaleY, float scaleZ) {
         Eigen::Affine3f scaleMatrix = Eigen::Affine3f::Identity();
         scaleMatrix.scale(Eigen::Vector3f(scaleX, scaleY, scaleZ));
+        return scaleMatrix.matrix();
+    }
+
+    static Eigen::Matrix4d createScaleMatrix(double scaleX, double scaleY, double scaleZ) {
+        Eigen::Affine3d scaleMatrix = Eigen::Affine3d::Identity();
+        scaleMatrix.scale(Eigen::Vector3d(scaleX, scaleY, scaleZ));
         return scaleMatrix.matrix();
     }
 
@@ -129,6 +147,13 @@ public:
     static Eigen::Matrix4f createRotationMatrixAxis(float angle, Eigen::Vector3f axis) {
         Eigen::AngleAxisf rotation(angle, axis);
         Eigen::Matrix4f rotationMatrix = Eigen::Matrix4f::Identity();
+        rotationMatrix.block<3, 3>(0, 0) = rotation.toRotationMatrix();
+        return rotationMatrix;
+    }
+
+    static Eigen::Matrix4d createRotationMatrixAxis(double angle, Eigen::Vector3d axis) {
+        Eigen::AngleAxisd rotation(angle, axis);
+        Eigen::Matrix4d rotationMatrix = Eigen::Matrix4d::Identity();
         rotationMatrix.block<3, 3>(0, 0) = rotation.toRotationMatrix();
         return rotationMatrix;
     }

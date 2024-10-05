@@ -191,7 +191,7 @@ void MapRenderer::render2DMap() {
                     continue;
                 }
                 glScissor(scissorX, scissorY, backgroundTileTexSize, backgroundTileTexSize);
-                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0);
+                auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0f);
                 auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
                 Eigen::Matrix4f tileMatrix = pvTexture * translate * scaleM;
                 mapTileRender.renderTile(
