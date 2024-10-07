@@ -10,7 +10,7 @@
 
 class MapStyle {
 public:
-    unsigned short determineStyle(std::string layerName, layer_map_type props);
+    unsigned short determineStyle(std::string layerName, layer_map_type props, int z);
 
     float getLineWidth(unsigned short style) {
         return lineWidth[style];
@@ -28,6 +28,8 @@ private:
     std::set<unsigned short> styles;
     std::map<unsigned short, CSSColorParser::Color> color;
     std::map<unsigned short, float> lineWidth;
+
+    bool registerAdminLayer(std::string layerName, uint64_t adminLevel, int& currentIndex);
 };
 
 

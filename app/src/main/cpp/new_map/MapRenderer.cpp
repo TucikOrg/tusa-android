@@ -198,7 +198,8 @@ void MapRenderer::render2DMap() {
                         shadersBucket,
                         backgroundTile,
                         mapCamera,
-                        tileMatrix
+                        tileMatrix,
+                        zTile
                 );
             }
         }
@@ -226,7 +227,8 @@ void MapRenderer::render2DMap() {
                         shadersBucket,
                         tile,
                         mapCamera,
-                        tileMatrix
+                        tileMatrix,
+                        zTile
                 );
             }
         }

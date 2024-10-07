@@ -6,11 +6,11 @@
 
 #include <cmath>
 
-
 void MapRenderer2::renderFrame() {
     mapFpsCounter.newFrame();
 
     short tileZ = mapControls.getTilesZoom();
+    float zoom = mapControls.getZoom();
     int n = pow(2, tileZ);
     double EPSG3857LonNormInf = mapControls.getEPSG3857LongitudeNormInf();
     double EPSG3857CamLatNorm = mapControls.getEPSG3857LatitudeNorm();
@@ -18,7 +18,7 @@ void MapRenderer2::renderFrame() {
     double EPSG4326CamLat = mapControls.getEPSG4326Latitude();
     double distortion = mapControls.getVisPointDistortion();
     float transition = mapControls.getTransition();
-    float invDistortion = 1.0 / distortion;
+    double invDistortion = 1.0 / distortion;
 
     float impact = mapControls.getCamDistDistortionImpact();
     float distancePortion = invDistortion * impact + (1.0 - impact);
@@ -29,18 +29,20 @@ void MapRenderer2::renderFrame() {
     float farPlane = distanceToMap + planesDelta;
     float extent = 4096;
 
-
     double shiftPlaneY = -1.0 * EPSG3857CamLatNorm * (planeSize * 0.5 / distortion);
-    Eigen::Matrix4f scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0f);
-    Eigen::Matrix4f translatePlane = EigenGL::createTranslationMatrix(0.0f, FLOAT(shiftPlaneY), 0.0f);
-    Eigen::Matrix4f planeModelMatrix = translatePlane * scalePlane;
+    Eigen::Matrix4d scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0);
+    Eigen::Matrix4d translatePlane = EigenGL::createTranslationMatrix(0.0, shiftPlaneY, 0.0);
+    Eigen::Matrix4d planeModelMatrix = translatePlane * scalePlane;
     Eigen::Matrix4f sphereModelMatrix = EigenGL::createRotationMatrixAxis(FLOAT(EPSG4326CamLat), Eigen::Vector3f {1.0, 0.0, 0.0});
 
-    Eigen::Matrix4f projection = mapCamera.createPerspectiveProjection(nearPlane, farPlane);
-    Eigen::Matrix4f view = mapCamera.createView(0, 0, distanceToMap, 0, 0, 0);
-    Eigen::Matrix4f pv = projection * view;
+    Eigen::Matrix4d projection = mapCamera.createPerspectiveProjectionD(nearPlane, farPlane);
+    Eigen::Matrix4d view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0);
+    Eigen::Matrix4d pv = projection * view;
 
-    float textureTileSize = textureTileSizeUnit;
+    Eigen::Matrix4f pvFloat = pv.cast<float>();
+    Eigen::Matrix4f planeModelMatrixFloat = planeModelMatrix.cast<float>();
+    Eigen::Matrix4f sphereModelMatrixFloat = sphereModelMatrix.cast<float>();
+
     auto plainShader = shadersBucket.plainShader.get();
     auto planet3Shader = shadersBucket.planet3Shader.get();
 
@@ -54,15 +56,18 @@ void MapRenderer2::renderFrame() {
         visXTilesDelta = 2.0;
         visYTilesDelta = 2.0;
     }
+//    if (n == 8) {
+//        visXTilesDelta = 3.0;
+//        visYTilesDelta = 3.0;
+//    }
 
-    float zoom = mapControls.getZoom();
-    bool forwardRenderingToWorld = zoom >= 6;
+    float textureTileSize = textureTileSizeUnit;
+    bool forwardRenderingToWorld = zoom >= 4.6;
 
     float maxTilesZoom = mapControls.getMaxTilesZoom();
     if (zoom > maxTilesZoom) {
         visYTilesDelta = 0.5;
         visXTilesDelta = 1.0;
-        textureTileSize *= 2;
     }
 
     double camYNorm = (EPSG3857CamLatNorm - 1.0) / -2.0;
@@ -93,7 +98,7 @@ void MapRenderer2::renderFrame() {
 
     double planetVStart = visTileYStartInv * tileP;
     double planetVEnd = visTileYEndInv * tileP;
-    int segments = zoom > 6 ? 1 : 40;
+    int segments = zoom > 7 ? 1 : 40;
     double planetVDelta = (planetVEnd - planetVStart) / segments;
     double verticesShift = planeSize / 2.0;
 
@@ -144,8 +149,11 @@ void MapRenderer2::renderFrame() {
             std::to_string(visTileXEndInf) +
             std::to_string(tileZ) +
             std::to_string(backgroundTiles.size()) +
-            std::to_string(existTiles);
+            std::to_string(existTiles) +
+            std::to_string(textureTileSize);
 
+    glEnable(GL_BLEND);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
     float topY = visTileYStart;
     float leftX = normalizeXTile(visTileXStartInf, n);
@@ -154,7 +162,7 @@ void MapRenderer2::renderFrame() {
     ////       Render texture       //
     ////                            //
     //////////////////////////////////
-    if (textureKey != newTextureKey) {
+    if (textureKey != newTextureKey && !forwardRenderingToWorld) {
         textureKey = newTextureKey;
 
         float textureWidth = textureTileSize * xTilesAmount;
@@ -199,7 +207,8 @@ void MapRenderer2::renderFrame() {
                         shadersBucket,
                         backgroundTile,
                         mapCamera,
-                        tileMatrix
+                        tileMatrix,
+                        tileZ
                 );
             }
         }
@@ -216,12 +225,12 @@ void MapRenderer2::renderFrame() {
                 float translateYIndex = tileY - visTileYStart;
                 float translateX = translateXIndex * extent;
                 float translateY = translateYIndex * -extent;
-                float scissorX = translateXIndex * textureTileSize;
-                float scissorY = yTilesAmount * textureTileSize - (translateYIndex + 1) * textureTileSize;
-                glScissor(scissorX, scissorY, textureTileSize, textureTileSize);
+                int scissorX = ceil(translateXIndex * textureTileSize);
+                int scissorY = ceil(yTilesAmount * textureTileSize - (translateYIndex + 1) * textureTileSize);
+                glScissor(scissorX, scissorY, ceil(textureTileSize), ceil(textureTileSize));
                 auto tileModelMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
                 Eigen::Matrix4f tileMatrix = pvTexture * tileModelMatrix;
-                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix);
+                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix, tileZ);
             }
         }
         glDisable(GL_SCISSOR_TEST);
@@ -238,61 +247,61 @@ void MapRenderer2::renderFrame() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     if (forwardRenderingToWorld) {
-        float shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
-        Eigen::Vector4f topLeftWorld4f = planeModelMatrix * Eigen::Vector4f(leftXVertex, topYVertex, 0, 1.0);
-        Eigen::Vector4f bottomRightWorld4f = planeModelMatrix * Eigen::Vector4f(rightXVertex, bottomYVertex, 0, 1.0);
-        Eigen::Vector3f topLeftWorld = topLeftWorld4f.head(3) / topLeftWorld4f.w();
-        Eigen::Vector3f bottomRightWorld = bottomRightWorld4f.head(3) / bottomRightWorld4f.w();
-        float worldTileSizeX = abs(bottomRightWorld.x() - topLeftWorld.x()) / (2.0 * visXTilesDelta);
-        float worldTileSizeY = abs(bottomRightWorld.y() - topLeftWorld.y()) / yTilesAmount;
-        float scaleTileX = worldTileSizeX / extent;
-        float scaleTileY = worldTileSizeY / extent;
+        double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
+        Eigen::Vector4d topLeftWorld4f = planeModelMatrix * Eigen::Vector4d(leftXVertex, topYVertex, 0, 1.0);
+        Eigen::Vector4d bottomRightWorld4f = planeModelMatrix * Eigen::Vector4d(rightXVertex, bottomYVertex, 0, 1.0);
+        Eigen::Vector3d topLeftWorld = topLeftWorld4f.head(3) / topLeftWorld4f.w();
+        Eigen::Vector3d bottomRightWorld = bottomRightWorld4f.head(3) / bottomRightWorld4f.w();
+        double worldTileSizeX = abs(bottomRightWorld.x() - topLeftWorld.x()) / (2.0 * visXTilesDelta);
+        double worldTileSizeY = abs(bottomRightWorld.y() - topLeftWorld.y()) / yTilesAmount;
+        double scaleTileX = worldTileSizeX / extent;
+        double scaleTileY = worldTileSizeY / extent;
 
-        Eigen::Vector4f bl = pv * planeModelMatrix * Eigen::Vector4f(leftXVertex, bottomYVertex, 0, 1.0);
-        Eigen::Vector3f blNDC = bl.head(3) / bl.w();
+        Eigen::Vector4d bl = pv * planeModelMatrix * Eigen::Vector4d(leftXVertex, bottomYVertex, 0, 1.0);
+        Eigen::Vector3d blNDC = bl.head(3) / bl.w();
 
-        Eigen::Vector4f blNext = pv * planeModelMatrix * Eigen::Vector4f(rightXVertex, topYVertex, 0, 1.0);
-        Eigen::Vector3f blNextNDC = blNext.head(3) / blNext.w();
+        Eigen::Vector4d blNext = pv * planeModelMatrix * Eigen::Vector4d(rightXVertex, topYVertex, 0, 1.0);
+        Eigen::Vector3d blNextNDC = blNext.head(3) / blNext.w();
 
-        float halfScreenWidth = mapCamera.getScreenW() * 0.5f;
-        float halfScreenHeight = mapCamera.getScreenH() * 0.5f;
-        float viewportBLX = blNDC.x() * halfScreenWidth + halfScreenWidth;
-        float viewportBLY = blNDC.y() * halfScreenHeight + halfScreenHeight;
-        float viewportBLXNext = blNextNDC.x() * halfScreenWidth + halfScreenWidth;
-        float viewportBLYNext = blNextNDC.y() * halfScreenHeight + halfScreenHeight;
-        float viewportSizeX = viewportBLXNext - viewportBLX;
-        float viewportSizeY = viewportBLYNext - viewportBLY;
-        float viewportTileSizeX = viewportSizeX / (visXTilesDelta * 2.0);
-        float viewportTileSizeY = viewportSizeY / yTilesAmount;
+        double halfScreenWidth = mapCamera.getScreenW() * 0.5f;
+        double halfScreenHeight = mapCamera.getScreenH() * 0.5f;
+        double viewportBLX = blNDC.x() * halfScreenWidth + halfScreenWidth;
+        double viewportBLY = blNDC.y() * halfScreenHeight + halfScreenHeight;
+        double viewportBLXNext = blNextNDC.x() * halfScreenWidth + halfScreenWidth;
+        double viewportBLYNext = blNextNDC.y() * halfScreenHeight + halfScreenHeight;
+        double viewportSizeX = viewportBLXNext - viewportBLX;
+        double viewportSizeY = viewportBLYNext - viewportBLY;
+        double viewportTileSizeX = viewportSizeX / (visXTilesDelta * 2.0);
+        double viewportTileSizeY = viewportSizeY / yTilesAmount;
 
         glEnable(GL_SCISSOR_TEST);
         // рисуем фоновые тайлы
         for (int loop = -1; loop <= 1; loop++) {
             for (auto backgroundTile : backgroundTiles) {
-                float deltaZ = tileZ - backgroundTile->getZ();
-                float scale = pow(2.0, deltaZ);
+                double deltaZ = tileZ - backgroundTile->getZ();
+                double scale = pow(2.0, deltaZ);
 
-                float translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX) - shiftXTileP;
-                float translateYIndex = (backgroundTile->getY() * scale - topY);
+                double translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX) - shiftXTileP;
+                double translateYIndex = (backgroundTile->getY() * scale - topY);
 
-                float translateX = translateXIndex * worldTileSizeX + topLeftWorld.x();
-                float translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+                double translateX = translateXIndex * worldTileSizeX + topLeftWorld.x();
+                double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
 
-                float scaleTileBgX = scale * scaleTileX;
-                float scaleTileBgY = scale * scaleTileY;
+                double scaleTileBgX = scale * scaleTileX;
+                double scaleTileBgY = scale * scaleTileY;
 
-                float scissorX = translateXIndex * viewportTileSizeX + viewportBLX;
-                float scissorY = viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0 * scale) * viewportTileSizeY;
-                float bgTileViewportSize = viewportTileSizeX * scale;
+                int scissorX = ceil(translateXIndex * viewportTileSizeX + viewportBLX);
+                int scissorY = ceil(viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0 * scale) * viewportTileSizeY);
+                int bgTileViewportSize = ceil(viewportTileSizeX * scale);
                 if (scissorX + bgTileViewportSize < 0 || scissorX > mapCamera.getScreenW()) {
                     continue;
                 }
                 glScissor(scissorX, scissorY, bgTileViewportSize, bgTileViewportSize);
 
-                auto scaleMatrix = EigenGL::createScaleMatrix(scaleTileBgX, scaleTileBgY, 1.0f);
+                auto scaleMatrix = EigenGL::createScaleMatrix(scaleTileBgX, scaleTileBgY, 1.0);
                 auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f tileMatrix = pv * translateMatrix * scaleMatrix;
-                mapTileRender.renderTile(shadersBucket, backgroundTile, mapCamera, tileMatrix);
+                Eigen::Matrix4d tileMatrix = pv * translateMatrix * scaleMatrix;
+                mapTileRender.renderTile(shadersBucket, backgroundTile, mapCamera, tileMatrix.cast<float>(), tileZ);
             }
         }
 
@@ -304,17 +313,17 @@ void MapRenderer2::renderFrame() {
                 if (tile->isEmpty()) {
                     continue;
                 }
-                float translateXIndex = xPos;
-                float translateYIndex = tileY - visTileYStart;
-                float translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
-                float translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+                double translateXIndex = xPos;
+                double translateYIndex = tileY - visTileYStart;
+                double translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
+                double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
                 auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0f);
-                Eigen::Matrix4f tileMatrix = pv * translateMatrix * scaleMatrix;
-                float scissorX = viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX;
-                float scissorY = viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY;
-                glScissor(scissorX, scissorY, viewportTileSizeX, viewportTileSizeY);
-                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix);
+                Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
+                Eigen::Matrix4d tileMatrix = pv * translateMatrix * scaleMatrix;
+                int scissorX = ceil(viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX);
+                int scissorY = ceil(viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY);
+                glScissor(scissorX, scissorY, ceil(viewportTileSizeX), ceil(viewportTileSizeY));
+                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix.cast<float>(), tileZ);
             }
         }
         glDisable(GL_SCISSOR_TEST);
@@ -354,9 +363,9 @@ void MapRenderer2::renderFrame() {
 
         glEnable(GL_DEPTH_TEST);
         glUseProgram(planet3Shader->program);
-        glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-        glUniformMatrix4fv(planet3Shader->getPlaneMatrixLocation(), 1, GL_FALSE, planeModelMatrix.data());
-        glUniformMatrix4fv(planet3Shader->getSphereMatrixLocation(), 1, GL_FALSE, sphereModelMatrix.data());
+        glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pvFloat.data());
+        glUniformMatrix4fv(planet3Shader->getPlaneMatrixLocation(), 1, GL_FALSE, planeModelMatrixFloat.data());
+        glUniformMatrix4fv(planet3Shader->getSphereMatrixLocation(), 1, GL_FALSE, sphereModelMatrixFloat.data());
         glVertexAttribPointer(planet3Shader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
         glEnableVertexAttribArray(planet3Shader->getPosLocation());
         glVertexAttribPointer(planet3Shader->getPlanetEPSG3857Location(), 2, GL_FLOAT, GL_FALSE, 0, planetEPSG3857.data());
@@ -375,57 +384,8 @@ void MapRenderer2::renderFrame() {
     }
 
 
-    // draw points
-//    glUseProgram(plainShader->program);
-//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
-//    glEnableVertexAttribArray(plainShader->getPosLocation());
-//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-//    glUniform1f(plainShader->getPointSizeLocation(), 8.0f);
-    //glDrawArrays(GL_POINTS, 0, planetVertices.size() / 2);
-
-    // draw center point
-    glUseProgram(plainShader->program);
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    float centerPoint[] = {0, 0};
-    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, centerPoint);
-    glEnableVertexAttribArray(plainShader->getPosLocation());
-    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1f(plainShader->getPointSizeLocation(), 10.0f);
-    glDrawArrays(GL_POINTS, 0, 1);
-
-    // draw texture test
-    auto textureShader = shadersBucket.textureShader;
-    float ratio = mapCamera.getRatio();
-    float testTextureWindowSize = 0.1;
-    float width = testTextureWindowSize * xTilesAmount;
-    float height = testTextureWindowSize * yTilesAmount;
-    std::vector<float> testVertices = {
-            -ratio, -1.0f,
-            -ratio + width, -1.0f,
-            -ratio + width, -1.0f + height,
-            -ratio, -1.0f + height
-    };
-    std::vector<float> uvTest = {
-            0, 0,
-            1, 0,
-            1, 1,
-            0, 1
-    };
-    Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(-ratio, ratio, -1, 1, 0.1, 1);
-    Eigen::Matrix4f viewTest = mapCamera.createView(0, 0, 1, 0, 0, 0);
-    Eigen::Matrix4f pvTest = projectionTest * viewTest;
-    glUseProgram(textureShader->program);
-    glUniformMatrix4fv(textureShader->getMatrixLocation(), 1, GL_FALSE, pvTest.data());
-    glVertexAttribPointer(textureShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, testVertices.data());
-    glEnableVertexAttribArray(textureShader->getPosLocation());
-    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, uvTest.data());
-    glEnableVertexAttribArray(textureShader->getTextureCord());
-    glBindTexture(GL_TEXTURE_2D, mapTexture);
-    glUniform1f(textureShader->getTileTextureLocation0(), 0);
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
+//    mapTest.drawCenterPoint(shadersBucket, pvFloat);
+//    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTexture, xTilesAmount, yTilesAmount);
     mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
 }
 
@@ -464,10 +424,7 @@ void MapRenderer2::scale(float scaleFactor) {
 }
 
 void MapRenderer2::doubleTap() {
-    //mapControls.doubleTap();
-    float moscowLat = DEG2RAD(55.7558);
-    float moscowLon = DEG2RAD(37.6176);
-    mapControls.setCamPos(moscowLat, moscowLon);
+    mapControls.doubleTap();
 }
 
 MapRenderer2::MapRenderer2() {
@@ -477,7 +434,7 @@ MapRenderer2::MapRenderer2() {
     float latitude = DEG2RAD(78.236812);
     float longitude = DEG2RAD(15.623110);
 
-    mapControls.setCamPos(latitude, longitude);
+    mapControls.setCamPos(moscowLat, moscowLon);
     mapControls.setZoom(0);
     mapControls.initCamUnit(planeSize);
 }

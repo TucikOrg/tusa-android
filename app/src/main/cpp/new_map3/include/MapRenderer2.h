@@ -33,22 +33,18 @@ private:
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
 
-
     float normalizeXTile(float infTile, int n) {
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
     }
 
-
-
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    int textureTileSizeUnit = 512 * 2.0;
     int prTex2dHeight;
     int prTex2dWidth;
     std::string textureKey;
 
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
-
 };
 
 

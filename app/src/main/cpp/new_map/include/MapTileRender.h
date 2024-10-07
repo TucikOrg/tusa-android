@@ -30,12 +30,8 @@ public:
             ShadersBucket& shadersBucket,
             MapTile* tile,
             MapCamera& mapCamera,
-            Eigen::Matrix4f pv
-    );
-
-    void renderTilesByLayers(
-            ShadersBucket& shadersBucket,
-            std::vector<TileAndMatrix> tiles
+            Eigen::Matrix4f pv,
+            int zoom
     );
 
     MapStyle& getStyle();
@@ -50,7 +46,8 @@ private:
             ShadersBucket& shadersBucket,
             MapTile* tile,
             Eigen::Matrix4f pv,
-            int styleIndex
+            int styleIndex,
+            int zoom
     );
 
     GLuint tilesTexture;

@@ -33,7 +33,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style
         while (auto feature = layer.next_feature()) {
             auto geomType = feature.geometry_type();
             auto props = create_properties_map<layer_map_type>(feature);
-            auto styleIndex = style.determineStyle(layerName, props);
+            auto styleIndex = style.determineStyle(layerName, props, z);
             if(styleIndex == 0) {
                 continue;
             }
@@ -85,11 +85,9 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style
         }
     }
 
-
     // Теперь агрегируем всю геометрию по стилям чтобы потом ее рисовать
     // агрегирование по стилю так как от стиля зависит как рисовать
     for (auto styleIndex : style.getStyles()) {
-
         // Простые линии
         size_t indicesShift = 0;
         size_t pointsShift = 0;
@@ -111,7 +109,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style
             }
         }
         resultLinesAggregatedByStyles[styleIndex] = MapSimpleLine { std::move(resultLinesVertices), std::move(resultLinesIndices) };
-
 
         // Полигоны
         unsigned int currentPointIndex = 0;

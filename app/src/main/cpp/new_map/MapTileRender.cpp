@@ -22,11 +22,12 @@ void MapTileRender::renderTile(
         ShadersBucket &shadersBucket,
         MapTile *tile,
         MapCamera &mapCamera,
-        Eigen::Matrix4f pv
+        Eigen::Matrix4f pv,
+        int zoom
 ) {
     drawBackground(shadersBucket, pv);
     for (auto styleIndex : style.getStyles()) {
-        drawLayer(shadersBucket, tile, pv, styleIndex);
+        drawLayer(shadersBucket, tile, pv, styleIndex, zoom);
     }
 }
 
@@ -38,27 +39,14 @@ GLuint MapTileRender::getTilesTexture() {
     return tilesTexture;
 }
 
-void MapTileRender::renderTilesByLayers(ShadersBucket &shadersBucket, std::vector<TileAndMatrix> tiles) {
-    auto& plainShader = shadersBucket.plainShader;
-    for (auto& tileAndMatrix : tiles) {
-        auto& matrix = tileAndMatrix.matrix;
-        drawBackground(shadersBucket, matrix);
-    }
 
-    for (auto styleIndex : style.getStyles()) {
-        for (auto& tileAndMatrix : tiles) {
-            auto& matrix = tileAndMatrix.matrix;
-            auto tile = tileAndMatrix.tile;
-            drawLayer(shadersBucket, tile, matrix, styleIndex);
-        }
-    }
-}
 
 void MapTileRender::drawLayer(
         ShadersBucket& shadersBucket,
         MapTile* tile,
         Eigen::Matrix4f pv,
-        int styleIndex
+        int styleIndex,
+        int zoom
 ) {
     auto plainShader = shadersBucket.plainShader;
     float lineWidth = style.getLineWidth(styleIndex);
@@ -98,7 +86,7 @@ void MapTileRender::drawBackground(
             extent, -extent,
             extent, 0,
     };
-    auto backgroundColor = CommonUtils::toOpenGlColor(CSSColorParser::parse("rgb(241, 255, 230)"));
+    auto backgroundColor = CommonUtils::toOpenGlColor(CSSColorParser::parse("rgba(241, 255, 230, 1.0)"));
     glUseProgram(plainShader->program);
     glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
     glUniform4fv(plainShader->getColorLocation(), 1.0f, backgroundColor.data());

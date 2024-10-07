@@ -77,12 +77,13 @@ public:
     float getAnimatedTransition(float time) { return abs(cos(time * 0.1)); }
 
     float getCamDistDistortionImpact() {
+        float impact1 = 1.0f;
         float from = 1.0f;
-        float to = 3.0f;
+        float to = 2.0f;
+
+        float impact2 = 1.0f;
         float secondFrom = 4.0f;
         float secondTo = 14.0f;
-        float impact1 = 0.9;
-        float impact2 = 0.75f;
 
         float zoom = getZoom();
         if (zoom <= from) {
@@ -96,26 +97,25 @@ public:
             return impact1 - p * impact1;
         }
 
+//        if (zoom <= secondFrom) {
+//            return impact1;
+//        }
+//
+//        if (zoom > secondFrom && zoom < secondTo) {
+//            float size = secondTo - secondFrom;
+//            float p = 1.0 - (secondTo - zoom) / size;
+//            p = std::fmax(0.0f, std::fmin(1.0f, p));
+//            float delta = impact1 - impact2;
+//            return impact1 - p * delta;
+//        }
 
-        if (zoom <= secondFrom) {
-            return impact1;
-        }
-
-        if (zoom > secondFrom && zoom < secondTo) {
-            float size = secondTo - secondFrom;
-            float p = 1.0 - (secondTo - zoom) / size;
-            p = std::fmax(0.0f, std::fmin(1.0f, p));
-            float delta = impact1 - impact2;
-            return impact1 - p * delta;
-        }
-
-        return impact2;
+        return impact1;
     }
 
     float getTransition() {
         float transition = 1.0f;
         float from = 4.0f;
-        float to = 5.0f;
+        float to = 4.5f;
         if (getZoom() > from && getZoom() < to) {
             transition = (to - getZoom()) / (to - from);
         }
@@ -130,10 +130,9 @@ public:
     }
 
     void initCamUnit(float planeSize) {
-        camOneUnitScale = planeSize / 500000.0f;
+        camOneUnitScale = planeSize / 400000.0f;
     }
 
-    float transitionTest = 0.0;
 private:
     int maxTilesZoom = 16;
 

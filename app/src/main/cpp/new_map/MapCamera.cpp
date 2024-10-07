@@ -15,6 +15,17 @@ Eigen::Matrix4f MapCamera::createPerspectiveProjection(float near, float far) {
     return std::move(projectionMatrix);
 }
 
+// copy of createPerspectiveProjection replace f to d
+Eigen::Matrix4d MapCamera::createPerspectiveProjectionD(float near, float far) {
+    Eigen::Matrix4d projectionMatrix = EigenGL::createPerspectiveProjectionMatrix(
+            (double)fovy,
+            (double)getRatio(),
+            (double)near,
+            (double)far
+    );
+    return std::move(projectionMatrix);
+}
+
 Eigen::Matrix4f MapCamera::createView(
         float camX, float camY, float camZ,
         float targetX, float targetY, float targetZ
@@ -23,6 +34,17 @@ Eigen::Matrix4f MapCamera::createView(
     Eigen::Vector3f target(targetX, targetY, targetZ);
     Eigen::Vector3f up(0.0f, 1.0f, 0.0f);
     Eigen::Matrix4f viewMatrix = EigenGL::createViewMatrix(cameraPosition, target, up);
+    return std::move(viewMatrix);
+}
+
+Eigen::Matrix4d MapCamera::createViewD(
+        float camX, float camY, float camZ,
+        float targetX, float targetY, float targetZ
+) {
+    Eigen::Vector3d cameraPosition = Eigen::Vector3d(camX, camY, camZ);
+    Eigen::Vector3d target(targetX, targetY, targetZ);
+    Eigen::Vector3d up(0.0, 1.0, 0.0);
+    Eigen::Matrix4d viewMatrix = EigenGL::createViewMatrix(cameraPosition, target, up);
     return std::move(viewMatrix);
 }
 

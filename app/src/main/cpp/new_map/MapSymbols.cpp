@@ -141,8 +141,7 @@ void MapSymbols::renderText2D(
                 0, 1, 2
         };
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
         glUseProgram(symbolShader->program);
 
         glUniform3f(symbolShader->getColorLocation(), red, green, blue);

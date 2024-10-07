@@ -116,6 +116,25 @@ public:
         return projectionMatrix1;
     }
 
+    // copy of createPerspectiveProjectionMatrix replace f to d
+    static Eigen::Matrix4d createPerspectiveProjectionMatrix(double fovY, double aspectRatio, double near, double far) {
+        // Convert field of view from degrees to radians
+        double fovYRad = fovY * (M_PI / 180.0f);
+
+        // Calculate the scale factors
+        double tanHalfFovy = tan(fovYRad / 2.0f);
+
+        Eigen::Matrix4d projectionMatrix1 = Eigen::Matrix4d::Zero();
+
+        projectionMatrix1(0, 0) = 1.0 / (aspectRatio * tanHalfFovy);
+        projectionMatrix1(1, 1) = 1.0 / tanHalfFovy;
+        projectionMatrix1(2, 2) = -(far + near) / (far - near);
+        projectionMatrix1(2, 3) = -(2.0 * far * near) / (far - near);
+        projectionMatrix1(3, 2) = -1.0;
+
+        return projectionMatrix1;
+    }
+
     static Eigen::Matrix4f createViewMatrix(const Eigen::Vector3f& cameraPos, const Eigen::Vector3f& target, const Eigen::Vector3f& up) {
         // Calculate forward, right, and up vectors
         Eigen::Vector3f forward = (cameraPos - target).normalized();
@@ -124,6 +143,35 @@ public:
 
         // Create a 4x4 view matrix
         Eigen::Matrix4f viewMatrix = Eigen::Matrix4f::Identity();
+
+        // Set rotation part (top-left 3x3)
+        viewMatrix(0, 0) = right.x();
+        viewMatrix(0, 1) = right.y();
+        viewMatrix(0, 2) = right.z();
+        viewMatrix(1, 0) = cameraUp.x();
+        viewMatrix(1, 1) = cameraUp.y();
+        viewMatrix(1, 2) = cameraUp.z();
+        viewMatrix(2, 0) = forward.x();
+        viewMatrix(2, 1) = forward.y();
+        viewMatrix(2, 2) = forward.z();
+
+        // Set translation part (top-right 3x1)
+        viewMatrix(0, 3) = -right.dot(cameraPos);
+        viewMatrix(1, 3) = -cameraUp.dot(cameraPos);
+        viewMatrix(2, 3) = -forward.dot(cameraPos);
+
+        return viewMatrix;
+    }
+
+    // copy of createViewMatrix replace f to d
+    static Eigen::Matrix4d createViewMatrix(const Eigen::Vector3d& cameraPos, const Eigen::Vector3d& target, const Eigen::Vector3d& up) {
+        // Calculate forward, right, and up vectors
+        Eigen::Vector3d forward = (cameraPos - target).normalized();
+        Eigen::Vector3d right = up.cross(forward).normalized();
+        Eigen::Vector3d cameraUp = forward.cross(right).normalized();
+
+        // Create a 4x4 view matrix
+        Eigen::Matrix4d viewMatrix = Eigen::Matrix4d::Identity();
 
         // Set rotation part (top-left 3x3)
         viewMatrix(0, 0) = right.x();
