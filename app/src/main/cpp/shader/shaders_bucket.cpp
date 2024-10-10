@@ -43,6 +43,15 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     planet3FRendShader = std::shared_ptr<Planet3FRendShader>(new Planet3FRendShader(
             assetManager, "shaders/planet3_f_rend.vert", "shaders/planet3_f_rend.frag"
     ));
+    roadShader = std::shared_ptr<RoadShader>(new RoadShader(
+            assetManager, "shaders/road.vert", "shaders/road.frag"
+    ));
+    simplePointShader = std::shared_ptr<SimplePointShader>(new SimplePointShader(
+            assetManager, "shaders/simple_point.vert", "shaders/simple_point.frag"
+    ));
+    squarePointShader = std::shared_ptr<SquarePointShader>(new SquarePointShader(
+            assetManager, "shaders/square_point.vert", "shaders/square_point.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {

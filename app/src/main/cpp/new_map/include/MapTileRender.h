@@ -30,30 +30,35 @@ public:
             ShadersBucket& shadersBucket,
             MapTile* tile,
             MapCamera& mapCamera,
-            Eigen::Matrix4f pv,
-            int zoom
+            Eigen::Matrix4f p,
+            Eigen::Matrix4f vm,
+            Eigen::Matrix4f pvm,
+            float zoom,
+            bool isForwardRendering
     );
 
-    MapStyle& getStyle();
     GLuint getTilesTexture();
+
+
 private:
     void drawBackground(
             ShadersBucket& shadersBucket,
-            Eigen::Matrix4f pv
+            Eigen::Matrix4f pvm
     );
 
     void drawLayer(
             ShadersBucket& shadersBucket,
             MapTile* tile,
-            Eigen::Matrix4f pv,
+            Eigen::Matrix4f p,
+            Eigen::Matrix4f vm,
+            Eigen::Matrix4f pvm,
             int styleIndex,
-            int zoom
+            float zoom,
+            bool isForwardRendering
     );
 
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
-
-    MapStyle style = MapStyle();
 };
 
 

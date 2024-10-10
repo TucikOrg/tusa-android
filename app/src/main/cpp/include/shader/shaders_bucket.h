@@ -18,6 +18,9 @@
 #include "planet2_shader.h"
 #include "planet3_shader.h"
 #include "planet3_f_rend.h"
+#include "road_shader.h"
+#include "SimplePointShader.h"
+#include "SquarePointShader.h"
 #include <boost/shared_ptr.hpp>
 
 class ShadersBucket {
@@ -27,6 +30,7 @@ public:
 
     void compileAllShaders(AAssetManager* assetManager);
 
+    std::shared_ptr<RoadShader> roadShader;
     std::shared_ptr<PlainShader> plainShader;
     std::shared_ptr<SymbolShader> symbolShader;
     std::shared_ptr<PlanetShader> planetShader;
@@ -37,6 +41,8 @@ public:
     std::shared_ptr<UserMarkerShader> userMarkerShader;
     std::shared_ptr<Planet3Shader> planet3Shader;
     std::shared_ptr<Planet3FRendShader> planet3FRendShader;
+    std::shared_ptr<SimplePointShader> simplePointShader;
+    std::shared_ptr<SquarePointShader> squarePointShader;
 };
 
 

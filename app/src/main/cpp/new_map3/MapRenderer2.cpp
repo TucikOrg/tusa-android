@@ -56,10 +56,6 @@ void MapRenderer2::renderFrame() {
         visXTilesDelta = 2.0;
         visYTilesDelta = 2.0;
     }
-//    if (n == 8) {
-//        visXTilesDelta = 3.0;
-//        visYTilesDelta = 3.0;
-//    }
 
     float textureTileSize = textureTileSizeUnit;
     bool forwardRenderingToWorld = zoom >= 4.6;
@@ -149,8 +145,7 @@ void MapRenderer2::renderFrame() {
             std::to_string(visTileXEndInf) +
             std::to_string(tileZ) +
             std::to_string(backgroundTiles.size()) +
-            std::to_string(existTiles) +
-            std::to_string(textureTileSize);
+            std::to_string(existTiles);
 
     glEnable(GL_BLEND);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
@@ -202,13 +197,17 @@ void MapRenderer2::renderFrame() {
                 glScissor(scissorX, scissorY, backgroundTileTexSize, backgroundTileTexSize);
                 auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0f);
                 auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f tileMatrix = pvTexture * translate * scaleM;
+                Eigen::Matrix4f vTileMatrix = viewTexture * translate * scaleM;
+                Eigen::Matrix4f pvTileMatrix = projectionTexture * vTileMatrix;
                 mapTileRender.renderTile(
                         shadersBucket,
                         backgroundTile,
                         mapCamera,
-                        tileMatrix,
-                        tileZ
+                        projectionTexture,
+                        vTileMatrix,
+                        pvTileMatrix,
+                        zoom,
+                        forwardRenderingToWorld
                 );
             }
         }
@@ -229,8 +228,18 @@ void MapRenderer2::renderFrame() {
                 int scissorY = ceil(yTilesAmount * textureTileSize - (translateYIndex + 1) * textureTileSize);
                 glScissor(scissorX, scissorY, ceil(textureTileSize), ceil(textureTileSize));
                 auto tileModelMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4f tileMatrix = pvTexture * tileModelMatrix;
-                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix, tileZ);
+                Eigen::Matrix4f vTileMatrix = viewTexture * tileModelMatrix;
+                Eigen::Matrix4f pvTileMatrix = projectionTexture * vTileMatrix;
+                mapTileRender.renderTile(
+                        shadersBucket,
+                        tile,
+                        mapCamera,
+                        projectionTexture,
+                        vTileMatrix,
+                        pvTileMatrix,
+                        zoom,
+                        forwardRenderingToWorld
+                );
             }
         }
         glDisable(GL_SCISSOR_TEST);
@@ -300,8 +309,18 @@ void MapRenderer2::renderFrame() {
 
                 auto scaleMatrix = EigenGL::createScaleMatrix(scaleTileBgX, scaleTileBgY, 1.0);
                 auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4d tileMatrix = pv * translateMatrix * scaleMatrix;
-                mapTileRender.renderTile(shadersBucket, backgroundTile, mapCamera, tileMatrix.cast<float>(), tileZ);
+                Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
+                Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
+                mapTileRender.renderTile(
+                        shadersBucket,
+                        backgroundTile,
+                        mapCamera,
+                        projection.cast<float>(),
+                        vTileMatrix.cast<float>(),
+                        pvTileMatrix.cast<float>(),
+                        zoom,
+                        forwardRenderingToWorld
+                );
             }
         }
 
@@ -319,11 +338,21 @@ void MapRenderer2::renderFrame() {
                 double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
                 auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
                 Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
-                Eigen::Matrix4d tileMatrix = pv * translateMatrix * scaleMatrix;
+                Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
+                Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
                 int scissorX = ceil(viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX);
                 int scissorY = ceil(viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY);
                 glScissor(scissorX, scissorY, ceil(viewportTileSizeX), ceil(viewportTileSizeY));
-                mapTileRender.renderTile(shadersBucket, tile, mapCamera, tileMatrix.cast<float>(), tileZ);
+                mapTileRender.renderTile(
+                        shadersBucket,
+                        tile,
+                        mapCamera,
+                        projection.cast<float>(),
+                        vTileMatrix.cast<float>(),
+                        pvTileMatrix.cast<float>(),
+                        zoom,
+                        forwardRenderingToWorld
+                );
             }
         }
         glDisable(GL_SCISSOR_TEST);
@@ -390,7 +419,7 @@ void MapRenderer2::renderFrame() {
 }
 
 void MapRenderer2::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
-    mapTileGetter = new MapTileGetter(env, request_tile, mapTileRender.getStyle());
+    mapTileGetter = new MapTileGetter(env, request_tile);
     mapTileGetter->getOrRequest(0, 0, 0);
     mapSymbols.loadFont(assetManager);
 }
@@ -435,7 +464,7 @@ MapRenderer2::MapRenderer2() {
     float longitude = DEG2RAD(15.623110);
 
     mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(0);
+    mapControls.setZoom(14);
     mapControls.initCamUnit(planeSize);
 }
 

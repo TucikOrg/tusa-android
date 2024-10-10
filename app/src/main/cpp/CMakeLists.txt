@@ -40,6 +40,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/user_marker_shader.cpp
         shader/planet3_shader.cpp
         shader/planet3_f_rend.cpp
+        shader/road_shader.cpp
 
         renderer/renderer.cpp
         renderer/map_draw_call.cpp
@@ -82,7 +83,6 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 
         csscolorparser/csscolorparser.cpp
 
-        new_map/MapRenderer.cpp
         new_map/MapCamera.cpp
         new_map/MapGeometry.cpp
         new_map/MapTest.cpp
@@ -102,6 +102,11 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         new_map3/MapRenderer2.cpp
         new_map3/MapControls2.cpp
         new_map3/TileAndMatrix.cpp
+        new_map3/MapWideLine.cpp
+        new_map3/MapSimplePoint.cpp
+        new_map3/SimplePointShader.cpp
+        new_map3/SquarePointShader.cpp
+        new_map3/MapSquarePoints.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

@@ -11,6 +11,9 @@
 #include "MapPolygon.h"
 #include "MapStyle.h"
 #include "MapSimpleLine.h"
+#include "MapWideLine.h"
+#include "MapSimplePoint.h"
+#include "MapSquarePoints.h"
 #include "MapPolygonAggregated.h"
 #include "style/style.h"
 
@@ -18,7 +21,7 @@
 class MapTile {
 public:
     MapTile(int x, int y, int z);
-    MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapStyle& style);
+    MapTile(int x, int y, int z, vtzero::vector_tile& tile);
 
     bool cover(std::array<int, 3> otherTile);
 
@@ -51,6 +54,12 @@ public:
 
     std::map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
     std::map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
+    std::map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
+    std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
+
+    std::map<unsigned short, std::forward_list<std::vector<MapWideLine>>> featuresWideLinesResult = {};
+
+    MapStyle style = MapStyle();
 private:
     int z;
     int x;

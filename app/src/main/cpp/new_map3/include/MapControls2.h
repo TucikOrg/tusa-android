@@ -130,7 +130,7 @@ public:
     }
 
     void initCamUnit(float planeSize) {
-        camOneUnitScale = planeSize / 400000.0f;
+        camOneUnitScale = planeSize / 430000.0f;
     }
 
 private:

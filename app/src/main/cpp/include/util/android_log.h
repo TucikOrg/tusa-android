@@ -22,6 +22,16 @@
 
 class Utils {
 public:
+    static std::string generateRandomColor() {
+        // Generate random RGB values
+        int r = std::rand() % 256;
+        int g = std::rand() % 256;
+        int b = std::rand() % 256;
+
+        // Return color as a string in the format "rgb(r, g, b)"
+        return "rgb(" + std::to_string(r) + ", " + std::to_string(g) + ", " + std::to_string(b) + ")";
+    }
+
     // Функция для округления до определенного количества знаков после запятой
     static float round(float value, int precision) {
         float scale = std::pow(10.0f, precision);

@@ -16,13 +16,12 @@
 
 class MapTileGetter {
 public:
-    MapTileGetter(JNIEnv *env, jobject& request_tile, MapStyle& style);
+    MapTileGetter(JNIEnv *env, jobject& request_tile);
     ~MapTileGetter();
     MapTile* getOrRequest(int x, int y, int z, bool forceMem = false);
     MapTile* findExistParent(int x, int y, int z);
 private:
     std::unordered_map<uint64_t, MapTile> cacheTiles = {};
-    MapStyle& style;
 
     jclass requestTileClassGlobal;
     jobject requestTileGlobal;
