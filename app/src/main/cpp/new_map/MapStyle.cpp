@@ -62,6 +62,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "wood") {
         color[currentIndex] = CSSColorParser::parse("rgba(194, 239, 179, 0.8)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -69,6 +71,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "scrub") {
         color[currentIndex] = CSSColorParser::parse("rgba(224, 246, 213, 0.6)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -76,6 +80,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "agriculture") {
         color[currentIndex] = CSSColorParser::parse("rgba(243, 252, 238, 0.6)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -83,6 +89,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "park") {
         color[currentIndex] = CSSColorParser::parse("rgb(192, 240, 168)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -90,6 +98,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "grass") {
         color[currentIndex] = CSSColorParser::parse("rgba(243, 252, 238, 0.6)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -97,6 +107,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "airport") {
         color[currentIndex] = CSSColorParser::parse("rgb(244, 243, 251)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -104,6 +116,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "cemetery") {
         color[currentIndex] = CSSColorParser::parse("rgb(210, 236, 198)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -111,6 +125,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "glacier") {
         color[currentIndex] = CSSColorParser::parse("rgb(204, 233, 245)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -118,6 +134,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "hospital") {
         color[currentIndex] = CSSColorParser::parse("rgb(246, 238, 244)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -125,6 +143,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "pitch") {
         color[currentIndex] = CSSColorParser::parse("rgb(217, 248, 186)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -132,6 +152,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "sand") {
         color[currentIndex] = CSSColorParser::parse("rgb(236, 251, 228)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -139,6 +161,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "school") {
         color[currentIndex] = CSSColorParser::parse("rgb(241, 236, 228)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -146,6 +170,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "parking") {
         color[currentIndex] = CSSColorParser::parse("rgb(245, 245, 245)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -153,6 +179,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "residential") {
         color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -160,6 +188,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && (className == "facility" || className == "industrial")) {
         color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -167,6 +197,8 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     if (layerName == "landuse" && className == "commercial_area") {
         color[currentIndex] = CSSColorParser::parse("rgb(252, 244, 232)");
         visibleZoom[currentIndex] = zooms;
+        alphaInterpolateFrom[currentIndex] = 14.0f;
+        alphaInterpolateTo[currentIndex] = 14.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -300,7 +332,9 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
 
     if (layerName == "building") {
         color[currentIndex] = CSSColorParser::parse("rgb(237, 237, 237)");
-        visibleZoom[currentIndex] = allZoomsVisible({});
+        visibleZoom[currentIndex] = fromToZoomsVisible(15, 22);
+        alphaInterpolateFrom[currentIndex] = 15.0f;
+        alphaInterpolateTo[currentIndex] = 16.0f;
         styles.insert(currentIndex);
         return currentIndex;
     } else currentIndex++;

@@ -56,15 +56,18 @@ void MapRenderer2::renderFrame() {
         visXTilesDelta = 2.0;
         visYTilesDelta = 2.0;
     }
+    if (tileZ >= 14) {
+        visXTilesDelta = 1.0;
+        visYTilesDelta = 1.0;
+    }
+    if (tileZ >= 15) {
+        visXTilesDelta = 1.0;
+        visYTilesDelta = 1.0;
+    }
+
 
     float textureTileSize = textureTileSizeUnit;
     bool forwardRenderingToWorld = zoom >= 4.6;
-
-    float maxTilesZoom = mapControls.getMaxTilesZoom();
-    if (zoom > maxTilesZoom) {
-        visYTilesDelta = 0.5;
-        visXTilesDelta = 1.0;
-    }
 
     double camYNorm = (EPSG3857CamLatNorm - 1.0) / -2.0;
     double tileP = 1.0 / n;

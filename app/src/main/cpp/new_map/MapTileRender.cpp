@@ -65,15 +65,30 @@ void MapTileRender::drawLayer(
     auto visibleZoom = style.getVisibleZoom(styleIndex);
     auto forwardRenderingOnly = style.getForwardRenderingOnly(styleIndex);
     bool exitByFR = forwardRenderingOnly && !isForwardRendering;
-    bool exByVisZoom = visibleZoom.find(zoom) == visibleZoom.end();
+    bool exByVisZoom = visibleZoom.find(floor(zoom)) == visibleZoom.end();
     if (exByVisZoom || exitByFR) {
         return;
     }
 
-    glUseProgram(plainShader->program);
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
-    glUniform4fv(plainShader->getColorLocation(), 1, color.data());
+
+    auto colorData = color.data();
+    auto alphaFrom = style.getAlphaInterpolateFrom(styleIndex);
+    auto alphaTo = style.getAlphaInterpolateTo(styleIndex);
+    if (alphaFrom != -1.0 && alphaTo != -1.0) {
+        float alpha = 0.0;
+        if (zoom > alphaFrom && zoom < alphaTo) {
+            alpha = 1.0 - (alphaTo - zoom) / (alphaTo - alphaFrom);
+        }
+        if (zoom >= alphaTo) {
+            alpha = 1.0;
+        }
+        colorData[3] = alpha;
+    }
+
     if (!polygons.vertices.empty()) {
+        glUseProgram(plainShader->program);
+        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+        glUniform4fv(plainShader->getColorLocation(), 1, colorData);
         glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
                               GL_FALSE, 0, polygons.vertices.data()
         );
@@ -83,6 +98,9 @@ void MapTileRender::drawLayer(
 
     bool drawWideLines = canDrawWideLines && isWideLine;
     if (!lines.vertices.empty() && !drawWideLines) {
+        glUseProgram(plainShader->program);
+        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+        glUniform4fv(plainShader->getColorLocation(), 1, color.data());
         glLineWidth(lineWidth);
         glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
                               GL_FALSE, 0, lines.vertices.data()

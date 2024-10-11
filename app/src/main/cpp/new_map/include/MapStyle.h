@@ -47,6 +47,22 @@ public:
         }
         return iteration->second;
     }
+
+    float getAlphaInterpolateFrom(unsigned short style) {
+        auto iteration = alphaInterpolateFrom.find(style);
+        if (iteration == alphaInterpolateFrom.end()) {
+            return -1.0;
+        }
+        return iteration->second;
+    }
+
+    float getAlphaInterpolateTo(unsigned short style) {
+        auto iteration = alphaInterpolateTo.find(style);
+        if (iteration == alphaInterpolateTo.end()) {
+            return -1.0;
+        }
+        return iteration->second;
+    }
 private:
     std::set<unsigned short> styles;
     std::map<unsigned short, CSSColorParser::Color> color;
@@ -55,6 +71,9 @@ private:
     std::map<unsigned short, bool> forwardRenderingOnly;
     std::map<unsigned short, float> borderFactor;
     std::map<unsigned short, std::unordered_map<short, void*>> visibleZoom;
+
+    std::map<unsigned short, float> alphaInterpolateFrom;
+    std::map<unsigned short, float> alphaInterpolateTo;
 
     std::unordered_map<short, void*> allZoomsVisible(std::unordered_map<short, void*> expect = {});
     std::unordered_map<short, void*> fromToZoomsVisible(int from, int to);

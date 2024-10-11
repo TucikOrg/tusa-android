@@ -21,8 +21,10 @@ MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile): mainEnv(env) {
     requestTileClassGlobal = static_cast<jclass>(env->NewGlobalRef(env->FindClass("com/artem/tusaandroid/RequestTile")));
     requestTileGlobal = env->NewGlobalRef(request_tile);
 
-    std::thread networkTileThread([this, gJvm] { this->networkTilesFunction(gJvm); });
-    networkTileThread.detach();
+    for (int i = 0; i <= 3; i++) {
+        std::thread networkTileThread([this, gJvm] { this->networkTilesFunction(gJvm); });
+        networkTileThread.detach();
+    }
 }
 
 void MapTileGetter::networkTilesFunction(JavaVM* gJvm) {

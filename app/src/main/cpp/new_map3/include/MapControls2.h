@@ -81,9 +81,9 @@ public:
         float from = 1.0f;
         float to = 2.0f;
 
-        float impact2 = 1.0f;
-        float secondFrom = 4.0f;
-        float secondTo = 14.0f;
+        float impact2 = 0.5f;
+        float secondFrom = 13.0f;
+        float secondTo = 16.0f;
 
         float zoom = getZoom();
         if (zoom <= from) {
@@ -97,19 +97,19 @@ public:
             return impact1 - p * impact1;
         }
 
-//        if (zoom <= secondFrom) {
-//            return impact1;
-//        }
-//
-//        if (zoom > secondFrom && zoom < secondTo) {
-//            float size = secondTo - secondFrom;
-//            float p = 1.0 - (secondTo - zoom) / size;
-//            p = std::fmax(0.0f, std::fmin(1.0f, p));
-//            float delta = impact1 - impact2;
-//            return impact1 - p * delta;
-//        }
+        if (zoom <= secondFrom) {
+            return impact1;
+        }
 
-        return impact1;
+        if (zoom > secondFrom && zoom < secondTo) {
+            float size = secondTo - secondFrom;
+            float p = 1.0 - (secondTo - zoom) / size;
+            p = std::fmax(0.0f, std::fmin(1.0f, p));
+            float delta = impact1 - impact2;
+            return impact1 - p * delta;
+        }
+
+        return impact2;
     }
 
     float getTransition() {
@@ -130,7 +130,7 @@ public:
     }
 
     void initCamUnit(float planeSize) {
-        camOneUnitScale = planeSize / 430000.0f;
+        camOneUnitScale = planeSize / 400000.0f;
     }
 
 private:
