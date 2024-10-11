@@ -51,14 +51,14 @@ void MapTest::drawLines3D(
     glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, indices.data());
 }
 
-void MapTest::drawFPS(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, float fps) {
+void MapTest::drawTopText(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, std::string text, float leftD) {
     CSSColorParser::Color color = CSSColorParser::parse("rgb(255, 0, 0)");
     float aspectRatio = mapCamera.getRatio();
     float left        = -aspectRatio;
     float right       = aspectRatio;
     float bottom      = -1;
     float top         = 1;
-    mapSymbols.renderText2D("FPS " + std::to_string((int)fps), left + 0.1, top - 0.05, 0.001, color, pvUI, shadersBucket);
+    mapSymbols.renderText2D(text, left + leftD, top - 0.05, 0.001, color, pvUI, shadersBucket);
 }
 
 void MapTest::init(MapCamera& mapCamera) {

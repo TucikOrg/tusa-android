@@ -24,6 +24,10 @@ public:
         return color[style];
     }
 
+    CSSColorParser::Color getBorderColor(unsigned short style) {
+        return borderColor[style];
+    }
+
     std::set<unsigned short> getStyles() {
         return styles;
     };
@@ -63,10 +67,20 @@ public:
         }
         return iteration->second;
     }
+
+    float getRenderWideAfterZoom(unsigned short style) {
+        auto iteration = renderWideAfterZoom.find(style);
+        if (iteration == renderWideAfterZoom.end()) {
+            return 15.0;
+        }
+        return iteration->second;
+    }
 private:
     std::set<unsigned short> styles;
     std::map<unsigned short, CSSColorParser::Color> color;
+    std::map<unsigned short, CSSColorParser::Color> borderColor;
     std::map<unsigned short, float> lineWidth;
+    std::map<unsigned short, float> renderWideAfterZoom;
     std::map<unsigned short, bool> isWideLine;
     std::map<unsigned short, bool> forwardRenderingOnly;
     std::map<unsigned short, float> borderFactor;

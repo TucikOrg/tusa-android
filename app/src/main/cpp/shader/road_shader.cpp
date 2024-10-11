@@ -18,10 +18,10 @@ RoadShader::RoadShader(AAssetManager* assetManager, const char* vertexShaderName
     a_even = glGetAttribLocation(program, "a_even");
     a_perpendiculars = glGetAttribLocation(program, "a_perpendiculars");
     a_uv = glGetAttribLocation(program, "a_uv");
-    a_shiftVector = glGetAttribLocation(program, "a_shiftVector");
 
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
+    u_border_color = glGetUniformLocation(program, "u_border_color");
     u_pointSize = glGetUniformLocation(program, "u_pointSize");
     u_width = glGetUniformLocation(program, "u_width");
     u_projection = glGetUniformLocation(program, "u_projection");

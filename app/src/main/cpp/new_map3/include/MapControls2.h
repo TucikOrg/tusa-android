@@ -101,6 +101,8 @@ public:
             return impact1;
         }
 
+        return impact1;
+
         if (zoom > secondFrom && zoom < secondTo) {
             float size = secondTo - secondFrom;
             float p = 1.0 - (secondTo - zoom) / size;

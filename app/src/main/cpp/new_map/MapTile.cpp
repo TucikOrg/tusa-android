@@ -35,7 +35,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
     std::map<unsigned short, unsigned int> linesResultIndicesCount = {};
 
     // Широкие линии
-    //std::map<unsigned short, std::forward_list<std::vector<MapWideLine>>> featuresWideLinesResult = {};
+    std::map<unsigned short, std::forward_list<std::vector<MapWideLine>>> featuresWideLinesResult = {};
     std::map<unsigned short, unsigned int> wideLinesPointsCount = {};
     std::map<unsigned short, unsigned int> wideLinesResultIndicesCount = {};
 
@@ -110,9 +110,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                             pointsVertices[pointIndex * 2 + 0] = point.x;
                             pointsVertices[pointIndex * 2 + 1] = -point.y;
 
-                            shiftVector[pointIndex * 2 + 0] = 0.0f;
-                            shiftVector[pointIndex * 2 + 1] = 0.0f;
-
                             vertices[pointIndex * 4 + 0] = point.x;
                             vertices[pointIndex * 4 + 1] = -point.y;
                             vertices[pointIndex * 4 + 2] = point.x;
@@ -129,20 +126,26 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                             perpendiculars[pointIndex * 4 + 3] = -ny;
                         }
 
-                        size_t indicesAmount = wideLinePointsSize;
+                        size_t indicesAmount = (pointsSize - 1) * 6;
                         std::vector<unsigned int> indices(indicesAmount);
-                        for(int indicesIndex = 0; indicesIndex < indicesAmount; indicesIndex++) {
-                            indices[indicesIndex] = indicesIndex;
+                        for(int i = 0; i < pointsSize - 1; i++) {
+                            unsigned int pointNum = i * 2;
+                            unsigned int startI = i * 6;
+                            indices[startI + 0] = 0 + pointNum;
+                            indices[startI + 1] = 1 + pointNum;
+                            indices[startI + 2] = 2 + pointNum;
+
+                            indices[startI + 3] = 1 + pointNum;
+                            indices[startI + 4] = 3 + pointNum;
+                            indices[startI + 5] = 2 + pointNum;
                         }
+
                         wideLinesResultIndicesCount[styleIndex] += indicesAmount;
                         wideLines[geomIndex] = {
                              std::move(vertices),
                              std::move(indices),
                              std::move(perpendiculars),
-                             std::move(pointsVertices),
-                             std::move(color),
-                             std::move(uv),
-                             std::move(shiftVector)
+                             std::move(uv)
                         };
                     }
 
@@ -308,6 +311,37 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
             std::move(squarePointIndices),
             std::move(squarePointShift)
         };
+
+        // Широкие линии
+        std::vector<unsigned int> wideLinesIndices(wideLinesResultIndicesCount[styleIndex]);
+        std::vector<float> wideLinesVertices(wideLinesPointsCount[styleIndex] * 2);
+        std::vector<float> wideLinesUVs(wideLinesPointsCount[styleIndex] * 2);
+        std::vector<float> wideLinesPerpendiculars(wideLinesPointsCount[styleIndex] * 2);
+        unsigned int wideLineCopyIndex = 0;
+        unsigned int wideLineIndicesCopyIndex = 0;
+        unsigned int indicShift = 0;
+        for (auto& wideLines : featuresWideLinesResult[styleIndex]) {
+            for (auto& wideLine : wideLines) {
+                for (int i = 0; i < wideLine.vertices.size(); i++) {
+                    wideLinesVertices[wideLineCopyIndex] = wideLine.vertices[i];
+                    wideLinesUVs[wideLineCopyIndex] = wideLine.uv[i];
+                    wideLinesPerpendiculars[wideLineCopyIndex] = wideLine.perpendiculars[i];
+                    wideLineCopyIndex++;
+                }
+                for (auto& indic : wideLine.indices) {
+                    wideLinesIndices[wideLineIndicesCopyIndex] = indic + indicShift;
+                    wideLineIndicesCopyIndex++;
+                }
+                indicShift += wideLine.vertices.size() / 2;
+            }
+        }
+        resultWideLineAggregatedByStyles[styleIndex] = MapWideLine {
+            std::move(wideLinesVertices),
+            std::move(wideLinesIndices),
+            std::move(wideLinesPerpendiculars),
+            std::move(wideLinesUVs)
+        };
+
     }
 }
 

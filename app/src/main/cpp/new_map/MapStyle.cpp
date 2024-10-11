@@ -30,10 +30,12 @@ bool MapStyle::registerAdminLayer(
         uint64_t adminLevel,
         int& currentIndex
 ) {
+    std::unordered_map<short, void*> zooms = fromToZoomsVisible(0, 12);
+    zooms.erase(0);
     if(layerName == "admin" && adminLevel == 0) {
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
-        visibleZoom[currentIndex] = allZoomsVisible({{0, nullptr}});
+        visibleZoom[currentIndex] = zooms;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -41,7 +43,7 @@ bool MapStyle::registerAdminLayer(
     if(layerName == "admin" && adminLevel == 1) {
         lineWidth[currentIndex] = 1.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
-        visibleZoom[currentIndex] = allZoomsVisible({{0, nullptr}});
+        visibleZoom[currentIndex] = zooms;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -49,7 +51,7 @@ bool MapStyle::registerAdminLayer(
     if(layerName == "admin" && adminLevel == 2) {
         lineWidth[currentIndex] = 0.1f;
         color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
-        visibleZoom[currentIndex] = allZoomsVisible({{0, nullptr}});
+        visibleZoom[currentIndex] = zooms;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -58,12 +60,12 @@ bool MapStyle::registerAdminLayer(
 }
 
 bool MapStyle::registerLandUseLayer(std::string layerName, std::string className, int& currentIndex) {
-    auto zooms = fromToZoomsVisible(14, 22);
+    auto zooms = fromToZoomsVisible(10, 22);
     if (layerName == "landuse" && className == "wood") {
         color[currentIndex] = CSSColorParser::parse("rgba(194, 239, 179, 0.8)");
         visibleZoom[currentIndex] = zooms;
-        alphaInterpolateFrom[currentIndex] = 14.0f;
-        alphaInterpolateTo[currentIndex] = 14.5f;
+        alphaInterpolateFrom[currentIndex] = 10.0f;
+        alphaInterpolateTo[currentIndex] = 11.5f;
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
@@ -214,49 +216,106 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
 }
 
 bool MapStyle::registerRoadLayer(std::string layerName, std::string className, int& currentIndex) {
-    if (layerName == "road" && className == "primary") {
-        lineWidth[currentIndex] = 2.0;
+
+    if (layerName == "road" && (className == "secondary" || className == "tertiary")) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 4.0f;
+        borderFactor[currentIndex] = 0.05f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(10, 22);
+        styles.insert(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road" && (className == "secondary_link" || className == "tertiary_link")) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 2.0f;
+        borderFactor[currentIndex] = 0.05f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(10, 22);
+        styles.insert(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road" && className == "street" ) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = allZoomsVisible({});
+        visibleZoom[currentIndex] = fromToZoomsVisible(13, 22);
+        styles.insert(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road" && className == "street_limited" ) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        renderWideAfterZoom[currentIndex] = 15.0f;
+        lineWidth[currentIndex] = 1.0f;
+        color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
+        borderFactor[currentIndex] = 0.05f;
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(15, 22);
+        styles.insert(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road" && className == "service" ) {
+        forwardRenderingOnly[currentIndex] = false;
+        renderWideAfterZoom[currentIndex] = 15.0f;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 1.0f;
+        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(15, 22);
+        styles.insert(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road" && (className == "primary" || className == "primary_link")) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 4.0f;
+        borderFactor[currentIndex] = 0.05f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(7, 22);
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
 
     if (layerName == "road" && className == "motorway") {
-        lineWidth[currentIndex] = 2.0;
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 8.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        borderFactor[currentIndex] = 0.00f;
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(249, 199, 128)");
         visibleZoom[currentIndex] = allZoomsVisible({});
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && className == "trunk") {
-        lineWidth[currentIndex] = 2.0f;
+    if (layerName == "road" && (className == "trunk" || className == "trunk_link")) {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        lineWidth[currentIndex] = 8.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        borderFactor[currentIndex] = 0.00f;
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(240, 227, 86)");
         visibleZoom[currentIndex] = allZoomsVisible({});
         styles.insert(currentIndex);
         return true;
     } else currentIndex++;
-
-    if (layerName == "road" && (className == "secondary" || className == "tertiary")) {
-        forwardRenderingOnly[currentIndex] = true;
-        isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 4.0f;
-        borderFactor[currentIndex] = 0.0f;
-        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = allZoomsVisible({});
-        styles.insert(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    // fallback
-//    if (layerName == "road") {
-//        lineWidth[currentIndex] = 1.0;
-//        color[currentIndex] = CSSColorParser::parse("rgba(254, 229, 154, 1.0)");
-//        visibleZoom[currentIndex] = allZoomsVisible({});
-//        styles.insert(currentIndex);
-//        return true;
-//    } else currentIndex++;
 
     return false;
 }
@@ -315,6 +374,15 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         return currentIndex;
     }
 
+    if (layerName == "building") {
+        color[currentIndex] = CSSColorParser::parse("rgb(237, 237, 237)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(15, 22);
+        alphaInterpolateFrom[currentIndex] = 15.0f;
+        alphaInterpolateTo[currentIndex] = 16.0f;
+        styles.insert(currentIndex);
+        return currentIndex;
+    } else currentIndex++;
+
     if (layerName == "water") {
         color[currentIndex] = CSSColorParser::parse("rgba(0, 186, 255, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible({});
@@ -330,14 +398,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         return currentIndex;
     }
 
-    if (layerName == "building") {
-        color[currentIndex] = CSSColorParser::parse("rgb(237, 237, 237)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(15, 22);
-        alphaInterpolateFrom[currentIndex] = 15.0f;
-        alphaInterpolateTo[currentIndex] = 16.0f;
-        styles.insert(currentIndex);
-        return currentIndex;
-    } else currentIndex++;
+
 
 
     LOGI("Unknown style for layer %s class %s", layerName.c_str(), className.c_str());

@@ -14,6 +14,9 @@
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <string>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 #include "csscolorparser/csscolorparser.h"
 #define LOG_TAG "GL_ARTEM"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -22,6 +25,12 @@
 
 class Utils {
 public:
+    static std::string floatToString(float value, int precision) {
+        std::ostringstream out;
+        out << std::fixed << std::setprecision(precision) << value;
+        return out.str();
+    }
+
     static std::string generateRandomColor() {
         // Generate random RGB values
         int r = std::rand() % 256;

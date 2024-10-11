@@ -65,9 +65,8 @@ void MapRenderer2::renderFrame() {
         visYTilesDelta = 1.0;
     }
 
-
     float textureTileSize = textureTileSizeUnit;
-    bool forwardRenderingToWorld = zoom >= 4.6;
+    bool forwardRenderingToWorld = zoom >= forwardRenderingToWorldZoom;
 
     double camYNorm = (EPSG3857CamLatNorm - 1.0) / -2.0;
     double tileP = 1.0 / n;
@@ -418,7 +417,10 @@ void MapRenderer2::renderFrame() {
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTexture, xTilesAmount, yTilesAmount);
-    mapTest.drawFPS(shadersBucket, mapSymbols, mapCamera, mapFpsCounter.getFps());
+    auto fps = Utils::floatToString(mapFpsCounter.getFps(), 1);
+    auto zoomText = Utils::floatToString(zoom, 1);
+    std::string textInfo = "FPS: " + fps + " Z:" + zoomText;
+    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.2f);
 }
 
 void MapRenderer2::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -467,7 +469,7 @@ MapRenderer2::MapRenderer2() {
     float longitude = DEG2RAD(15.623110);
 
     mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(14);
+    mapControls.setZoom(10);
     mapControls.initCamUnit(planeSize);
 }
 

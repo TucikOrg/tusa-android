@@ -56,8 +56,7 @@ public:
     std::map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
     std::map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
     std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
-
-    std::map<unsigned short, std::forward_list<std::vector<MapWideLine>>> featuresWideLinesResult = {};
+    std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
 
     MapStyle style = MapStyle();
 private:

@@ -37,6 +37,7 @@ private:
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
     }
 
+    float forwardRenderingToWorldZoom = 14.0f;
     float planeSize = 10000000;
     int textureTileSizeUnit = 512 * 2.0;
     int prTex2dHeight;
