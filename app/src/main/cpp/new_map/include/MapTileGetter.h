@@ -13,6 +13,7 @@
 #include <cmath>
 #include "MapStyle.h"
 #include "MapTile.h"
+#include "CircularBuffer.h"
 
 class MapTileGetter {
 public:
@@ -20,8 +21,13 @@ public:
     ~MapTileGetter();
     MapTile* getOrRequest(int x, int y, int z, bool forceMem = false);
     MapTile* findExistParent(int x, int y, int z);
+    std::vector<MapTile*> findChildInPreviousTiles(int x, int y, int z);
+    void clearActualTiles();
 private:
-    std::unordered_map<uint64_t, MapTile> cacheTiles = {};
+    unsigned short networkThreadsCount = 2;
+    std::unordered_map<uint64_t, MapTile*> cacheTiles = {};
+    std::unordered_map<uint64_t, MapTile*> actualTiles = {};
+    CircularBuffer<uint64_t, MapTile*> previousTilesBuffer = CircularBuffer<uint64_t, MapTile*>(18);
 
     jclass requestTileClassGlobal;
     jobject requestTileGlobal;
@@ -29,10 +35,10 @@ private:
     MapTile emptyTile = MapTile(-1, -1, -1);
 
     std::unordered_map<uint64_t, void*> pushedToNetwork;
-    std::stack<std::array<int, 3>> networkTilesStack = {};
+    std::stack<std::array<int, 3>> networkTilesStack;
 
     MapTile* load(int x, int y, int z, JNIEnv* parallelThreadEnv);
-    void networkTilesFunction(JavaVM* gJvm);
+    void networkTilesFunction(JavaVM* gJvm, short num);
 };
 
 

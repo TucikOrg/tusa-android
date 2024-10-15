@@ -118,7 +118,6 @@ void MapSymbols::renderText2D(
         float w = std::get<1>(charRender);
         float h = std::get<2>(charRender);
         float pixelsShift = std::get<3>(charRender);
-
         float xPos = x + symbol.bitmapLeft * symbolScale;
         float yPos = y - (symbol.rows - symbol.bitmapTop ) * symbolScale;
 
@@ -128,30 +127,24 @@ void MapSymbols::renderText2D(
                 xPos + w, yPos,
                 xPos + w, (yPos + h)
         };
-
         GLfloat textureCords[] = {
                 0.0f, 0.0f,
                 0.0f, 1.0f,
                 1.0f, 1.0f,
                 1.0f, 0.0f
         };
-
         unsigned int indices[6] = {
                 2, 3, 0,
                 0, 1, 2
         };
 
-
         glUseProgram(symbolShader->program);
-
         glUniform3f(symbolShader->getColorLocation(), red, green, blue);
         glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
         glBindTexture(GL_TEXTURE_2D, textureId);
         glUniform1i(symbolShader->getTextureLocation(), 0);
-
         glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords);
         glEnableVertexAttribArray(symbolShader->getTextureCord());
-
         glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, points);
         glEnableVertexAttribArray(symbolShader->getPosLocation());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, indices);

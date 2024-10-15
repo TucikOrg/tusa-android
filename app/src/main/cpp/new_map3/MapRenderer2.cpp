@@ -5,6 +5,7 @@
 #include "MapRenderer2.h"
 
 #include <cmath>
+#include "MapColors.h"
 
 void MapRenderer2::renderFrame() {
     mapFpsCounter.newFrame();
@@ -23,6 +24,7 @@ void MapRenderer2::renderFrame() {
     float impact = mapControls.getCamDistDistortionImpact();
     float distancePortion = invDistortion * impact + (1.0 - impact);
     float distanceToMap = mapControls.getDistanceToMap(distancePortion);
+    float zoomingDelta = mapControls.getZoomingDelta();
 
     float planesDelta = distanceToMap / 1.1f;
     float nearPlane = distanceToMap - planesDelta;
@@ -33,7 +35,7 @@ void MapRenderer2::renderFrame() {
     Eigen::Matrix4d scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0);
     Eigen::Matrix4d translatePlane = EigenGL::createTranslationMatrix(0.0, shiftPlaneY, 0.0);
     Eigen::Matrix4d planeModelMatrix = translatePlane * scalePlane;
-    Eigen::Matrix4f sphereModelMatrix = EigenGL::createRotationMatrixAxis(FLOAT(EPSG4326CamLat), Eigen::Vector3f {1.0, 0.0, 0.0});
+    Eigen::Matrix4d sphereModelMatrix = EigenGL::createRotationMatrixAxis(EPSG4326CamLat, Eigen::Vector3d {1.0, 0.0, 0.0});
 
     Eigen::Matrix4d projection = mapCamera.createPerspectiveProjectionD(nearPlane, farPlane);
     Eigen::Matrix4d view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0);
@@ -117,22 +119,28 @@ void MapRenderer2::renderFrame() {
     float rightXVertex = rightPlanetU * planeSize - verticesShift;
 
     // определяем тайлы и ключ
+    bool allTilesReady = true;
     int existTiles = 0;
-    std::vector<MapTile*> backgroundTiles = {};
-    std::unordered_map<uint64_t, void*> backgroundTileKeys = {};
+    std::unordered_map<uint64_t, MapTile*> backgroundTiles = {};
     std::unordered_map<uint64_t, MapTile*> tiles = {};
     for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
         for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
             int tileX = normalizeXTile(tileXInf, n);
             auto tile = mapTileGetter->getOrRequest(tileX, tileY, tileZ);
             if (tile->isEmpty()) {
+                allTilesReady = false;
+                std::vector<MapTile*> replacement(1);
                 // Нужна замена на фоновый тайл
-                auto replacement = mapTileGetter->findExistParent(tileX, tileY, tileZ);
-                if (!replacement->isEmpty()) {
-                    auto addKey = MapTile::makeKey(replacement->getX(), replacement->getY(), replacement->getZ());
-                    if (backgroundTileKeys.find(addKey) == backgroundTileKeys.end()) {
-                        backgroundTiles.push_back(replacement);
-                        backgroundTileKeys.insert({addKey, nullptr});
+                if (zoomingDelta >= 0.0f) {
+                    replacement[0] = mapTileGetter->findExistParent(tileX, tileY, tileZ);
+                } else {
+                    replacement = mapTileGetter->findChildInPreviousTiles(tileX, tileY, tileZ);
+                }
+
+                for (auto replace : replacement) {
+                    auto addKey = MapTile::makeKey(replace->getX(), replace->getY(), replace->getZ());
+                    if (backgroundTiles.find(addKey) == backgroundTiles.end()) {
+                        backgroundTiles.insert({addKey, replace});
                     }
                 }
             }
@@ -140,6 +148,10 @@ void MapRenderer2::renderFrame() {
             tiles.insert({MapTile::makeKey(tileX, tileY, tileZ), tile});
         }
     }
+    mapTileGetter->clearActualTiles();
+    if (allTilesReady)
+        mapControls.allTilesReady();
+
     std::string newTextureKey =
             std::to_string(visTileYStart) +
             std::to_string(visTileYEnd) +
@@ -182,7 +194,8 @@ void MapRenderer2::renderFrame() {
 
         // рисуем фоновые тайлы
         for (int loop = -1; loop <= 1; loop++) {
-            for (auto backgroundTile : backgroundTiles) {
+            for (auto& backgroundTilePair : backgroundTiles) {
+                auto backgroundTile = backgroundTilePair.second;
                 float deltaZ = tileZ - backgroundTile->getZ();
                 float scale = pow(2.0, deltaZ);
 
@@ -288,7 +301,8 @@ void MapRenderer2::renderFrame() {
         glEnable(GL_SCISSOR_TEST);
         // рисуем фоновые тайлы
         for (int loop = -1; loop <= 1; loop++) {
-            for (auto backgroundTile : backgroundTiles) {
+            for (auto& backgroundTilePair : backgroundTiles) {
+                auto backgroundTile = backgroundTilePair.second;
                 double deltaZ = tileZ - backgroundTile->getZ();
                 double scale = pow(2.0, deltaZ);
 
@@ -411,16 +425,17 @@ void MapRenderer2::renderFrame() {
         glUniform2f(planet3Shader->getUVOffsetLocation(), shiftUTex, 0.0f);
         glUniform2f(planet3Shader->getUVScaleLocation(), scaleUTex, 1.0f);
         glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
+        drawTopCap(pvFloat, sphereModelMatrixFloat, zoom);
+        drawBottomCap(pvFloat, sphereModelMatrixFloat, zoom);
         glDisable(GL_DEPTH_TEST);
     }
-
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTexture, xTilesAmount, yTilesAmount);
     auto fps = Utils::floatToString(mapFpsCounter.getFps(), 1);
     auto zoomText = Utils::floatToString(zoom, 1);
     std::string textInfo = "FPS: " + fps + " Z:" + zoomText;
-    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.2f);
+    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.2f, 0.05f);
 }
 
 void MapRenderer2::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -447,6 +462,8 @@ void MapRenderer2::onSurfaceCreated(AAssetManager *assetManager) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glGenFramebuffers(1, &mapTextureFramebuffer);
+    int maxTextureSize;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
 }
 
 void MapRenderer2::drag(float dx, float dy) {
@@ -468,9 +485,125 @@ MapRenderer2::MapRenderer2() {
     float latitude = DEG2RAD(78.236812);
     float longitude = DEG2RAD(15.623110);
 
-    mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(10);
     mapControls.initCamUnit(planeSize);
+    mapControls.setCamPos(moscowLat, moscowLon);
+    mapControls.setZoom(14);
+}
+
+void MapRenderer2::drawTopCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom) {
+    float radius = planeSize / (2.0 * M_PI);
+    int segments = 40;
+    int pointsCount = (segments + 1);
+    int lastPoint = pointsCount - 1;
+    std::vector<float> vertices(pointsCount * 3);
+    vertices[0] = 0.0f;
+    vertices[1] = radius;
+    vertices[2] = 0.0f;
+    float maxLatDeg = RAD2DEG(maxLat);
+    int vertIndex = 2;
+    int delta = 360 / segments;
+    for (int lon = -180; lon <= 180; lon += delta) {
+        float lonRad = DEG2RAD(lon);
+        float x = radius * cos(maxLat) * sin(lonRad);
+        float y = radius * sin(maxLat);
+        float z = radius * cos(maxLat) * cos(lonRad);
+        vertices[++vertIndex] = x;
+        vertices[++vertIndex] = y;
+        vertices[++vertIndex] = z;
+    }
+    Eigen::Matrix4f translateSphere = EigenGL::createTranslationMatrix(0.0f, 0.0f, -radius);
+    Eigen::Matrix4f pvm = pv * translateSphere * sphereModelMatrix;
+    int indicesAmount = segments * 3;
+    std::vector<unsigned int> indices(indicesAmount);
+    unsigned int indexIndic = 0;
+    for (int i = 0; i < lastPoint - 1; i++) {
+        indices[indexIndic++] = 0;
+        indices[indexIndic++] = i + 1;
+        indices[indexIndic++] = i + 2;
+    }
+    indices[indexIndic++] = 0;
+    indices[indexIndic++] = lastPoint;
+    indices[indexIndic++] = 1;
+    auto waterColorCSS = MapColors::getWaterColor();
+    auto waterColor = CommonUtils::toOpenGlColor(waterColorCSS);
+    auto alphaFrom = 3.0f;
+    auto alphaTo = 4.0f;
+    if (alphaFrom != -1.0 && alphaTo != -1.0) {
+        float alpha = 1.0;
+        if (zoom > alphaFrom && zoom < alphaTo) {
+            alpha = (alphaTo - zoom) / (alphaTo - alphaFrom);
+        }
+        if (zoom >= alphaTo) {
+            alpha = 0.0;
+        }
+        waterColor[3] = alpha;
+    }
+    auto plainShader = shadersBucket.plainShader.get();
+    glUseProgram(plainShader->program);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glUniform4fv(plainShader->getColorLocation(), 1, waterColor.data());
+    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.data());
+}
+
+void MapRenderer2::drawBottomCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom) {
+    float radius = planeSize / (2.0 * M_PI);
+    int segments = 40;
+    int pointsCount = (segments + 1);
+    int lastPoint = pointsCount - 1;
+    std::vector<float> vertices(pointsCount * 3);
+    vertices[0] = 0.0f;
+    vertices[1] = -radius;
+    vertices[2] = 0.0f;
+    float maxLatDeg = RAD2DEG(-maxLat);
+    int vertIndex = 2;
+    int delta = 360 / segments;
+    for (int lon = -180; lon <= 180; lon += delta) {
+        float lonRad = DEG2RAD(lon);
+        float x = radius * cos(-maxLat) * sin(lonRad);
+        float y = radius * sin(-maxLat);
+        float z = radius * cos(-maxLat) * cos(lonRad);
+        vertices[++vertIndex] = x;
+        vertices[++vertIndex] = y;
+        vertices[++vertIndex] = z;
+    }
+    Eigen::Matrix4f translateSphere = EigenGL::createTranslationMatrix(0.0f, 0.0f, -radius);
+    Eigen::Matrix4f pvm = pv * translateSphere * sphereModelMatrix;
+    int indicesAmount = segments * 3;
+    std::vector<unsigned int> indices(indicesAmount);
+    unsigned int indexIndic = 0;
+    for (int i = 0; i < lastPoint - 1; i++) {
+        indices[indexIndic++] = 0;
+        indices[indexIndic++] = i + 1;
+        indices[indexIndic++] = i + 2;
+    }
+    indices[indexIndic++] = 0;
+    indices[indexIndic++] = lastPoint;
+    indices[indexIndic++] = 1;
+
+    auto poleColor = MapColors::getPoleColor();
+    auto alphaFrom = 3.0f;
+    auto alphaTo = 4.0f;
+    if (alphaFrom != -1.0f && alphaTo != -1.0f) {
+        float alpha = 1.0;
+        if (zoom > alphaFrom && zoom < alphaTo) {
+            alpha = (alphaTo - zoom) / (alphaTo - alphaFrom);
+        }
+        if (zoom >= alphaTo) {
+            alpha = 0.0;
+        }
+        poleColor[3] = alpha;
+    }
+
+    auto plainShader = shadersBucket.plainShader.get();
+    glUseProgram(plainShader->program);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
+    glEnableVertexAttribArray(plainShader->getPosLocation());
+    glUniform4fv(plainShader->getColorLocation(), 1, poleColor.data());
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, indices.data());
 }
 
 

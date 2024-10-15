@@ -8,6 +8,7 @@
 #include "csscolorparser/csscolorparser.h"
 #include "style/style.h"
 
+
 class MapStyle {
 public:
     unsigned short determineStyle(std::string layerName, layer_map_type props, int z);

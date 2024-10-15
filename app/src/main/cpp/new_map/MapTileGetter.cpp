@@ -6,6 +6,7 @@
 
 #include "util/android_log.h"
 
+std::mutex updateVisibleTiles;
 std::mutex cacheMutex2;
 std::mutex networkTileStackMutex2;
 
@@ -21,40 +22,48 @@ MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile): mainEnv(env) {
     requestTileClassGlobal = static_cast<jclass>(env->NewGlobalRef(env->FindClass("com/artem/tusaandroid/RequestTile")));
     requestTileGlobal = env->NewGlobalRef(request_tile);
 
-    for (int i = 0; i <= 3; i++) {
-        std::thread networkTileThread([this, gJvm] { this->networkTilesFunction(gJvm); });
+    for (short i = 0; i <= networkThreadsCount; i++) {
+        std::thread networkTileThread([this, gJvm, i] { this->networkTilesFunction(gJvm, i); });
         networkTileThread.detach();
     }
 }
 
-void MapTileGetter::networkTilesFunction(JavaVM* gJvm) {
+void MapTileGetter::clearActualTiles() {
+    updateVisibleTiles.lock();
+    actualTiles.clear();
+    updateVisibleTiles.unlock();
+}
+
+void MapTileGetter::networkTilesFunction(JavaVM* gJvm, short num) {
     JNIEnv* threadEnv;
     gJvm->AttachCurrentThread(&threadEnv, NULL);
 
     while (true) {
         // Берем тайлы для загрузки из списка и грузим потом
-        bool shouldLoadTile = false;
+        bool exists = false;
         networkTileStackMutex2.lock();
         std::array<int, 3> tileToNetwork;
         auto isEmpty = networkTilesStack.empty();
         if (!isEmpty) {
             tileToNetwork = networkTilesStack.top();
             networkTilesStack.pop();
-            shouldLoadTile = true;
+            exists = true;
         }
         networkTileStackMutex2.unlock();
+        if (!exists) continue;
 
         // Проверяем что тайл актуален и есть смысл его загружать к данному моменту
         // в момент когда наступает его очередь загрузки может быть так что он уже не нужен
-        //        visibleTilesResultMutex.lock();
-        //        if (visibleTilesResult.newVisibleTiles.find(tileToNetwork.getKey()) == visibleTilesResult.newVisibleTiles.end()) {
-        //            shouldLoadTile = false;
-        //        }
-        //        visibleTilesResultMutex.unlock();
+        auto tileToNetworkKey = MapTile::makeKey(tileToNetwork[0], tileToNetwork[1], tileToNetwork[2]);
+        updateVisibleTiles.lock();
+        bool isActual = actualTiles.find(tileToNetworkKey) == actualTiles.end();
+        updateVisibleTiles.unlock();
 
-        if (shouldLoadTile) {
+        if (isActual) {
             // Загружаем тайл
+            //LOGI("Load tile(%d) %d %d %d", num, tileToNetwork[0], tileToNetwork[1], tileToNetwork[2]);
             auto loaded = load(tileToNetwork[0], tileToNetwork[1], tileToNetwork[2], threadEnv);
+            //LOGI("Tile ready (%d)", num);
         }
     }
 
@@ -72,16 +81,16 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
 
     vtzero::vector_tile vectorTile(tileData);
-    MapTile mapTile = MapTile(x, y, z, vectorTile);
+    MapTile* mapTile = new MapTile(x, y, z, vectorTile);
 
     cacheMutex2.lock();
-    cacheTiles.insert({key, std::move(mapTile)});
+    cacheTiles.insert({key, mapTile});
     cacheMutex2.unlock();
 
-    return &cacheTiles.find(key)->second;
+    return mapTile;
 }
 
-MapTile *MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
+MapTile* MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
     cacheMutex2.lock();
     auto key = MapTile::makeKey(x, y, z);
     auto req = pushedToNetwork.find(key);
@@ -92,8 +101,10 @@ MapTile *MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
         if (reqExists) {
             pushedToNetwork.erase(req);
         }
+        previousTilesBuffer.add(key, it->second);
+        actualTiles.insert({key, it->second});
         cacheMutex2.unlock();
-        return &it->second;
+        return it->second;
     }
     cacheMutex2.unlock();
 
@@ -115,7 +126,7 @@ MapTile *MapTileGetter::findExistParent(int x, int y, int z) {
         cacheMutex2.unlock();
         return &emptyTile;
     }
-    MapTile* parent = &root->second;
+    MapTile* parent = root->second;
     int parentX = x;
     int parentY = y;
     int parentZ = z;
@@ -127,7 +138,8 @@ MapTile *MapTileGetter::findExistParent(int x, int y, int z) {
         auto it = cacheTiles.find(key);
         auto existsInMem = it != cacheTiles.end();
         if (existsInMem) {
-            parent = &it->second;
+            previousTilesBuffer.add(key, it->second);
+            parent = it->second;
             break;
         }
 
@@ -139,4 +151,31 @@ MapTile *MapTileGetter::findExistParent(int x, int y, int z) {
     return parent;
 }
 
+std::vector<MapTile*> MapTileGetter::findChildInPreviousTiles(int x, int y, int z) {
+    cacheMutex2.lock();
+    std::vector<MapTile*> childrens = {};
+    auto previousTiles = previousTilesBuffer.getBuffer();
+    int lastIndex = previousTiles.size() - 1;
+    for (int i = lastIndex - 1; i >= 0; i--) {
+        auto tile = previousTiles[i].second;
+        if (tile == nullptr) continue;
 
+        auto cover = MapTile::coverOneOther(x, y, z, tile->getX(), tile->getY(), tile->getZ());
+        if (!cover) continue;
+
+        bool coveredAlready = false;
+        for (auto child : childrens) {
+            auto cover2 = MapTile::coverOneOther(child->getX(), child->getY(), child->getZ(), tile->getX(), tile->getY(), tile->getZ());
+            if (cover2) {
+                coveredAlready = true;
+                break;
+            }
+        }
+        if (coveredAlready) continue;
+
+        childrens.push_back(tile);
+    }
+
+    cacheMutex2.unlock();
+    return childrens;
+}

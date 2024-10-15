@@ -1,4 +1,4 @@
-precision lowp float;
+precision highp float;
 
 attribute vec4 vertexPosition;
 attribute vec2 a_uv;
@@ -11,8 +11,8 @@ uniform mat4 u_projection;
 varying vec2 v_uv;
 
 void main() {
-    gl_PointSize = 30.0f;
-    float h = u_point_size / 2.0f;
+    gl_PointSize = 30.0;
+    float h = u_point_size / 2.0;
     vec2 shift = vec2(a_shift.x * h, a_shift.y * h);
     gl_Position = u_projection * (u_matrix * vertexPosition + vec4(shift, 0.0, 0.0));
 

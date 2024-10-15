@@ -40,7 +40,6 @@ public:
     std::shared_ptr<TextureShader> textureShader;
     std::shared_ptr<UserMarkerShader> userMarkerShader;
     std::shared_ptr<Planet3Shader> planet3Shader;
-    std::shared_ptr<Planet3FRendShader> planet3FRendShader;
     std::shared_ptr<SimplePointShader> simplePointShader;
     std::shared_ptr<SquarePointShader> squarePointShader;
 };

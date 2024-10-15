@@ -1,3 +1,4 @@
+precision highp float;
 
 uniform sampler2D u_text;
 uniform vec3 u_color;

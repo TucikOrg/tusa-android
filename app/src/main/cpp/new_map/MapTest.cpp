@@ -51,14 +51,14 @@ void MapTest::drawLines3D(
     glDrawElements(GL_LINES, indices.size(), GL_UNSIGNED_INT, indices.data());
 }
 
-void MapTest::drawTopText(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, std::string text, float leftD) {
+void MapTest::drawTopText(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, std::string text, float leftD, float topD) {
     CSSColorParser::Color color = CSSColorParser::parse("rgb(255, 0, 0)");
     float aspectRatio = mapCamera.getRatio();
     float left        = -aspectRatio;
     float right       = aspectRatio;
     float bottom      = -1;
     float top         = 1;
-    mapSymbols.renderText2D(text, left + leftD, top - 0.05, 0.001, color, pvUI, shadersBucket);
+    mapSymbols.renderText2D(text, left + leftD, top - topD, 0.001, color, pvUI, shadersBucket);
 }
 
 void MapTest::init(MapCamera& mapCamera) {

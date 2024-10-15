@@ -6,6 +6,7 @@
 #include "shader/shaders_bucket.h"
 #include "util/android_log.h"
 #include "util/eigen_gl.h"
+#include "MapColors.h"
 
 void MapTileRender::initTilesTexture() {
     glGenFramebuffers(1, &tilesFrameBuffer);
@@ -86,10 +87,11 @@ void MapTileRender::drawLayer(
         colorData[3] = alpha;
     }
 
+    glUseProgram(plainShader->program);
+    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+    glUniform4fv(plainShader->getColorLocation(), 1, colorData);
+    glLineWidth(lineWidth);
     if (!polygons.vertices.empty()) {
-        glUseProgram(plainShader->program);
-        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
-        glUniform4fv(plainShader->getColorLocation(), 1, colorData);
         glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
                               GL_FALSE, 0, polygons.vertices.data()
         );
@@ -99,10 +101,6 @@ void MapTileRender::drawLayer(
 
     bool drawWideLines = canDrawWideLines && isWideLine;
     if (!lines.vertices.empty() && !drawWideLines) {
-        glUseProgram(plainShader->program);
-        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
-        glUniform4fv(plainShader->getColorLocation(), 1, colorData);
-        glLineWidth(lineWidth);
         glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
                               GL_FALSE, 0, lines.vertices.data()
         );
@@ -173,7 +171,7 @@ void MapTileRender::drawBackground(
             extent, -extent,
             extent, 0,
     };
-    auto backgroundColor = CommonUtils::toOpenGlColor(CSSColorParser::parse("rgba(241, 255, 230, 1.0)"));
+    auto backgroundColor = CommonUtils::toOpenGlColor(MapColors::getBackground());
     glUseProgram(plainShader->program);
     glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
     glUniform4fv(plainShader->getColorLocation(), 1.0f, backgroundColor.data());

@@ -177,6 +177,9 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                         indices[indicesIndex + 1] = indicesIndex / 2 + 1;
                     }
                     linesResultIndicesCount[styleIndex] += indicesAmount;
+                    if (vertices.size() == 0) {
+                        int i = 2;
+                    }
                     simpleLines[geomIndex] = { std::move(vertices), std::move(indices) };
                 }
                 featuresLinesResult[styleIndex].push_front(std::move(simpleLines));
@@ -361,6 +364,23 @@ bool MapTile::cover(std::array<int, 3> otherTile) {
     return (transformed_x1 <= otherTile[0] && otherTile[0] < transformed_x1 + scale) &&
            (transformed_y1 <= otherTile[1] && otherTile[1] < transformed_y1 + scale);
 
+}
+
+bool MapTile::coverOneOther(int x1, int y1, int z1, int x2, int y2, int z2) {
+    if (z1 > z2) {
+        return false;
+    }
+
+    // Коэффициент масштаба между уровнями зума
+    int scale = 1 << (z2 - z1);
+
+    // Преобразуем координаты тайла1 на уровень зума тайла2
+    int transformed_x1 = x1 * scale;
+    int transformed_y1 = y1 * scale;
+
+    // Проверяем, покрывает ли тайл1 тайл2
+    return (transformed_x1 <= x2 && x2 < transformed_x1 + scale) &&
+           (transformed_y1 <= y2 && y2 < transformed_y1 + scale);
 }
 
 

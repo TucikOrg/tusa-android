@@ -27,22 +27,26 @@ public:
         scaleFactorRaw *= (1 + realScale * scaleSpeed);
         scaleFactorRaw = std::fmax(scaleShift, std::fmin(scaleFactorRaw, maxScale));
         float factor = scaleFactorRaw - scaleShift;
+        zoomingDelta = factor - zoomingStart;
         scaleFactorZoom = factor;
     };
+    void doubleTap() {}
 
-    void doubleTap() {
-
+    void allTilesReady() {
+        zoomingStart = scaleFactorZoom;
     }
 
     void setZoom(float zoom) {
         scaleFactorRaw = zoom + scaleShift;
         float factor = scaleFactorRaw - scaleShift;
         scaleFactorZoom = factor;
+        zoomingStart = factor;
     }
 
     short getMaxTilesZoom() { return maxTilesZoom; }
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }
+    float getZoomingDelta() { return zoomingDelta; }
 
     void setCamPos(float latitudeEPSG4326, float longitudeEPSG4326) {
         epsg3857LatNorm = Utils::EPSG4326_to_EPSG3857_latitude(latitudeEPSG4326) / M_PI;
@@ -78,8 +82,8 @@ public:
 
     float getCamDistDistortionImpact() {
         float impact1 = 1.0f;
-        float from = 1.0f;
-        float to = 2.0f;
+        float from = 2.0f;
+        float to = 2.5f;
 
         float impact2 = 0.5f;
         float secondFrom = 13.0f;
@@ -136,6 +140,8 @@ public:
     }
 
 private:
+    float zoomingDelta = 0.0;
+    float zoomingStart = 0.0;
     int maxTilesZoom = 16;
 
     double epsg3857LatNorm = 0;
@@ -145,7 +151,7 @@ private:
     float maxZoom = 19.0f;
     float scaleShift = 1.0f;
     float maxScale = maxZoom + scaleShift;
-    float scaleSpeed = 0.5f;
+    float scaleSpeed = 0.4f;
     float scaleFactorZoom = 0;
     double moveSpeed = 0.001;
     float camOneUnitScale;

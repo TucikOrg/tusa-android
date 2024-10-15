@@ -40,9 +40,6 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     planet3Shader = std::shared_ptr<Planet3Shader>(new Planet3Shader(
             assetManager, "shaders/planet3.vert", "shaders/planet3.frag"
     ));
-    planet3FRendShader = std::shared_ptr<Planet3FRendShader>(new Planet3FRendShader(
-            assetManager, "shaders/planet3_f_rend.vert", "shaders/planet3_f_rend.frag"
-    ));
     roadShader = std::shared_ptr<RoadShader>(new RoadShader(
             assetManager, "shaders/road.vert", "shaders/road.frag"
     ));

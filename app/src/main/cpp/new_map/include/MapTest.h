@@ -61,7 +61,7 @@ public:
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
-    void drawTopText(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, std::string text, float leftD);
+    void drawTopText(ShadersBucket &shadersBucket, MapSymbols &mapSymbols, MapCamera& mapCamera, std::string text, float leftD, float topD);
     void drawPoints2D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix);
     void drawPoints3D(ShadersBucket& shadersBucket, std::vector<float>& vertices, float pointSize, Eigen::Matrix4f& matrix);
     void drawLines3D(ShadersBucket& shadersBucket, std::vector<float>& vertices, std::vector<unsigned int> &indices, float lineWidth, Eigen::Matrix4f& matrix);

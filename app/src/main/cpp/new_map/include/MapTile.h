@@ -25,6 +25,8 @@ public:
 
     bool cover(std::array<int, 3> otherTile);
 
+    static bool coverOneOther(int x1, int y1, int z1, int x2, int y2, int z2);
+
     static uint64_t makeKey(int x, int y, int z) {
         return (static_cast<uint64_t>(x) << 32) | (static_cast<uint32_t>(y) << 16) | static_cast<uint16_t>(z);
     }

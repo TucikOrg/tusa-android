@@ -1,4 +1,4 @@
-precision lowp float;
+precision highp float;
 
 uniform sampler2D u_tile_0;
 varying vec2 v_tile_cords_unit_square;

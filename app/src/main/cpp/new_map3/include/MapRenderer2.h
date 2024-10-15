@@ -13,6 +13,7 @@
 #include "MapControls2.h"
 #include "TileAndMatrix.h"
 
+
 class MapRenderer2 {
 public:
     MapRenderer2();
@@ -37,15 +38,19 @@ private:
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
     }
 
-    float forwardRenderingToWorldZoom = 14.0f;
+    float maxLat = atan(sinh(M_PI));
+    float forwardRenderingToWorldZoom = 13.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 512 * 2.0;
+    int textureTileSizeUnit = 1024;
     int prTex2dHeight;
     int prTex2dWidth;
     std::string textureKey;
 
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
+
+    void drawTopCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom);
+    void drawBottomCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom);
 };
 
 

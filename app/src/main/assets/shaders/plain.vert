@@ -1,4 +1,4 @@
-precision lowp float;
+precision highp float;
 
 attribute vec4 vertexPosition;
 uniform mat4 u_matrix;

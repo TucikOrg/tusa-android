@@ -17,7 +17,7 @@ const float M_PI = 3.1415926535897932384626433832795;
 const float M_PI_2 = M_PI / 2.0;
 const float M_PI_4 = M_PI / 4.0;
 const float M_PI_8 = M_PI / 8.0;
-const float M_2_PI = 2.0 * M_PI;
+const float TWO_M_PI = 2.0 * M_PI;
 
 float sinh(float x) {
     return (exp(x) - exp(-x)) / 2.0;
@@ -42,7 +42,7 @@ vec3 getSpherePoint(float epsg4326Latitude, float epsg4326Longitude, float radiu
 void main() {
     vec2 epsg3857 = a_planet_epsg3857;
     vec2 epsg4326 = EPSG3857_TO_EPSG4326(epsg3857);
-    float radius = u_planeSize / M_2_PI;
+    float radius = u_planeSize / TWO_M_PI;
 
     vec4 sphereVertexPos = u_sphere_matrix * vec4(getSpherePoint(epsg4326.x, epsg4326.y, radius), 1.0) - vec4(0.0, 0.0, radius, 0.0);
     vec4 planeVertexPos = u_plane_matrix * a_vertexPosition;
