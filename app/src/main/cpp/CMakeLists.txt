@@ -109,6 +109,11 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         new_map3/MapSquarePoints.cpp
         new_map3/CircularBuffer.cpp
         new_map3/MapColors.cpp
+        new_map3/MapEnvironment.cpp
+        new_map3/RenderTextureData.cpp
+        new_map3/DrawMap.cpp
+        new_map3/DrawMapData.cpp
+        new_map3/MapNumbers.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

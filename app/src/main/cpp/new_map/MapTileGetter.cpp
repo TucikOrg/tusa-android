@@ -163,15 +163,15 @@ std::vector<MapTile*> MapTileGetter::findChildInPreviousTiles(int x, int y, int 
         auto cover = MapTile::coverOneOther(x, y, z, tile->getX(), tile->getY(), tile->getZ());
         if (!cover) continue;
 
-        bool coveredAlready = false;
-        for (auto child : childrens) {
-            auto cover2 = MapTile::coverOneOther(child->getX(), child->getY(), child->getZ(), tile->getX(), tile->getY(), tile->getZ());
-            if (cover2) {
-                coveredAlready = true;
-                break;
-            }
-        }
-        if (coveredAlready) continue;
+//        bool coveredAlready = false;
+//        for (auto child : childrens) {
+//            auto cover2 = MapTile::coverOneOther(child->getX(), child->getY(), child->getZ(), tile->getX(), tile->getY(), tile->getZ());
+//            if (cover2) {
+//                coveredAlready = true;
+//                break;
+//            }
+//        }
+//        if (coveredAlready) continue;
 
         childrens.push_back(tile);
     }

@@ -12,7 +12,10 @@
 #include "MapTileRender.h"
 #include "MapControls2.h"
 #include "TileAndMatrix.h"
-
+#include "MapEnvironment.h"
+#include "DrawMapData.h"
+#include "MapNumbers.h"
+#include "DrawMap.h"
 
 class MapRenderer2 {
 public:
@@ -30,27 +33,16 @@ private:
     MapTileRender mapTileRender = MapTileRender();
     ShadersBucket shadersBucket = ShadersBucket();
     MapFpsCounter mapFpsCounter = MapFpsCounter();
+    MapEnvironment mapEnvironment = MapEnvironment();
+    DrawMap drawMap = DrawMap();
     MapTileGetter* mapTileGetter;
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
 
-    float normalizeXTile(float infTile, int n) {
-        return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
-    }
-
-    float maxLat = atan(sinh(M_PI));
     float forwardRenderingToWorldZoom = 13.0f;
     float planeSize = 10000000;
     int textureTileSizeUnit = 1024;
-    int prTex2dHeight;
-    int prTex2dWidth;
     std::string textureKey;
-
-    GLuint mapTexture;
-    GLuint mapTextureFramebuffer;
-
-    void drawTopCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom);
-    void drawBottomCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelMatrix, float zoom);
 };
 
 

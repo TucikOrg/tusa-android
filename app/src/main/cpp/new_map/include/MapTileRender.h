@@ -17,6 +17,7 @@
 #include "TileAndMatrix.h"
 #include "util/eigen_gl.h"
 #include "MapTest.h"
+#include "RenderTextureData.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
 #include <Eigen/Core>
@@ -37,8 +38,12 @@ public:
             bool isForwardRendering
     );
 
-    GLuint getTilesTexture();
+    void renderTexture(RenderTextureData &data);
 
+    GLuint getTilesTexture();
+    GLuint getMapTexture() {
+        return mapTexture;
+    }
 
 private:
     void drawBackground(
@@ -57,8 +62,14 @@ private:
             bool isForwardRendering
     );
 
+    float extent = 4096;
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
+    int prTex2dHeight;
+    int prTex2dWidth;
+    GLuint mapTexture;
+    GLuint mapTextureFramebuffer;
+
 };
 
 

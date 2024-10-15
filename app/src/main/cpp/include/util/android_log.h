@@ -25,6 +25,10 @@
 
 class Utils {
 public:
+    static float normalizeXTile(float infTile, int n) {
+        return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
+    }
+
     static std::string floatToString(float value, int precision) {
         std::ostringstream out;
         out << std::fixed << std::setprecision(precision) << value;

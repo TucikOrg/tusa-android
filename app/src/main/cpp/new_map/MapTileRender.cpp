@@ -10,13 +10,127 @@
 
 void MapTileRender::initTilesTexture() {
     glGenFramebuffers(1, &tilesFrameBuffer);
-
     glGenTextures(1, &tilesTexture);
     glBindTexture(GL_TEXTURE_2D, tilesTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glGenFramebuffers(1, &mapTextureFramebuffer);
+    glGenTextures(1, &mapTexture);
+    glBindTexture(GL_TEXTURE_2D, mapTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+}
+
+void MapTileRender::renderTexture(RenderTextureData &data) {
+    auto textureTileSize = data.textureTileSize;
+    auto xTilesAmount = data.xTilesAmount;
+    auto yTilesAmount = data.yTilesAmount;
+    auto mapCamera = data.mapCamera;
+    auto backgroundTiles = data.backgroundTiles;
+    auto tiles = data.tiles;
+    auto forwardRenderingToWorld = data.forwardRenderingToWorld;
+    auto tileZ = data.tileZ;
+    auto zoom = data.zoom;
+    auto shadersBucket = data.shadersBucket;
+    auto n = data.n;
+    auto leftX = data.leftX;
+    auto topY = data.topY;
+    auto visTileYStart = data.visTileYStart;
+    auto visTileYEnd = data.visTileYEnd;
+    auto visTileXStartInf = data.visTileXStartInf;
+    auto visTileXEndInf = data.visTileXEndInf;
+
+    float textureWidth = textureTileSize * xTilesAmount;
+    float textureHeight = textureTileSize * yTilesAmount;
+    if (prTex2dHeight != textureHeight || prTex2dWidth != textureWidth) {
+        glBindTexture(GL_TEXTURE_2D, mapTexture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        prTex2dHeight = textureHeight;
+        prTex2dWidth = textureWidth;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, mapTextureFramebuffer);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mapTexture, 0);
+    glViewport(0, 0, textureWidth, textureHeight);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_SCISSOR_TEST);
+    Eigen::Matrix4f projectionTexture = mapCamera.createOrthoProjection(0, xTilesAmount * extent, yTilesAmount * -extent, 0, 0.1, 1);
+    Eigen::Matrix4f viewTexture = mapCamera.createView(0, 0, 1, 0, 0, 0);
+    Eigen::Matrix4f pvTexture = projectionTexture * viewTexture;
+
+    // рисуем фоновые тайлы
+    for (int loop = -1; loop <= 1; loop++) {
+        for (auto& backgroundTilePair : backgroundTiles) {
+            auto backgroundTile = backgroundTilePair.second;
+            float deltaZ = tileZ - backgroundTile->getZ();
+            float scale = pow(2.0, deltaZ);
+
+            float translateXIndex = loop * n + (backgroundTile->getX() * scale - leftX);
+            float translateYIndex = (backgroundTile->getY() * scale - topY);
+            float translateY = translateYIndex * -extent;
+            float translateX = translateXIndex * extent;
+            float scissorX = translateXIndex * textureTileSize;
+            float scissorY = yTilesAmount * textureTileSize - (translateYIndex + 1 * scale) * textureTileSize;
+            float backgroundTileTexSize = textureTileSize * scale;
+            if (scissorX + backgroundTileTexSize < 0 || scissorX > textureWidth) {
+                continue;
+            }
+            glScissor(scissorX, scissorY, backgroundTileTexSize, backgroundTileTexSize);
+            auto scaleM = EigenGL::createScaleMatrix(scale, scale, 1.0f);
+            auto translate = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+            Eigen::Matrix4f vTileMatrix = viewTexture * translate * scaleM;
+            Eigen::Matrix4f pvTileMatrix = projectionTexture * vTileMatrix;
+            renderTile(
+                    shadersBucket,
+                    backgroundTile,
+                    mapCamera,
+                    projectionTexture,
+                    vTileMatrix,
+                    pvTileMatrix,
+                    zoom,
+                    forwardRenderingToWorld
+            );
+        }
+    }
+
+    // рисуем актуальные тайлы
+    for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
+        for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
+            int tileX = Utils::normalizeXTile(tileXInf, n);
+            auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
+            if (tile->isEmpty()) {
+                continue;
+            }
+            float translateXIndex = xPos;
+            float translateYIndex = tileY - visTileYStart;
+            float translateX = translateXIndex * extent;
+            float translateY = translateYIndex * -extent;
+            int scissorX = ceil(translateXIndex * textureTileSize);
+            int scissorY = ceil(yTilesAmount * textureTileSize - (translateYIndex + 1) * textureTileSize);
+            glScissor(scissorX, scissorY, ceil(textureTileSize), ceil(textureTileSize));
+            auto tileModelMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+            Eigen::Matrix4f vTileMatrix = viewTexture * tileModelMatrix;
+            Eigen::Matrix4f pvTileMatrix = projectionTexture * vTileMatrix;
+            renderTile(
+                    shadersBucket,
+                    tile,
+                    mapCamera,
+                    projectionTexture,
+                    vTileMatrix,
+                    pvTileMatrix,
+                    zoom,
+                    forwardRenderingToWorld
+            );
+        }
+    }
+    glDisable(GL_SCISSOR_TEST);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    mapCamera.glViewportDeviceSize();
 }
 
 void MapTileRender::renderTile(
