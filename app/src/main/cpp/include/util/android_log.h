@@ -8,9 +8,6 @@
 #include <math.h>
 #include <cmath>
 #include <vector>
-#include "map/mercator.h"
-#include "matrices.h"
-#include "renderer/point.h"
 #include <android/log.h>
 #include <GLES2/gl2.h>
 #include <string>
@@ -22,9 +19,13 @@
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define FLOAT(x) static_cast<float>(x)
+#define DEG2RAD(a)   ((a) / (180 / M_PI))
+#define RAD2DEG(a)   ((a) * (180 / M_PI))
 
 class Utils {
 public:
+
+
     static float normalizeXTile(float infTile, int n) {
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
     }
@@ -66,7 +67,6 @@ public:
 
 class CommonUtils {
 public:
-
     static std::vector<GLfloat> toOpenGlColor(CSSColorParser::Color color) {
         GLfloat red   = static_cast<GLfloat>(color.r) / 255;
         GLfloat green = static_cast<GLfloat>(color.g) / 255;
@@ -83,18 +83,9 @@ public:
         return -(CommonUtils::latitudeToTile(0, latitude) * 2 - 1) * planetRadius;
     }
 
-    static Point planetCordsToWorldCords(float latitude, float longitude, float planetRadius) {
-        float y = planetRadius * sin(latitude);
-        float x = planetRadius * cos(latitude) * cos(-longitude);
-        float z = planetRadius * cos(latitude) * sin(-longitude);
-        return Point {x, y, z};
-    }
-
     static float randomFloatInRange(float min, float max) {
         return min + static_cast <float> (rand()) / (static_cast <float> (RAND_MAX / (max - min)));
     }
-
-
 
     static float latitudeToTile(int zoom, float latitude) {
         return pow(2, zoom) * (1 - (std::log(std::tan(latitude) + (1 / std::cos(latitude))) / M_PI)) / 2;
@@ -131,20 +122,6 @@ public:
             result += 2 * M_PI;
         }
         return result - M_PI;
-    }
-
-    static void extractPlanesFromProjMat(
-            Matrix4 mat,
-            float left[4], float right[4],
-            float bottom[4], float top[4],
-            float near[4], float far[4])
-    {
-        for (int i = 4; i--; ) { left[i]   = mat.getColumn(i)[3] + mat.getColumn(i)[0]; }
-        for (int i = 4; i--; ) { right[i]  = mat.getColumn(i)[3] - mat.getColumn(i)[0]; }
-        for (int i = 4; i--; ) { bottom[i] = mat.getColumn(i)[3] + mat.getColumn(i)[1]; }
-        for (int i = 4; i--; ) { top[i]    = mat.getColumn(i)[3] - mat.getColumn(i)[1]; }
-        for (int i = 4; i--; ) { near[i]   = mat.getColumn(i)[3] + mat.getColumn(i)[2]; }
-        for (int i = 4; i--; ) { far[i]    = mat.getColumn(i)[3] - mat.getColumn(i)[2]; }
     }
 
     static void normalizePlane(float (&plane)[4]) {

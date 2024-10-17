@@ -2,7 +2,6 @@
 #include <vector>
 #include <geometry.hpp>
 #include <array>
-#include "tile.h"
 
 #ifndef TUSA_POLYGON_HANDLER
 #define TUSA_POLYGON_HANDLER

@@ -42,93 +42,58 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/planet3_f_rend.cpp
         shader/road_shader.cpp
 
-        renderer/renderer.cpp
-        renderer/map_draw_call.cpp
-        renderer/render_tile_coordinates.cpp
-        renderer/render_tiles_enum.cpp
-        renderer/tile_cords.cpp
-        renderer/center_borders_cords.cpp
-        renderer/corners_cords.cpp
-        renderer/render_tile_hash.cpp
-        renderer/tile_node.cpp
-        renderer/visible_tiles_result.cpp
-        renderer/visible_tiles_block.cpp
-        renderer/user_marker.cpp
-        renderer/point.cpp
-
-        util/frustrums.cpp
-        util/matrices.cpp
         util/timer.cpp
         util/eigen_gl.cpp
 
-        network/get_tile_request.cpp
-
-        gl/open_gl_interface.cpp
-
-        map/tile.cpp
-        map/tiles_storage.cpp
         map/linestring_handler.cpp
         map/polygon_handler.cpp
-        map/visible_tile_render_mode.cpp
-        map/mercator.cpp
-
-        geometry/geometry.cpp
-        geometry/sphere.cpp
-
-        style/style.cpp
-        style/style_expecter.cpp
-
-        symbols/symbols.cpp
-        symbols/symbol.cpp
 
         csscolorparser/csscolorparser.cpp
 
-        new_map/MapCamera.cpp
-        new_map/MapGeometry.cpp
-        new_map/MapTest.cpp
-        new_map/MapTileRender.cpp
-        new_map/MapTile.cpp
-        new_map/MapPolygon.cpp
-        new_map/MapSimpleLine.cpp
-        new_map/MapPolygonAggregated.cpp
-        new_map/MapTileGetter.cpp
-        new_map/MapStyle.cpp
-        new_map/MapFpsCounter.cpp
-        new_map/MapControls.cpp
-        new_map/MapSymbols.cpp
-        new_map/MapTileNode.cpp
-        new_map/MapTilePos.cpp
+        map_unit_1/MapCamera.cpp
+        map_unit_1/MapTest.cpp
+        map_unit_1/MapTileRender.cpp
+        map_unit_1/MapTile.cpp
+        map_unit_1/MapPolygon.cpp
+        map_unit_1/MapSimpleLine.cpp
+        map_unit_1/MapPolygonAggregated.cpp
+        map_unit_1/MapTileGetter.cpp
+        map_unit_1/MapStyle.cpp
+        map_unit_1/MapFpsCounter.cpp
+        map_unit_1/MapSymbols.cpp
 
-        new_map3/MapRenderer2.cpp
-        new_map3/MapControls2.cpp
-        new_map3/TileAndMatrix.cpp
-        new_map3/MapWideLine.cpp
-        new_map3/MapSimplePoint.cpp
-        new_map3/SimplePointShader.cpp
-        new_map3/SquarePointShader.cpp
-        new_map3/MapSquarePoints.cpp
-        new_map3/CircularBuffer.cpp
-        new_map3/MapColors.cpp
-        new_map3/MapEnvironment.cpp
-        new_map3/RenderTextureData.cpp
-        new_map3/DrawMap.cpp
-        new_map3/DrawMapData.cpp
-        new_map3/MapNumbers.cpp
+        map_unit_2/MapRenderer2.cpp
+        map_unit_2/MapControls2.cpp
+        map_unit_2/TileAndMatrix.cpp
+        map_unit_2/MapWideLine.cpp
+        map_unit_2/MapSimplePoint.cpp
+        map_unit_2/SimplePointShader.cpp
+        map_unit_2/SquarePointShader.cpp
+        map_unit_2/MapSquarePoints.cpp
+        map_unit_2/CircularBuffer.cpp
+        map_unit_2/MapColors.cpp
+        map_unit_2/MapEnvironment.cpp
+        map_unit_2/RenderTextureData.cpp
+        map_unit_2/DrawMap.cpp
+        map_unit_2/DrawMapData.cpp
+        map_unit_2/MapNumbers.cpp
+        map_unit_2/SmoothMapTextureRender.cpp
+        map_unit_2/Markers.cpp
+        map_unit_2/UserMarker2.cpp
+        map_unit_2/TextureUtils.cpp
+        map_unit_2/Symbol.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
 
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE new_map/include)
-target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE new_map3/include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_1/include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_2/include)
 
 include(${PROJECT_SOURCE_DIR}/vendor/protozero.cmake)
-#include(${PROJECT_SOURCE_DIR}/vendor/vector-tile.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/earcut.hpp.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/boost.cmake)
-#include(${PROJECT_SOURCE_DIR}/vendor/geometry.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/variant.cmake)
-include(${PROJECT_SOURCE_DIR}/vendor/rapidjson.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/vtzero.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/freetype.cmake)
 
@@ -137,13 +102,10 @@ include(${PROJECT_SOURCE_DIR}/vendor/freetype.cmake)
 # build script, prebuilt third-party libraries, or Android system libraries.
 target_link_libraries(${CMAKE_PROJECT_NAME}
         mbgl-vendor-protozero
-        #        mbgl-vendor-vector-tile
         mbgl-vendor-earcut.hpp
         mbgl-vendor-boost
-        #        mbgl-vendor-geometry
         mbgl-vendor-variant
         vtzero-vendor
-        rapidjson
         freetype
         Eigen3::Eigen
         )

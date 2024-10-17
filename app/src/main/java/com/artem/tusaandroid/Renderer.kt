@@ -22,6 +22,8 @@ class Renderer(
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         NativeLibrary.surfaceCreated(_assetManager)
+
+        NativeLibrary.addMarker("test", 55.7558f, 37.6176f, defaultAvatar!!)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {

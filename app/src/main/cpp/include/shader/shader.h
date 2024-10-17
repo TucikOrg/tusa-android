@@ -7,7 +7,6 @@
 
 #include <cstdint>
 #include <array>
-#include "util/matrices.h"
 #include <GLES2/gl2.h>
 #include <android/asset_manager.h>
 
