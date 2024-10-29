@@ -13,11 +13,11 @@ public:
 
     GLint getPosLocation() const {return a_pos;}
     GLint getTextureLocation() const {return u_texture;}
-    GLint getTextureCord() const {return a_unit_square_cords;}
+    GLint getUVLocation() const {return a_uv;}
 
 private:
     GLint a_pos;
-    GLint a_unit_square_cords;
+    GLint a_uv;
     GLint u_texture;
 };
 

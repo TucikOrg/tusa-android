@@ -9,11 +9,11 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface FriendDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(friend: FriendEntity)
+    suspend fun insert(friend: FriendRoomEntity)
 
-    @Query("DELETE FROM friend WHERE installAppId = :installAppId")
-    suspend fun deleteByInstallAppId(installAppId: String)
+    @Query("DELETE FROM friend WHERE phone = :phone")
+    suspend fun deleteById(phone: String)
 
     @Query("SELECT * FROM friend")
-    fun getAllFriends(): Flow<List<FriendEntity>>
+    fun getAllFriends(): Flow<List<FriendRoomEntity>>
 }

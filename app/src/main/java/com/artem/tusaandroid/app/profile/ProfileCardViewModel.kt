@@ -1,29 +1,93 @@
 package com.artem.tusaandroid.app.profile
 
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.api.ProfileControllerApi
-import com.artem.tusaandroid.model.ChangeNameDto
+import com.artem.tusaandroid.socket.SendMessage
+import com.artem.tusaandroid.socket.SocketBinaryMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.cbor.Cbor
+import kotlinx.serialization.encodeToByteArray
 import javax.inject.Inject
 
 @HiltViewModel
 open class ProfileCardViewModel @Inject constructor(
-    private val profileControllerApi: ProfileControllerApi?,
-    private val profileState: ProfileState?
+    private val profileState: ProfileState?,
+    private val sendMessage: SendMessage?
 ): ViewModel() {
     private var showModal = mutableStateOf(false)
-    var name by mutableStateOf(profileState?.getName())
-    private var lastSaved: String? = name
 
-    open fun getPhone(): String {
-        return profileState?.getPhone()?: "Phone"
+    fun getName(): MutableState<String> {
+        return profileState?.getName()?: mutableStateOf("Name")
+    }
+
+    fun getUniqueName(): MutableState<String> {
+        return profileState?.getUniqueName()?: mutableStateOf("unique")
+    }
+
+    open fun getPhone(): MutableState<String> {
+        return profileState?.getPhone()?: mutableStateOf("Phone")
+    }
+
+    @Composable
+    fun ShowTitle() {
+        Text(
+            modifier = Modifier,
+            text = getTitle(),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
+
+    @Composable
+    fun ShowUnderTitleLineOne() {
+        val uniqueNameValue = profileState?.getUniqueName()?.value
+        if (uniqueNameValue?.isNotEmpty() == true && getTitle() != uniqueNameValue) {
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = "@$uniqueNameValue",
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+    }
+
+    @Composable
+    fun ShowUnderTitleLineTwo() {
+        val phoneValue = getPhone().value
+        if (phoneValue.isNotEmpty() && getTitle() != phoneValue) {
+            Spacer(modifier = Modifier.height(3.dp))
+            Text(
+                text = phoneValue,
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray
+            )
+        }
+    }
+
+    fun getTitle(): String {
+        val nameValue = profileState?.getName()?.value
+        if (nameValue?.isNotEmpty() == true) {
+            return nameValue
+        }
+
+        val uniqueNameValue = profileState?.getUniqueName()?.value
+        if (uniqueNameValue?.isNotEmpty() == true) {
+            return uniqueNameValue
+        }
+
+        return profileState?.getPhone()?.value?: "Phone"
     }
 
     fun getShowModal(): Boolean {
@@ -34,21 +98,26 @@ open class ProfileCardViewModel @Inject constructor(
         showModal.value = true
     }
 
+    fun closeModal() {
+        showModal.value = false
+    }
+
     fun dismiss() {
         showModal.value = false
         saveName()
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun saveName() {
-        profileState?.saveName(name!!)
-        if (name == null || name == lastSaved) {
-            return
-        }
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                lastSaved = name
-                profileControllerApi?.changeName(ChangeNameDto(name!!))
-            }
-        }
+        val nameValue = profileState?.getName()?.value?: ""
+        profileState?.saveName(nameValue)
+        sendMessage?.sendMessage(SocketBinaryMessage("change-name", Cbor.encodeToByteArray(nameValue)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun saveUniqueName() {
+        val uniqueNameValue = profileState?.getUniqueName()?.value?: ""
+        profileState?.saveUniqueName(uniqueNameValue)
+        sendMessage?.sendMessage(SocketBinaryMessage("change-unique-name", Cbor.encodeToByteArray(uniqueNameValue)))
     }
 }

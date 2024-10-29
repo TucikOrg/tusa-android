@@ -15,6 +15,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
@@ -101,23 +103,14 @@ fun MainActionInModal(model: MainActionFabViewModel) {
             .padding(horizontal = 10.dp)
     ) {
         ProfileCard(
-            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewProfileCardViewModel())
+            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewProfileCardViewModel()),
+            mainModel = model
         )
+        Spacer(modifier = Modifier.height(5.dp))
         LocationSetupCard(
             model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewLocationSetupCardViewModel())
         )
-        Spacer(modifier = Modifier.height(20.dp))
-        ElevatedButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
-            onClick = {
-                model.logout()
-            }
-        ) {
-            Text("Выйти")
-        }
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(80.dp))
     }
 }
 

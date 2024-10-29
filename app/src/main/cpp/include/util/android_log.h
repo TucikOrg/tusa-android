@@ -63,6 +63,10 @@ public:
     static float EPSG3857_to_EPSG4326_latitude(float epsg3857Lat) {
         return atan(sinh(epsg3857Lat));
     }
+
+    static float EPSG4326_to_EPSG3857_longitude(float epsg4326Lon) {
+        return epsg4326Lon;
+    }
 };
 
 class CommonUtils {

@@ -4,10 +4,9 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-| **fromPhone** | **kotlin.String** |  |  |
-| **toPhone** | **kotlin.String** |  |  |
+| **fromUserId** | **kotlin.Long** |  |  |
+| **toUserId** | **kotlin.Long** |  |  |
 | **date** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  |
-| **activated** | **kotlin.Boolean** |  |  |
 | **id** | **kotlin.Long** |  |  [optional] |
 
 

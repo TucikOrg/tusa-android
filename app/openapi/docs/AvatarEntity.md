@@ -4,7 +4,7 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-| **phone** | **kotlin.String** |  |  |
+| **ownerId** | **kotlin.Long** |  |  |
 | **avatar** | **kotlin.ByteArray** |  |  |
 | **creation** | [**java.time.OffsetDateTime**](java.time.OffsetDateTime.md) |  |  |
 | **id** | **kotlin.Long** |  |  [optional] |

@@ -1,3 +1,5 @@
+precision highp float;
+
 attribute vec4 vertexPosition;
 attribute float vertexPointSize;
 

@@ -40,9 +40,9 @@ fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
         )
         Spacer(modifier = Modifier.height(21.dp))
         OutlinedTextField(
-            value = model.name?: "",
+            value = model.getName().value,
             onValueChange = {
-                model.name = it
+                model.getName().value = it
             },
             placeholder = {
                 Text("Введите ваше имя",
@@ -52,9 +52,7 @@ fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
             },
             keyboardActions = KeyboardActions(
                 onDone = {
-                    val name = model.name
-                    if (name != null)
-                        model.changeName(name, rootModel)
+                    model.changeName(model.getName().value, rootModel)
                 }
             ),
             singleLine = true,
@@ -68,9 +66,7 @@ fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
             .weight(1.0f))
         Button(
             onClick = {
-                val name = model.name
-                if (name != null)
-                    model.changeName(name, rootModel)
+                model.changeName(model.getName().value, rootModel)
             },
             modifier = Modifier
                 .fillMaxWidth()

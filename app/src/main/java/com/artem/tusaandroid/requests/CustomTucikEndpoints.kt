@@ -7,6 +7,10 @@ class CustomTucikEndpoints(
 ) {
     private val legalDocuments = "api/v1/legal/documents"
     private val getAvatarImage = "api/v1/avatar/image"
+    private val uploadAvatar = "api/v1/avatar"
+    private val login = "api/v1/auth/login"
+    private val addLocation = "api/v1/location/add"
+    private val sendCode = "api/v1/auth/send-code"
     private val logout = "api/v1/logout"
 
     private fun makeEndpoint(path: String): String {
@@ -17,14 +21,34 @@ class CustomTucikEndpoints(
         return makeEndpoint(legalDocuments)
     }
 
-    fun makeToAvatarImage(phone: String): String {
+    fun makeToAvatarImage(userId: Long): String {
         val uri = Uri.parse(makeEndpoint(getAvatarImage)).buildUpon()
-            .appendQueryParameter("phone", phone)
+            .appendQueryParameter("userId", userId.toString())
             .build()
         return uri.toString()
     }
 
     fun makeLogout(): String {
         return makeEndpoint(logout)
+    }
+
+    fun makeSendCode(): String {
+        val uri = Uri.parse(makeEndpoint(sendCode)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeLoginEndpoint(): String {
+        val uri = Uri.parse(makeEndpoint(login)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeAddLocation(): String {
+        val uri = Uri.parse(makeEndpoint(addLocation)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeAvatarUpload(): String? {
+        val uri = Uri.parse(makeEndpoint(uploadAvatar)).buildUpon().build()
+        return uri.toString()
     }
 }

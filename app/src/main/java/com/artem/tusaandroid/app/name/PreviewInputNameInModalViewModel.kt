@@ -1,3 +1,3 @@
 package com.artem.tusaandroid.app.name
 
-class PreviewInputNameInModalViewModel: InputNameInModalViewModel(null, null)
+class PreviewInputNameInModalViewModel: InputNameInModalViewModel(null)

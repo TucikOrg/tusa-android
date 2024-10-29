@@ -4,7 +4,7 @@
 ## Properties
 | Name | Type | Description | Notes |
 | ------------ | ------------- | ------------- | ------------- |
-| **phone** | **kotlin.String** |  |  |
+| **ownerId** | **kotlin.Long** |  |  |
 | **latitude** | **kotlin.Float** |  |  |
 | **longitude** | **kotlin.Float** |  |  |
 

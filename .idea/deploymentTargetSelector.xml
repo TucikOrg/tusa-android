@@ -7,22 +7,19 @@
       </SelectionState>
       <SelectionState runConfigName="MainActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-10-16T07:06:10.350590Z">
+        <DropdownSelection timestamp="2024-10-28T15:49:49.646441Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=RF8X704YKYJ" />
+              <DeviceId pluginId="PhysicalDevice" identifier="serial=18c6d1b9" />
             </handle>
           </Target>
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="ProfileCardPreview">
+      <SelectionState runConfigName="PreviewSwipeableCard">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="ProfileForMeInModalPreview (1)">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
-      <SelectionState runConfigName="LocationSetupCardPreview">
+      <SelectionState runConfigName="PreviewFriendRow">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

@@ -4,7 +4,8 @@ docs/AddLocationDto.md
 docs/AvatarEntity.md
 docs/ChangeNameDto.md
 docs/ChangeUniqueNameDto.md
-docs/FriendEntity.md
+docs/FriendDto.md
+docs/FriendRequestDto.md
 docs/FriendRequestEntity.md
 docs/GenerateSecretKey200Response.md
 docs/LocationDto.md
@@ -27,7 +28,8 @@ src/main/kotlin/com/artem/tusaandroid/model/AddLocationDto.kt
 src/main/kotlin/com/artem/tusaandroid/model/AvatarEntity.kt
 src/main/kotlin/com/artem/tusaandroid/model/ChangeNameDto.kt
 src/main/kotlin/com/artem/tusaandroid/model/ChangeUniqueNameDto.kt
-src/main/kotlin/com/artem/tusaandroid/model/FriendEntity.kt
+src/main/kotlin/com/artem/tusaandroid/model/FriendDto.kt
+src/main/kotlin/com/artem/tusaandroid/model/FriendRequestDto.kt
 src/main/kotlin/com/artem/tusaandroid/model/FriendRequestEntity.kt
 src/main/kotlin/com/artem/tusaandroid/model/GenerateSecretKey200Response.kt
 src/main/kotlin/com/artem/tusaandroid/model/LocationDto.kt

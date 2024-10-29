@@ -9,6 +9,12 @@
 
 class MapColors {
 public:
+    static CSSColorParser::Color getStarsColor() {
+        return CSSColorParser::parse("rgb(255, 255, 255)");
+    }
+    static CSSColorParser::Color getSpaceColor() {
+        return CSSColorParser::parse("rgb(12, 50, 80)");
+    }
     static CSSColorParser::Color getWaterColor() {
         return CSSColorParser::parse("rgba(0, 186, 255, 1.0)");
     }

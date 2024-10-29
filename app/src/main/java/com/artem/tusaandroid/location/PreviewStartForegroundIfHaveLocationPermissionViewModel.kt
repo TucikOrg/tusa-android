@@ -1,4 +1,0 @@
-package com.artem.tusaandroid.location
-
-class PreviewStartForegroundIfHaveLocationPermissionViewModel: StartForegroundIfHaveLocationPermissionViewModel(null) {
-}

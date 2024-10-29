@@ -1,14 +1,13 @@
-precision lowp float;
+precision highp float;
 
 uniform mat4 u_matrix;
 
 attribute vec4 a_vertexPosition;
-attribute vec2 a_unit_square_cords;
+attribute vec2 a_uv;
 
-varying vec2 v_tile_cords_unit_square;
+varying vec2 v_uv;
 
 void main() {
     gl_Position = u_matrix * a_vertexPosition;
-
-    v_tile_cords_unit_square = a_unit_square_cords;
+    v_uv = a_uv;
 }

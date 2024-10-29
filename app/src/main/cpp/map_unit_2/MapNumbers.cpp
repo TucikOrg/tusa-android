@@ -5,13 +5,16 @@
 #include "MapNumbers.h"
 
 MapNumbers::MapNumbers(
-        MapControls2 &mapControls,
+        MapControls &mapControls,
         MapCamera &mapCamera,
         ShadersBucket &shadersBucket,
         float planeSize,
         int textureTileSizeUnit,
         float forwardRenderingToWorldZoom
 ) {
+    this->mapControls = &mapControls;
+    this->planeSize = planeSize;
+    radius = planeSize / (2.0f * M_PI);
     tileZ = mapControls.getTilesZoom();
     zoom = mapControls.getZoom();
     n = pow(2, tileZ);
@@ -19,18 +22,24 @@ MapNumbers::MapNumbers(
     EPSG3857CamLatNorm = mapControls.getEPSG3857LatitudeNorm();
     EPSG3857CamLat = mapControls.getEPSG3857Latitude();
     EPSG4326CamLat = mapControls.getEPSG4326Latitude();
-    double distortion = mapControls.getVisPointDistortion();
+    distortion = mapControls.getVisPointDistortion();
     transition = mapControls.getTransition();
     double invDistortion = 1.0 / distortion;
 
+    camLatitude = EPSG4326CamLat;
+    camLongitude = fmod(EPSG3857LonNormInf * M_PI + M_PI, 2 * M_PI) - M_PI;
+
+    scale = mapControls.getScale();
     float impact = mapControls.getCamDistDistortionImpact();
-    float distancePortion = invDistortion * impact + (1.0 - impact);
-    distanceToMap = mapControls.getDistanceToMap(distancePortion);
+    distortionDistanceToMapPortion = invDistortion * impact + (1.0 - impact);
+    distanceToMap = mapControls.getDistanceToMap(distortionDistanceToMapPortion);
+    maxDistanceToMap = mapControls.getMaxDistanceToMap();
     zoomingDelta = mapControls.getZoomingDelta();
 
     float planesDelta = distanceToMap / 1.1f;
-    float nearPlane = distanceToMap - planesDelta;
-    float farPlane = distanceToMap + planesDelta;
+    mapNearPlaneDelta = 1.0;
+    float nearPlane = distanceToMap - mapNearPlaneDelta;
+    float farPlane = distanceToMap + planeSize * 4.0;
     float extent = 4096;
 
     double shiftPlaneY = -1.0 * EPSG3857CamLatNorm * (planeSize * 0.5 / distortion);
@@ -80,10 +89,10 @@ MapNumbers::MapNumbers(
     int visTileYStartInv = n - visTileYEnd;
     int visTileYEndInv = n - visTileYStart;
 
-    double camXNorm = (EPSG3857LonNormInf + 1.0) / 2.0;
+    camXNorm = (EPSG3857LonNormInf + 1.0) / 2.0;
     yTilesAmount = visTileYEnd - visTileYStart;
     double camCenterXTile = camXNorm * n;
-    double camXStart = camCenterXTile - visXTilesDelta;
+    camXStart = camCenterXTile - visXTilesDelta;
     double camXEnd = camCenterXTile + visXTilesDelta;
     visTileXStartInf = floor(camXStart);
     visTileXEndInf = ceil(camXEnd);

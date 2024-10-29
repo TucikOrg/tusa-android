@@ -14,6 +14,6 @@ UserMarkerShader::UserMarkerShader(AAssetManager *assetManager, const char *vert
 
     u_matrix = glGetUniformLocation(program, "u_matrix");
     a_pos = glGetAttribLocation(program, "a_vertexPosition");
-    a_unit_square_cords = glGetAttribLocation(program, "a_unit_square_cords");
+    a_uv = glGetAttribLocation(program, "a_uv");
     u_texture = glGetUniformLocation(program, "u_texture");
 }

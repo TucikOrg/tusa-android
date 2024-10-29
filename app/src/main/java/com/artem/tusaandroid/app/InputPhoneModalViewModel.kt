@@ -13,22 +13,15 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.api.AuthenticationControllerApi
 import com.artem.tusaandroid.app.profile.ProfileState
-import com.artem.tusaandroid.model.SendCodeDto
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.openapitools.client.infrastructure.ClientException
 import javax.inject.Inject
 
 @HiltViewModel
 class InputPhoneModalViewModel @Inject constructor(
     private val profileState: ProfileState,
-    private val authenticationControllerApi: AuthenticationControllerApi,
+    private val authenticationState: AuthenticationState,
     private val customTucikEndpoints: CustomTucikEndpoints
 ): ViewModel() {
     var errorText by mutableStateOf<AnnotatedString?>(null)
@@ -42,27 +35,22 @@ class InputPhoneModalViewModel @Inject constructor(
 
     fun sendCode(phone: String) {
         profileState.savePhone(phone)
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                try {
-                    authenticationControllerApi.sendCode(SendCodeDto(phone))
-                    onResult(InputPhoneModalResult.ok(phone))
-                } catch (clientException: ClientException) {
-                    clientException.printStackTrace()
-                    errorText = buildAnnotatedString {
-                        append("Не можем отправить код сейчас. Пожалуйста сообщи в эту ")
-                        withStyle(
-                            style = SpanStyle(
-                                color = Color.Blue,
-                                textDecoration = TextDecoration.Underline
-                            )
-                        ) {
-                            append("телеграмм группу :)")
-                        }
-                    }
-                    onResult(InputPhoneModalResult.error())
+        val success = authenticationState.sendCodeToPhone(phone)
+        if (success) {
+            onResult(InputPhoneModalResult.ok(phone))
+        } else {
+            errorText = buildAnnotatedString {
+                append("Не можем отправить код сейчас. Пожалуйста сообщи в эту ")
+                withStyle(
+                    style = SpanStyle(
+                        color = Color.Blue,
+                        textDecoration = TextDecoration.Underline
+                    )
+                ) {
+                    append("телеграмм группу :)")
                 }
             }
+            onResult(InputPhoneModalResult.error())
         }
     }
 

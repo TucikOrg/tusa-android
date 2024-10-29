@@ -9,6 +9,9 @@
 #include <Eigen/Dense>
 #include "MapColors.h"
 #include "shader/shaders_bucket.h"
+#include "MapNumbers.h"
+#include <random>
+#include <iostream>
 
 class MapEnvironment {
 public:
@@ -29,9 +32,27 @@ public:
             float planeSize,
             ShadersBucket& shadersBucket
     );
+
+    void drawStars(
+            MapNumbers &mapNumbers,
+            ShadersBucket &shadersBucket
+    );
+
+    void drawGlowing(
+            MapNumbers &mapNumbers,
+            ShadersBucket &shadersBucket
+    );
+
+    void draw(
+            MapNumbers& mapNumbers,
+            ShadersBucket& shadersBucket
+    );
+
+    void selectClearColor(float zoom);
 private:
     void createTopCap(float planeSize);
     void createBottomCap(float planeSize);
+    void createStars(float planeSize);
     Eigen::Matrix4f translateSphere;
     GLuint topCapVbo;
     GLuint topCapIbo;
@@ -40,6 +61,14 @@ private:
     GLuint bottomCapVbo;
     GLuint bottomCapIbo;
     unsigned int bottomCapIboSize;
+
+    GLuint starsVbo;
+    GLuint starsSizeVbo;
+    unsigned int starsAmount;
+
+
+    float drawSpaceZoomBorder = 5.0f;
+    float glowSize = 0.0015f;
 };
 
 

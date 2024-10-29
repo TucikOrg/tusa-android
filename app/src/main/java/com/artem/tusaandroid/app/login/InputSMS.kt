@@ -36,7 +36,7 @@ fun InputSMS(model: InputSMSViewModel, rootModel: MainActionFabViewModel) {
             text = "Мы отправили на номер",
         )
         Text(
-            text = model.getPhone(),
+            text = model.getPhone().value,
         )
 
         LaunchedEffect(model.timeLeft) {
@@ -50,7 +50,7 @@ fun InputSMS(model: InputSMSViewModel, rootModel: MainActionFabViewModel) {
         TextButton(
             modifier = Modifier.padding(vertical = 0.dp),
             onClick = {
-                model.sendCodeToPhone(model.getPhone())
+                model.sendCodeToPhone(model.getPhone().value)
             }
         ) {
             Text(
@@ -59,7 +59,7 @@ fun InputSMS(model: InputSMSViewModel, rootModel: MainActionFabViewModel) {
             )
         }
         SMSCodeInput { code ->
-            val phone = model.getPhone()
+            val phone = model.getPhone().value
             model.login(phone = phone, code = code, mainActionFabViewModel = rootModel)
         }
         Spacer(modifier = Modifier.height(40.dp))

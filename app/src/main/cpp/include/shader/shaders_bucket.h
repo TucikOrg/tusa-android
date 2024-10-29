@@ -18,6 +18,7 @@
 #include "planet2_shader.h"
 #include "planet3_shader.h"
 #include "planet3_f_rend.h"
+#include "space_dark_shader.h"
 #include "road_shader.h"
 #include "SimplePointShader.h"
 #include "SquarePointShader.h"
@@ -37,6 +38,7 @@ public:
     std::shared_ptr<Planet2Shader> planet2Shader;
     std::shared_ptr<StarsShader> starsShader;
     std::shared_ptr<PlanetGlowShader> planetGlowShader;
+    std::shared_ptr<SpaceDarkShader> spaceDarkShader;
     std::shared_ptr<TextureShader> textureShader;
     std::shared_ptr<UserMarkerShader> userMarkerShader;
     std::shared_ptr<Planet3Shader> planet3Shader;

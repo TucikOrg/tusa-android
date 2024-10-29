@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
@@ -59,7 +60,11 @@ fun MeAvatar(modifier: Modifier, model: MeAvatarViewModel) {
         onClick = {
             pickAvatarLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
         },
-        modifier = modifier
+        modifier = modifier,
+        elevation = FloatingActionButtonDefaults.elevation(
+            defaultElevation = 0.dp,
+            pressedElevation = 0.dp
+        )
     ) {
         val avatarBitmap = model.getAvatarBitmap().value
         if (avatarBitmap == null) {

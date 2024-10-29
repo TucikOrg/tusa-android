@@ -9,30 +9,44 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include "util/eigen_gl.h"
-#include "MapControls2.h"
+#include "MapControls.h"
 #include "MapCamera.h"
 #include "shader/shaders_bucket.h"
 
 class MapNumbers {
 public:
     MapNumbers(
-        MapControls2 &mapControls,
-        MapCamera &mapCamera,
-        ShadersBucket &shadersBucket,
-        float planeSize,
-        int textureTileSizeUnit,
-        float forwardRenderingToWorldZoom
+            MapControls &mapControls,
+            MapCamera &mapCamera,
+            ShadersBucket &shadersBucket,
+            float planeSize,
+            int textureTileSizeUnit,
+            float forwardRenderingToWorldZoom
     );
 
+    float getDistortion(float epsg4326Latitude) { return mapControls->getDistortion(epsg4326Latitude); }
+
+    MapControls *mapControls;
+    float planeSize;
     int textureTileSize;
     int n;
     short tileZ;
+    double camLatitude;
+    double camLongitude;
     double EPSG3857LonNormInf;
     double EPSG3857CamLatNorm;
     double EPSG3857CamLat;
     double EPSG4326CamLat;
+    double camXStart;
+    double distortion;
+    float radius;
+    double camXNorm;
     float distanceToMap;
+    float maxDistanceToMap;
+    float mapNearPlaneDelta;
     float zoomingDelta;
+    float scale;
+    float distortionDistanceToMapPortion;
     Eigen::Matrix4d planeModelMatrix;
     Eigen::Matrix4d sphereModelMatrix;
     Eigen::Matrix4d projection;

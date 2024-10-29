@@ -41,6 +41,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/planet3_shader.cpp
         shader/planet3_f_rend.cpp
         shader/road_shader.cpp
+        shader/space_dark_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp
@@ -62,8 +63,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_1/MapFpsCounter.cpp
         map_unit_1/MapSymbols.cpp
 
-        map_unit_2/MapRenderer2.cpp
-        map_unit_2/MapControls2.cpp
+        map_unit_2/MapRenderer.cpp
+        map_unit_2/MapControls.cpp
         map_unit_2/TileAndMatrix.cpp
         map_unit_2/MapWideLine.cpp
         map_unit_2/MapSimplePoint.cpp
@@ -79,7 +80,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/MapNumbers.cpp
         map_unit_2/SmoothMapTextureRender.cpp
         map_unit_2/Markers.cpp
-        map_unit_2/UserMarker2.cpp
+        map_unit_2/UserMarker.cpp
         map_unit_2/TextureUtils.cpp
         map_unit_2/Symbol.cpp
 )

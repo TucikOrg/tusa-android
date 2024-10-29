@@ -208,8 +208,6 @@ void DrawMap::drawMap(DrawMapData& data) {
         glUniform2f(planet3Shader->getUVOffsetLocation(), shiftUTex, 0.0f);
         glUniform2f(planet3Shader->getUVScaleLocation(), scaleUTex, 1.0f);
         glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
-        mapEnvironment.drawTopCap(pvFloat, sphereModelMatrixFloat, zoom, planeSize, shadersBucket);
-        mapEnvironment.drawBottomCap(pvFloat, sphereModelMatrixFloat, zoom, planeSize, shadersBucket);
         glDisable(GL_DEPTH_TEST);
     }
 }

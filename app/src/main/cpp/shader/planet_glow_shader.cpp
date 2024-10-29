@@ -9,9 +9,8 @@ PlanetGlowShader::PlanetGlowShader(AAssetManager* assetManager, const char* vert
         return;
     }
     a_pos = glGetAttribLocation(program, "vertexPosition");
-    a_textureCord = glGetAttribLocation(program, "a_textureCord");
+    a_uv = glGetAttribLocation(program, "a_uv");
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
-    u_radius = glGetUniformLocation(program, "u_radius");
     u_pointSize = glGetUniformLocation(program, "u_pointSize");
 }

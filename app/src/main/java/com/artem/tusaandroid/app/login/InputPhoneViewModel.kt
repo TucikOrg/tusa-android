@@ -11,22 +11,20 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.artem.tusaandroid.api.AuthenticationControllerApi
+import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.action.MainActionFabViewModel
 import com.artem.tusaandroid.app.profile.ProfileState
-import com.artem.tusaandroid.model.SendCodeDto
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.openapitools.client.infrastructure.ClientException
 import javax.inject.Inject
 
 @HiltViewModel
 open class InputPhoneViewModel @Inject constructor(
     private val profileState: ProfileState?,
-    private val authenticationControllerApi: AuthenticationControllerApi?,
+    private val authenticationState: AuthenticationState?,
     private val customTucikEndpoints: CustomTucikEndpoints?
 ): ViewModel() {
     val legalDocumentsAnnotated = makeLegalDocumentsText()
@@ -35,11 +33,9 @@ open class InputPhoneViewModel @Inject constructor(
         profileState?.savePhone(phone)
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                try {
-                    authenticationControllerApi?.sendCode(SendCodeDto(phone))
+                val result = authenticationState?.sendCodeToPhone(phone)
+                if (result == true) {
                     mainActionFabViewModel.stage = MainActionStage.INPUT_SMS
-                } catch (clientException: ClientException) {
-                    clientException.printStackTrace()
                 }
             }
         }

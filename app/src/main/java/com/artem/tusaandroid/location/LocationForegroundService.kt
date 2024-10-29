@@ -13,13 +13,13 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.artem.tusaandroid.MainActivity
 import com.artem.tusaandroid.R
-import com.artem.tusaandroid.api.LocationControllerApi
-import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.await
-import com.artem.tusaandroid.model.AddLocationDto
+import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapter
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,10 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.openapitools.client.infrastructure.ClientException
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import javax.inject.Inject
 import kotlin.time.Duration
 
@@ -39,7 +42,11 @@ class LocationForegroundService: Service() {
     @Inject
     lateinit var lastLocationState: LastLocationState
     @Inject
-    lateinit var locationControllerApi: LocationControllerApi
+    lateinit var okHttpClient: OkHttpClient
+    @Inject
+    lateinit var moshi: Moshi
+    @Inject
+    lateinit var customTucikEndpoints: CustomTucikEndpoints
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
         if (intent.action == ACTION_STOP) {
@@ -77,6 +84,7 @@ class LocationForegroundService: Service() {
         return START_NOT_STICKY
     }
 
+    @OptIn(ExperimentalStdlibApi::class)
     private suspend fun doBackgroundWork() {
         while (serviceScope.isActive) {
             // Выполните задачу в фоне (если нужно)
@@ -94,17 +102,20 @@ class LocationForegroundService: Service() {
                 CancellationTokenSource().token
             ).await()
 
-            val latitude = location.latitude
-            val longitude = location.longitude
-            lastLocationState.setLastLatitude(latitude.toFloat())
-            lastLocationState.setLastLongitude(longitude.toFloat())
-            try {
-                locationControllerApi.addLocation(AddLocationDto(
-                    latitude = latitude.toFloat(),
-                    longitude = longitude.toFloat()
-                ))
-            } catch (exception: ClientException) {
-                exception.printStackTrace()
+            if (location != null) {
+                val latitude = location.latitude
+                val longitude = location.longitude
+                lastLocationState.setLastLatitude(latitude.toFloat())
+                lastLocationState.setLastLongitude(longitude.toFloat())
+
+                val request = Request.Builder()
+                    .url(customTucikEndpoints.makeAddLocation())
+                    .post(
+                        moshi.adapter<AddLocationDto>().toJson(AddLocationDto(latitude.toFloat(), longitude.toFloat()))
+                            .toRequestBody("application/json".toMediaTypeOrNull())
+                    )
+                    .build()
+                okHttpClient.newCall(request).execute()
             }
 
             delay(Duration.parse("30s"))

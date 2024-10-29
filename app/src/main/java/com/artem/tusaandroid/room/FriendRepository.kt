@@ -3,13 +3,13 @@ package com.artem.tusaandroid.room
 import kotlinx.coroutines.flow.Flow
 
 class FriendRepository(private val friendDao: FriendDao) {
-    val allFriends: Flow<List<FriendEntity>> = friendDao.getAllFriends()
+    val allFriends: Flow<List<FriendRoomEntity>> = friendDao.getAllFriends()
 
-    suspend fun insert(user: FriendEntity) {
+    suspend fun insert(user: FriendRoomEntity) {
         friendDao.insert(user)
     }
 
-    suspend fun deleteByInstallAppId(installAppId: String) {
-        friendDao.deleteByInstallAppId(installAppId)
+    suspend fun deleteByPhone(phone: String) {
+        friendDao.deleteById(phone)
     }
 }

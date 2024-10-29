@@ -1,27 +1,22 @@
-precision lowp float;
+precision highp float;
 
 uniform sampler2D u_texture;
-varying vec2 v_tile_cords_unit_square;
+varying vec2 v_uv;
 
 void main() {
-    float maxY = 1.25;
-    vec2 st = v_tile_cords_unit_square.xy;
+    // Центральные координаты
     vec2 center = vec2(0.5, 0.5);
-    float dist = distance(center, st);
-    float alphaAvatar = 1.0 - step(0.5, dist);
+    vec2 size = vec2(0.5, 0.5);
+    vec2 uv = abs(v_uv - center);
+    float uRadius = 0.2;
+    vec2 positionOfCornerCircle = size - vec2(uRadius, uRadius);
 
-    float avatarX_i = 0.5;
-    float avatarY_i = 0.75;
+    // Расстояние до угла
+    vec2 cornerPos = uv - positionOfCornerCircle;
+    float cornerDistance = length(cornerPos);
+    bool alphaB = cornerDistance > uRadius && cornerPos.x > 0.0 && cornerPos.y > 0.0;
+    float alpha = alphaB ? 1.0 : 0.0;
 
-    float b = sqrt(avatarY_i);
-    float a = b / avatarX_i;
-    float alphaArrowCut = step(maxY - st.y, avatarY_i);
-    float alphaArrow = (1. - step(maxY - st.y, pow(a * st.x - b, 2.0))) * alphaArrowCut;
-    float onlyArrowZone = alphaArrow - alphaAvatar;
-
-    float alpha = alphaArrow + alphaAvatar;
-    vec4 arrowColor = mix(vec4(0.0), vec4(vec3(1.), 1.), onlyArrowZone);
-    vec4 color = mix(arrowColor, texture2D(u_texture, st), alphaAvatar);
-
+    vec4 color = mix(texture2D(u_texture, v_uv), vec4(0.0), alpha);
     gl_FragColor = color;
 }

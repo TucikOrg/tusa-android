@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.location
 
+import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,10 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
+import android.location.LocationManager
+import android.provider.Settings
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @Preview
 @Composable
@@ -33,28 +38,20 @@ fun LocationSetupCardPreview() {
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun LocationSetupCard(model: LocationSetupCardViewModel) {
+    val context = LocalContext.current
+
     val coroutineScope = rememberCoroutineScope()
     val permissionState = rememberPermissionState(permission = android.Manifest.permission.ACCESS_FINE_LOCATION)
     if (permissionState.status.isGranted) {
+        if (model.gpsDisabledAlert.value) {
+            GpsDisabledDialog(model)
+        }
 
-        val context = LocalContext.current
         ElevatedButton(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(16.dp),
             onClick = {
-                if (model.locationServiceStarted.value == false) {
-                    val startIntent = Intent(context, LocationForegroundService::class.java).apply {
-                        action = LocationForegroundService.ACTION_START
-                    }
-                    context.startService(startIntent)
-                } else {
-                    val stopIntent = Intent(context, LocationForegroundService::class.java).apply {
-                        action = LocationForegroundService.ACTION_STOP
-                    }
-                    context.startService(stopIntent)
-                }
-
-                model.locationServiceStarted.value = model.locationServiceStarted.value?.not()
+                model.switchMyLocationState(context)
             }
         ) {
             if (model.locationServiceStarted.value == true) {
@@ -79,12 +76,12 @@ fun LocationSetupCard(model: LocationSetupCardViewModel) {
         Text(
             text = "Дать разрешение на геолокацию",
             fontWeight = FontWeight.Bold,
-            fontSize = MaterialTheme.typography.headlineSmall.fontSize
+            fontSize = MaterialTheme.typography.bodyMedium.fontSize
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
             imageVector = Icons.Default.LocationOn,
-            contentDescription = "search me on map",
+            contentDescription = "Искать меня на карте",
             modifier = Modifier.size(30.dp)
         )
     }

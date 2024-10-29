@@ -11,7 +11,7 @@ class LastLocationState: StateHasSharedPreferences() {
     private var needUpdateLastLocationInRenderer = false
     private var locationForegroundServiceStarted = false
 
-    override fun onLoad() {
+    override fun onLoad(userId: Long) {
         locationForegroundServiceStarted = sharedPreferences.getBoolean("locationForegroundServiceStarted", false)
     }
 

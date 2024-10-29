@@ -13,17 +13,15 @@ public:
     PlanetGlowShader(AAssetManager* assetManager, const char* vertexShaderName, const char* fragmentShaderName);
 
     GLint getPosLocation() const {return a_pos;}
-    GLint getTextureCoordinatesLocation() const {return a_textureCord;}
+    GLint getUVLocation() const {return a_uv;}
     GLint getColorLocation() const {return u_color;}
     GLint getPointSizeLocation() const {return u_pointSize;}
-    GLint getRadiusLocation() const {return u_radius;}
 
 private:
     GLint a_pos;
-    GLint a_textureCord;
+    GLint a_uv;
     GLint u_color;
     GLint u_pointSize;
-    GLint u_radius;
 };
 
 

@@ -49,6 +49,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     squarePointShader = std::shared_ptr<SquarePointShader>(new SquarePointShader(
             assetManager, "shaders/square_point.vert", "shaders/square_point.frag"
     ));
+    spaceDarkShader = std::shared_ptr<SpaceDarkShader>(new SpaceDarkShader(
+            assetManager, "shaders/space_dark.vert", "shaders/space_dark.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {
