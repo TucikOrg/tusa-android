@@ -19,12 +19,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.app.AppLaunchActions
 import com.artem.tusaandroid.app.action.MainActionFab
 import com.artem.tusaandroid.app.MainActivityViewModel
+import com.artem.tusaandroid.app.TestInfoLine
+import com.artem.tusaandroid.app.action.auth.CredentialsManagerAuth
 import com.artem.tusaandroid.app.action.friends.FriendsActionFab
 import com.artem.tusaandroid.app.action.friends.PreviewFriendViewModel
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.socket.ConnectionStatus
+import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
 import com.artem.tusaandroid.theme.TusaAndroidTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -60,15 +64,29 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
             TucikMap(
                 model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMapViewModel())
             )
-            MainActionFab(modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .width(120.dp)
-                .height(120.dp)
-                .padding(16.dp),
-                hiltViewModel()
+
+            TestInfoLine(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(4.dp)
+            )
+
+            ConnectionStatus(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(4.dp),
+                connectionStatusViewModel = TucikViewModel(preview = model.isPreview(), previewModel = PreviewConnectionStatusViewModel())
             )
 
             if (model.authenticationState.authenticated) {
+                MainActionFab(modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .width(120.dp)
+                    .height(120.dp)
+                    .padding(16.dp),
+                    hiltViewModel()
+                )
+
                 FriendsActionFab(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -76,6 +94,13 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                         .height(80.dp)
                         .padding(16.dp),
                     model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
+                )
+            } else {
+                // not authenticated
+                CredentialsManagerAuth(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(16.dp)
                 )
             }
         }

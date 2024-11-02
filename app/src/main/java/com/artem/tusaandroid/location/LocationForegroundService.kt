@@ -68,15 +68,15 @@ class LocationForegroundService: Service() {
             this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("Тусик")
-            .setContentText("Отображаем тебя на карте")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .addAction(R.drawable.close, "Перестать", stopPendingIntent)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        startForeground(1, notification)
+//        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
+//            .setContentTitle("Тусик")
+//            .setContentText("Отображаем тебя на карте")
+//            .setSmallIcon(R.drawable.ic_launcher_foreground)
+//            .addAction(R.drawable.close, "Перестать", stopPendingIntent)
+//            .setContentIntent(pendingIntent)
+//            .build()
+//
+//        startForeground(1, notification)
         serviceScope.launch {
             doBackgroundWork()
         }

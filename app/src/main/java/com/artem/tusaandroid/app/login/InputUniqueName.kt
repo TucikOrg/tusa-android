@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.app.action.MainActionFabViewModel
 
 @Composable
-fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
+fun InputUniqueName(model: InputUniqueNameViewModel, rootModel: MainActionFabViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -31,28 +31,28 @@ fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "Твое имя",
+            text = "Уникальное имя пользователя",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
-        Text(
-            text = "Мы будем отображать его в профиле",
-        )
         Spacer(modifier = Modifier.height(21.dp))
         OutlinedTextField(
-            value = model.getName().value,
+            value = model.getUniqueName().value,
             onValueChange = {
-                model.getName().value = it
+                model.getUniqueName().value = it
+            },
+            label = {
+                Text("@")
             },
             placeholder = {
-                Text("Введите ваше имя",
+                Text("никнейм",
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
             },
             keyboardActions = KeyboardActions(
                 onDone = {
-                    model.changeName(model.getName().value, rootModel)
+                    model.changeUniqueName(model.getUniqueName().value, rootModel)
                 }
             ),
             singleLine = true,
@@ -66,7 +66,7 @@ fun InputName(model: InputNameViewModel, rootModel: MainActionFabViewModel) {
             .weight(1.0f))
         Button(
             onClick = {
-                model.changeName(model.getName().value, rootModel)
+                model.changeUniqueName(model.getUniqueName().value, rootModel)
             },
             modifier = Modifier
                 .fillMaxWidth()

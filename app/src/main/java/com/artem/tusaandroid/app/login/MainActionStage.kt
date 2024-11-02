@@ -4,7 +4,7 @@ enum class MainActionStage {
     START,
     INPUT_PHONE,
     INPUT_SMS,
-    INPUT_NAME,
+    INPUT_UNIQUE_NAME,
     END,
     PROFILE
 }

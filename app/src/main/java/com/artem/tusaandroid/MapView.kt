@@ -10,14 +10,18 @@ import android.view.ScaleGestureDetector
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import android.view.SurfaceHolder
 import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.socket.SocketListener
 
 @SuppressLint("ViewConstructor")
 class MapView(
     context: Context,
     private val meAvatarState: MeAvatarState,
     private val lastLocationState: LastLocationState,
-    private val requestTile: RequestTile
+    private val requestTile: RequestTile,
+    private val socketListener: SocketListener,
+    private val avatarState: AvatarState
 ) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
@@ -31,7 +35,9 @@ class MapView(
         setRenderer(Renderer(
             resources.assets,
             meAvatarState,
-            lastLocationState
+            lastLocationState,
+            socketListener,
+            avatarState
         ))
 
         scaleGestureDetector = ScaleGestureDetector(context, ScaleListener())

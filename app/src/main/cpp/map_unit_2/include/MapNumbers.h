@@ -33,6 +33,7 @@ public:
     short tileZ;
     double camLatitude;
     double camLongitude;
+    double camLongitudeNormalized;
     double EPSG3857LonNormInf;
     double EPSG3857CamLatNorm;
     double EPSG3857CamLat;

@@ -31,6 +31,6 @@ fun AppLaunchActions(model: AppLaunchActionsViewModel) {
             model.setLocationForegroundServiceStarted(false)
         }
 
-        model.onLogin()
+        model.connectToSocket()
     }
 }

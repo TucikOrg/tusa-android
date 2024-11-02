@@ -27,9 +27,7 @@ fun FriendAvatar(
     }
 
     FloatingActionButton(
-        onClick = {
-
-        },
+        onClick = { },
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
         elevation =  FloatingActionButtonDefaults.elevation(
@@ -37,7 +35,7 @@ fun FriendAvatar(
             pressedElevation = 0.dp
         )
     ) {
-        val avatarBitmap = model.avatarBitmap.value
+        val avatarBitmap = model.getState(userId)?.value
         if (avatarBitmap == null) {
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.image_52dp),

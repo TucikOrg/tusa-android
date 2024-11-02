@@ -15,9 +15,10 @@ void UserMarker::draw(
 ) {
     double radius = mapNumbers.radius;
     auto camLatitude = mapNumbers.camLatitude;
-    auto camLongitude = mapNumbers.camLongitude;
+    auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
+
     double noZTestDelta = M_PI / 4;
-    bool enableDepthTest = abs(camLatitude - latitude) > noZTestDelta || abs(camLongitude - longitude) > noZTestDelta;
+    bool enableDepthTest = abs(camLatitude - latitude) > noZTestDelta || abs(camLongitudeNormalized - longitude) > noZTestDelta;
     if (enableDepthTest) {
         glEnable(GL_DEPTH_TEST);
     }

@@ -55,16 +55,12 @@ open class InputSMSViewModel @Inject constructor(
                     return@withContext
                 }
 
-                if (profileState?.getName()?.value?.isEmpty() == true) {
-                    mainActionFabViewModel.stage = MainActionStage.INPUT_NAME
+                if (profileState?.getUniqueName()?.value?.isEmpty() == true) {
+                    mainActionFabViewModel.stage = MainActionStage.INPUT_UNIQUE_NAME
                 } else {
                     mainActionFabViewModel.stage = MainActionStage.PROFILE
                     mainActionFabViewModel.showModal = false
                 }
-
-                // Загружаем данные авторизованного пользователя заранее
-                meAvatarState?.loadMeAvatar()
-                friendsState?.loadFriendsAndRequests()
             }
         }
     }

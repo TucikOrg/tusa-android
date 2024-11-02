@@ -8,12 +8,12 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
-class InputNameViewModel @Inject constructor(
+class InputUniqueNameViewModel @Inject constructor(
     private val profileState: ProfileState?
 ): ViewModel() {
-    fun getName() = profileState?.getName()?: mutableStateOf("Name")
+    fun getUniqueName() = profileState?.getUniqueName()?: mutableStateOf("Name")
 
-    fun changeName(name: String, rootModel: MainActionFabViewModel) {
+    fun changeUniqueName(name: String, rootModel: MainActionFabViewModel) {
         profileState?.changeName(name)
         rootModel.stage = MainActionStage.PROFILE
         rootModel.showModal = false

@@ -12,7 +12,15 @@ import com.artem.tusaandroid.RequestTile
 @Composable
 fun TucikMap(model: MapViewModel, innerPadding: PaddingValues = PaddingValues(0.dp)) {
     AndroidView(
-        factory = { MapView(it, model.meAvatarState!!, model.lastLocationState!!, RequestTile(it)) },
+        factory = {
+            MapView(it,
+                model.meAvatarState!!,
+                model.lastLocationState!!,
+                RequestTile(it),
+                model.socketListener!!,
+                model.avatarState!!
+            )
+        },
         modifier = Modifier.padding(innerPadding)
     )
 }

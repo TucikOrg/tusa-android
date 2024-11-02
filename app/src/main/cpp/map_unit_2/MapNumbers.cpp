@@ -28,6 +28,13 @@ MapNumbers::MapNumbers(
 
     camLatitude = EPSG4326CamLat;
     camLongitude = fmod(EPSG3857LonNormInf * M_PI + M_PI, 2 * M_PI) - M_PI;
+    camLongitudeNormalized = camLongitude;
+    if (camLongitudeNormalized >= M_PI) {
+        camLongitudeNormalized -= 2 * M_PI;
+    }
+    if (camLongitudeNormalized <= -M_PI) {
+        camLongitudeNormalized += 2 * M_PI;
+    }
 
     scale = mapControls.getScale();
     float impact = mapControls.getCamDistDistortionImpact();

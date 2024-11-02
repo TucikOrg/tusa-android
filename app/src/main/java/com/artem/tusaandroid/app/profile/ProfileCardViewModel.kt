@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import com.artem.tusaandroid.socket.SendMessage
 import com.artem.tusaandroid.socket.SocketBinaryMessage
+import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -23,7 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 open class ProfileCardViewModel @Inject constructor(
     private val profileState: ProfileState?,
-    private val sendMessage: SendMessage?
+    private val socketListener: SocketListener?
 ): ViewModel() {
     private var showModal = mutableStateOf(false)
 
@@ -107,17 +108,13 @@ open class ProfileCardViewModel @Inject constructor(
         saveName()
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun saveName() {
         val nameValue = profileState?.getName()?.value?: ""
-        profileState?.saveName(nameValue)
-        sendMessage?.sendMessage(SocketBinaryMessage("change-name", Cbor.encodeToByteArray(nameValue)))
+        profileState?.changeName(nameValue)
     }
 
-    @OptIn(ExperimentalSerializationApi::class)
     fun saveUniqueName() {
         val uniqueNameValue = profileState?.getUniqueName()?.value?: ""
-        profileState?.saveUniqueName(uniqueNameValue)
-        sendMessage?.sendMessage(SocketBinaryMessage("change-unique-name", Cbor.encodeToByteArray(uniqueNameValue)))
+        profileState?.changeUniqueName(uniqueNameValue)
     }
 }

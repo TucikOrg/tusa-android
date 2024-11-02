@@ -3,11 +3,13 @@ package com.artem.tusaandroid.app
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.login.LoginDto
 import com.artem.tusaandroid.app.login.LoginResponseDto
 import com.artem.tusaandroid.app.login.SendCodeDto
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
+import com.artem.tusaandroid.socket.SocketListener
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -20,15 +22,16 @@ class AuthenticationState(
     private val customTucikEndpoints: CustomTucikEndpoints,
     private val profileState: ProfileState,
     private val meAvatarState: MeAvatarState,
+    private val friendsState: FriendsState,
     private val moshi: Moshi,
-    private val startStopApp: StartStopApp
+    private val socketListener: SocketListener
 ) {
     var authenticated by mutableStateOf(profileState.getIsAuthenticated())
 
     fun logout() {
         profileState.saveJwt("")
         authenticated = false
-        startStopApp.onLogout()
+        socketListener.disconnect()
         profileState.clear()
         meAvatarState.hideMe()
         meAvatarState.clearAvatar()
@@ -79,7 +82,7 @@ class AuthenticationState(
             profileState.saveName(loginResponse.name)
             profileState.saveUniqueName(loginResponse.uniqueName)
             profileState.savePhone(loginResponse.phone)
-            startStopApp.onLogin()
+            socketListener.connect(loginResponse.id)
             authenticated = true
         }
         return response.isSuccessful

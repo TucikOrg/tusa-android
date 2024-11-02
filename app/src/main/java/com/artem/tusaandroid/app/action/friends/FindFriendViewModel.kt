@@ -7,6 +7,7 @@ import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.ReceiveMessage
 import com.artem.tusaandroid.socket.SendMessage
 import com.artem.tusaandroid.socket.SocketBinaryMessage
+import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -15,12 +16,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class FindFriendViewModel @Inject constructor(
-    private val sendMessage: SendMessage?,
-    private val receiveMessage: ReceiveMessage?
+    private val socketListener: SocketListener?,
 ): ViewModel() {
 
     init {
-        receiveMessage?.findUsersBus?.addListener(object : EventListener<List<FriendDto>> {
+        socketListener?.getReceiveMessage()?.findUsersBus?.addListener(object : EventListener<List<FriendDto>> {
             override fun onEvent(event: List<FriendDto>) {
                 users.value = event
             }
@@ -37,6 +37,6 @@ open class FindFriendViewModel @Inject constructor(
             users.value = listOf()
             return
         }
-        sendMessage?.sendMessage(SocketBinaryMessage("find-users", Cbor.encodeToByteArray(searchQuery.value)))
+        socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("find-users", Cbor.encodeToByteArray(searchQuery.value)))
     }
 }

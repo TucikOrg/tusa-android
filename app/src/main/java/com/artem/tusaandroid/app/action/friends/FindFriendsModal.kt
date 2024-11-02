@@ -79,6 +79,7 @@ fun FindFriendsModal(model: FindFriendViewModel, friendsVM: FriendViewModel) {
                 Column(
                     modifier = Modifier
                         .weight(1f)
+                        .fillMaxWidth()
                         .padding(10.dp),
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally

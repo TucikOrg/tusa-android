@@ -5,12 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import com.artem.tusaandroid.StateHasSharedPreferences
 import com.artem.tusaandroid.socket.SendMessage
 import com.artem.tusaandroid.socket.SocketBinaryMessage
+import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
 
 class ProfileState(
-    private val sendMessage: SendMessage?
+    private val socketListener: SocketListener?
 ): StateHasSharedPreferences() {
     val timeLeftInit = 40
 
@@ -22,9 +23,16 @@ class ProfileState(
 
     @OptIn(ExperimentalSerializationApi::class)
     fun changeName(name: String) {
-        sendMessage?.sendMessage(SocketBinaryMessage("change-name", Cbor.encodeToByteArray(name)))
+        socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("change-name", Cbor.encodeToByteArray(name)))
         this.name.value = name
         saveName(name)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun changeUniqueName(uniqueName: String) {
+        socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("change-unique-name", Cbor.encodeToByteArray(uniqueName)))
+        this.uniqueName.value = uniqueName
+        saveUniqueName(uniqueName)
     }
 
     fun clear() {

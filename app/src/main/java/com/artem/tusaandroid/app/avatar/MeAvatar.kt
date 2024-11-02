@@ -66,7 +66,7 @@ fun MeAvatar(modifier: Modifier, model: MeAvatarViewModel) {
             pressedElevation = 0.dp
         )
     ) {
-        val avatarBitmap = model.getAvatarBitmap().value
+        val avatarBitmap = model.getAvatarBitmap()?.value
         if (avatarBitmap == null) {
             Icon(
                 imageVector = ImageVector.vectorResource(id = R.drawable.image_52dp),

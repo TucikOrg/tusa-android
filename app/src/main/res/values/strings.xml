@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Tucik</string>
+    <string name="asset_statements" translatable="false">
+    [{
+      \"include\": \"https://tucik.fun/.well-known/assetlinks.json"
+    }]
+    </string>
 </resources>

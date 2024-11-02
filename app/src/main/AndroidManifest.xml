@@ -27,6 +27,8 @@
         android:theme="@style/Theme.TusaAndroid"
         tools:targetApi="31" >
 
+        <meta-data android:name="asset_statements" android:resource="@string/asset_statements" />
+
         <service android:name="com.google.android.gms.metadata.ModuleDependencies"
             android:enabled="false"
             android:exported="false"
