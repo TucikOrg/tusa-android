@@ -33,12 +33,12 @@ import com.artem.tusaandroid.isPreview
 @Composable
 @Preview
 fun PreviewFindFriendsModal() {
-    FindFriendsModal(PreviewFindFriendViewModel(), PreviewFriendViewModel())
+    FindFriendsModal(PreviewFindFriendViewModel())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FindFriendsModal(model: FindFriendViewModel, friendsVM: FriendViewModel) {
+fun FindFriendsModal(model: FindFriendViewModel) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         modifier = Modifier.navigationBarsPadding(),

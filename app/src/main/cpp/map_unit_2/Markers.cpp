@@ -3,6 +3,7 @@
 //
 
 #include "Markers.h"
+#include "FromLatLonToSpherePos.h"
 
 bool Markers::hasMarker(std::string key) {
     return userMarkers.find(key) != userMarkers.end();
@@ -24,24 +25,15 @@ void Markers::addMarker(
 }
 
 void Markers::drawMarkers(ShadersBucket& shadersBucket, Eigen::Matrix4f pv, MapNumbers& mapNumbers) {
-    double radius = mapNumbers.radius;
-    double angleLongitude = -1.0 * mapNumbers.EPSG3857LonNormInf * M_PI;
-    double angleLatitude = mapNumbers.EPSG4326CamLat;
-
-    Eigen::AngleAxisd rotationPlanetLatitude = Eigen::AngleAxisd(angleLatitude, Eigen::Vector3d(1, 0, 0));
-    Eigen::AngleAxisd rotationPlanetLongitude = Eigen::AngleAxisd(angleLongitude, rotationPlanetLatitude * Eigen::Vector3d(0, 1, 0));
-    Eigen::Vector3d axisLatitude = rotationPlanetLongitude * Eigen::Vector3d(1, 0, 0);
-    Eigen::Vector3d axisLongitude = rotationPlanetLatitude * Eigen::Vector3d(0, 1, 0);
+    FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
+    fromLatLonToSpherePos.init(mapNumbers);
 
     for (auto marker : userMarkers) {
         marker.second.draw(
                 shadersBucket,
                 pv,
                 mapNumbers,
-                rotationPlanetLatitude,
-                rotationPlanetLongitude,
-                axisLatitude,
-                axisLongitude
+                fromLatLonToSpherePos
         );
     }
 }

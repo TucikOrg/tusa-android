@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +53,7 @@ fun MyProfileModalPreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewModel) {
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         sheetState = sheetState,
@@ -136,7 +138,7 @@ fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewMode
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(10.dp),
                 onClick = {
-                    mainModel.logout()
+                    mainModel.logout(context)
                     model.closeModal()
                 }
             ) {

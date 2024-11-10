@@ -9,6 +9,7 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.artem.tusaandroid.MainActivity
@@ -115,7 +116,12 @@ class LocationForegroundService: Service() {
                             .toRequestBody("application/json".toMediaTypeOrNull())
                     )
                     .build()
-                okHttpClient.newCall(request).execute()
+
+                try {
+                    okHttpClient.newCall(request).execute()
+                } catch (exception: Exception) {
+                    exception.printStackTrace()
+                }
             }
 
             delay(Duration.parse("30s"))

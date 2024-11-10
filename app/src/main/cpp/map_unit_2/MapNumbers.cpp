@@ -7,7 +7,6 @@
 MapNumbers::MapNumbers(
         MapControls &mapControls,
         MapCamera &mapCamera,
-        ShadersBucket &shadersBucket,
         float planeSize,
         int textureTileSizeUnit,
         float forwardRenderingToWorldZoom
@@ -26,8 +25,8 @@ MapNumbers::MapNumbers(
     transition = mapControls.getTransition();
     double invDistortion = 1.0 / distortion;
 
-    camLatitude = EPSG4326CamLat;
-    camLongitude = fmod(EPSG3857LonNormInf * M_PI + M_PI, 2 * M_PI) - M_PI;
+    camLatitude = mapControls.getCamLatitude();
+    camLongitude = mapControls.getCamLongitude();
     camLongitudeNormalized = camLongitude;
     if (camLongitudeNormalized >= M_PI) {
         camLongitudeNormalized -= 2 * M_PI;
@@ -133,3 +132,5 @@ MapNumbers::MapNumbers(
     bottomYVertex = bottomPlanetV * planeSize - verticesShift;
     rightXVertex = rightPlanetU * planeSize - verticesShift;
 }
+
+

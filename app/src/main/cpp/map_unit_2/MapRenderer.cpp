@@ -1,4 +1,4 @@
-//
+ //
 // Created by Artem on 30.09.2024.
 //
 
@@ -10,10 +10,11 @@
 void MapRenderer::renderFrame() {
     mapFpsCounter.newFrame();
     auto mn = MapNumbers(
-            mapControls, mapCamera,
-            shadersBucket, planeSize,
+            mapControls, mapCamera, planeSize,
             textureTileSizeUnit, forwardRenderingToWorldZoom
     );
+
+    animateCameraTo.animateTick(mapFpsCounter, mapControls);
 
     // определяем тайлы и ключ
     bool allTilesReady = true;
@@ -137,6 +138,11 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     int maxTextureSize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+    float moscowLat = DEG2RAD(55.7558);
+    float moscowLon = DEG2RAD(37.6176);
+    animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
+    animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
 }
 
 void MapRenderer::drag(float dx, float dy) {

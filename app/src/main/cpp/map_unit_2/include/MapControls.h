@@ -6,13 +6,13 @@
 #define TUSA_ANDROID_MAPCONTROLS_H
 
 #include <cmath>
+#include <thread>
 #include "util/android_log.h"
+#include "MapFpsCounter.h"
 
 class MapControls {
 public:
-    MapControls() {
-
-    };
+    MapControls() {};
 
     void drag(float dx, float dy) {
         double scale = pow(2.0, std::fmin(scaleFactorZoom, maxZoom));
@@ -36,11 +36,12 @@ public:
         zoomingStart = scaleFactorZoom;
     }
 
-    void setZoom(float zoom) {
-        scaleFactorRaw = zoom + scaleShift;
-        float factor = scaleFactorRaw - scaleShift;
-        scaleFactorZoom = factor;
-        zoomingStart = factor;
+    float getCamLatitude() {
+        return getEPSG4326Latitude();
+    }
+
+    float getCamLongitude() {
+        return fmod(epsg3857LonNormInf * M_PI + M_PI, 2 * M_PI) - M_PI;
     }
 
     short getMaxTilesZoom() { return maxTilesZoom; }
@@ -48,6 +49,13 @@ public:
     short getZoomFloor() { return (short) scaleFactorZoom; }
     float getZoomingDelta() { return zoomingDelta; }
     float getScale() { return pow(2.0, maxZoom - scaleFactorZoom); }
+
+    void setZoom(float zoom) {
+        scaleFactorRaw = zoom + scaleShift;
+        float factor = scaleFactorRaw - scaleShift;
+        scaleFactorZoom = factor;
+        zoomingStart = factor;
+    }
 
     void setCamPos(float latitudeEPSG4326, float longitudeEPSG4326) {
         epsg3857LatNorm = Utils::EPSG4326_to_EPSG3857_latitude(latitudeEPSG4326) / M_PI;
@@ -136,6 +144,8 @@ public:
     }
 
 private:
+
+
     float zoomingDelta = 0.0;
     float zoomingStart = 0.0;
     int maxTilesZoom = 16;

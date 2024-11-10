@@ -5,6 +5,7 @@ import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
@@ -22,30 +23,29 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
-//    private val basePath = "http://192.168.0.103:8080"
-//    private val socketUrl = "ws://192.168.0.103:8080/stream"
-
-    private val basePath = "https://tucik.fun"
-    private val socketUrl = "wss://tucik.fun/stream"
 
     @Provides
     @Singleton
     fun provideCustomTucikEndpoints(): CustomTucikEndpoints {
-        return CustomTucikEndpoints(basePath)
+        return CustomTucikEndpoints(BuildConfig.SERVICE_URL)
     }
 
     @Provides
     @Singleton
     fun provideMeAvatarState(
         profileState: ProfileState,
-        socketListener: SocketListener,
         avatarState: AvatarState
     ): MeAvatarState {
         return MeAvatarState(
             profileState,
-            socketListener,
             avatarState
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideCropperState(): CropperState {
+        return CropperState()
     }
 
     @Provides
@@ -55,7 +55,7 @@ class AppModule {
         socketConnectionState: SocketConnectionState,
     ): SocketListener {
         return SocketListener(
-            socketUrl,
+            BuildConfig.SOCKET_URL,
             okHttpClient,
             socketConnectionState
         )
@@ -95,11 +95,10 @@ class AppModule {
         profileState: ProfileState,
         meAvatarState: MeAvatarState,
         moshi: Moshi,
-        friendsState: FriendsState,
         socketListener: SocketListener
     ): AuthenticationState {
         return AuthenticationState(client, customTucikEndpoints, profileState,
-            meAvatarState, friendsState, moshi, socketListener
+            meAvatarState, moshi, socketListener
         )
     }
 

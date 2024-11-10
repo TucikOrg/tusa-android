@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">Tucik</string>
+    <string name="web_client_id">672565422675-ohrhocqm73av5ba2klinb2e4bpcncgnk.apps.googleusercontent.com</string>
     <string name="asset_statements" translatable="false">
     [{
       \"include\": \"https://tucik.fun/.well-known/assetlinks.json"

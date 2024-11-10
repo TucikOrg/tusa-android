@@ -11,14 +11,13 @@ import javax.inject.Inject
 open class AppLaunchActionsViewModel @Inject constructor(
     private val lastLocationState: LastLocationState?,
     private val socketListener: SocketListener?,
-    private val authenticationState: AuthenticationState?,
     private val profileState: ProfileState?
 ): ViewModel() {
     fun getLocationForegroundServiceStarted() = lastLocationState?.getLocationForegroundServiceStarted()
     fun setLocationForegroundServiceStarted(state: Boolean) = lastLocationState?.saveLocationForegroundServiceStarted(state)
     fun connectToSocket() {
-        if (authenticationState?.authenticated == true) {
-            profileState?.getUserId()?.let {
+        if (profileState?.getIsAuthenticated() == true) {
+            profileState.getUserId().let {
                 socketListener?.connect(it)
             }
         }

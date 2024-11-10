@@ -1,12 +1,13 @@
 [versions]
 accompanistPermissions = "<latest_version>"
 accompanistPermissionsVersion = "<version>"
-agp = "8.5.2"
+googleid="1.1.1"
+agp = "8.7.2"
 androidImageCropper = "4.6.0"
 coilCompose = "2.4.0"
 core = "3.5.0"
 credentials = "1.5.0-beta01"
-gradle = "8.1.4"
+gradle = "8.7.2"
 hiltAndroid = "2.48"
 hiltNavigationCompose = "1.2.0"
 kotlin = "2.0.20"
@@ -45,6 +46,8 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workRuntimeKtx" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
+credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth" }
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref="googleid" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
 hilt-android-gradle-plugin = { module = "com.google.dagger:hilt-android-gradle-plugin", version.ref = "hiltAndroid" }

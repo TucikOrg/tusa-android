@@ -17,6 +17,7 @@
 #include "MapNumbers.h"
 #include "DrawMap.h"
 #include "Markers.h"
+#include "AnimateCameraTo.h"
 
 class MapRenderer {
 public:
@@ -37,6 +38,7 @@ private:
     ShadersBucket shadersBucket = ShadersBucket();
     MapFpsCounter mapFpsCounter = MapFpsCounter();
     MapEnvironment mapEnvironment = MapEnvironment();
+    AnimateCameraTo animateCameraTo = AnimateCameraTo();
     DrawMap drawMap = DrawMap();
     Markers markers = Markers();
     MapTileGetter* mapTileGetter;

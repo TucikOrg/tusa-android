@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.artem.tusaandroid"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.artem.tusaandroid"
-        minSdk = 27
-        targetSdk = 34
+        minSdk = 30
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
@@ -24,6 +24,9 @@ android {
         }
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -31,6 +34,12 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
+            buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
+        }
+        debug {
+            buildConfigField("String", "SERVICE_URL", "\"http://192.168.0.103:8080\"")
+            buildConfigField("String", "SOCKET_URL", "\"ws://192.168.0.103:8080/stream\"")
         }
     }
     compileOptions {
@@ -93,6 +102,8 @@ dependencies {
     implementation(libs.androidx.material3)
 
     implementation(libs.androidx.credentials)
+    implementation(libs.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

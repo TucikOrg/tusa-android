@@ -7,7 +7,7 @@
       </SelectionState>
       <SelectionState runConfigName="MainActivity">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-02T07:54:58.679941Z">
+        <DropdownSelection timestamp="2024-11-08T08:35:56.922432Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=RF8X704YKYJ" />
@@ -16,10 +16,16 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="PreviewFriendRow">
+      <SelectionState runConfigName="PreviewConnectionStatus">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="PreviewConnectionStatus">
+      <SelectionState runConfigName="InputUniqueNamePreview">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="MeAvatarPreview">
+        <option name="selectionMode" value="DROPDOWN" />
+      </SelectionState>
+      <SelectionState runConfigName="PreviewTucikMap">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

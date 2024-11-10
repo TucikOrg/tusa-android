@@ -14,9 +14,9 @@ import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 
 @Composable
-fun FindFriendButton(model: FindFriendViewModel, friendsVM: FriendViewModel) {
+fun FindFriendButton(model: FindFriendViewModel) {
     if (model.showModal.value) {
-        FindFriendsModal(model, friendsVM)
+        FindFriendsModal(model)
     }
 
     TextButton(

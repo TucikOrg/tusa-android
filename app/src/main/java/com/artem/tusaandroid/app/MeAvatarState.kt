@@ -8,24 +8,8 @@ import com.artem.tusaandroid.socket.SocketListener
 
 class MeAvatarState(
     private val profileState: ProfileState?,
-    private val socketListener: SocketListener?,
     private val avatarState: AvatarState?
 ) {
-//    private val meAvatarEvent = object: EventListener<AvatarDTO> {
-//        override fun onEvent(event: AvatarDTO) {
-//            if (event.ownerId != profileState?.getUserId()) {
-//                return
-//            }
-//            val bitmap = BitmapFactory.decodeByteArray(event.avatar, 0, event.avatar.size)
-//            val bytes = event.avatar
-//            setAvatar(bitmap, bytes)
-//        }
-//    }
-//
-//    init {
-//        socketListener?.getReceiveMessage()?.avatarBus?.addListener(meAvatarEvent)
-//    }
-
     private var needUpdateInRenderFlag = false
     private var hideMeFlag = false
 

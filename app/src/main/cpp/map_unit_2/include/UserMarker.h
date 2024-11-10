@@ -11,6 +11,7 @@
 #include <Eigen/Dense>
 #include "util/eigen_gl.h"
 #include "MapNumbers.h"
+#include "FromLatLonToSpherePos.h"
 #include <cmath>
 
 class UserMarker {
@@ -22,10 +23,7 @@ public:
             ShadersBucket &shadersBucket,
             Eigen::Matrix4f &pv,
             MapNumbers& mapNumbers,
-            Eigen::AngleAxisd &rotationPlanetLatitude,
-            Eigen::AngleAxisd &rotationPlanetLongitude,
-            Eigen::Vector3d &axisLatitude,
-            Eigen::Vector3d &axisLongitude
+            FromLatLonToSpherePos& fromLatLonToSpherePos
     );
     void drawDebugData(
             ShadersBucket &shadersBucket,

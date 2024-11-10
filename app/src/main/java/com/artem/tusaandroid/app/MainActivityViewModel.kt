@@ -1,12 +1,11 @@
 package com.artem.tusaandroid.app
 
 import androidx.lifecycle.ViewModel
+import com.artem.tusaandroid.cropper.CropperState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 class MainActivityViewModel @Inject constructor(
     val authenticationState: AuthenticationState
-): ViewModel() {
-
-}
+): ViewModel()

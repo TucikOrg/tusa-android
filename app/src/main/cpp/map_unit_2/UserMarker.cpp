@@ -8,12 +8,8 @@ void UserMarker::draw(
         ShadersBucket &shadersBucket,
         Eigen::Matrix4f &pv,
         MapNumbers& mapNumbers,
-        Eigen::AngleAxisd &rotationPlanetLatitude,
-        Eigen::AngleAxisd &rotationPlanetLongitude,
-        Eigen::Vector3d &axisLatitude,
-        Eigen::Vector3d &axisLongitude
+        FromLatLonToSpherePos& fromLatLonToSpherePos
 ) {
-    double radius = mapNumbers.radius;
     auto camLatitude = mapNumbers.camLatitude;
     auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
 
@@ -23,21 +19,16 @@ void UserMarker::draw(
         glEnable(GL_DEPTH_TEST);
     }
 
-    Eigen::Vector3d pointOnSphere = rotationPlanetLongitude * rotationPlanetLatitude * Eigen::Vector3d(0, 0, 1);
-    Eigen::AngleAxisd rotationLatitude = Eigen::AngleAxisd(-latitude, axisLatitude);
-    Eigen::AngleAxisd rotationLongitude = Eigen::AngleAxisd(longitude, axisLongitude);
-    Eigen::Vector3d camPoint = rotationLongitude * rotationLatitude * pointOnSphere;
-    camPoint *= radius;
-
-    float markerX = camPoint.x();
-    float markerY = camPoint.y();
-    float markerZ = camPoint.z() - radius;
+    Eigen::Vector3d position = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude);
     std::vector<float> uv = {
             0, 1,
             1, 1,
             1, 0,
             0, 0,
     };
+    float markerX = position[0];
+    float markerY = position[1];
+    float markerZ = position[2];
 
     float z = 0.0f;
     float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;

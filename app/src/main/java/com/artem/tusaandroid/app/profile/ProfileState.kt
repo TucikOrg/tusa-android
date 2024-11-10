@@ -10,7 +10,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
 
-class ProfileState(
+open class ProfileState(
     private val socketListener: SocketListener?
 ): StateHasSharedPreferences() {
     val timeLeftInit = 40
@@ -70,7 +70,7 @@ class ProfileState(
     }
 
     fun getIsAuthenticated(): Boolean {
-        return jwt != null
+        return getJwt().isNotEmpty()
     }
 
     fun getJwt(): String {

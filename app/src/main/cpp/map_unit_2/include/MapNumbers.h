@@ -9,16 +9,15 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include "util/eigen_gl.h"
-#include "MapControls.h"
 #include "MapCamera.h"
 #include "shader/shaders_bucket.h"
+#include "MapControls.h"
 
 class MapNumbers {
 public:
     MapNumbers(
             MapControls &mapControls,
             MapCamera &mapCamera,
-            ShadersBucket &shadersBucket,
             float planeSize,
             int textureTileSizeUnit,
             float forwardRenderingToWorldZoom

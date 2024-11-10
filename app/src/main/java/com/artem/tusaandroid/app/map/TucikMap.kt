@@ -14,11 +14,11 @@ fun TucikMap(model: MapViewModel, innerPadding: PaddingValues = PaddingValues(0.
     AndroidView(
         factory = {
             MapView(it,
-                model.meAvatarState!!,
-                model.lastLocationState!!,
+                model.meAvatarState,
+                model.lastLocationState,
                 RequestTile(it),
-                model.socketListener!!,
-                model.avatarState!!
+                model.socketListener,
+                model.avatarState
             )
         },
         modifier = Modifier.padding(innerPadding)

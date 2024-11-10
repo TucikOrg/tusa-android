@@ -3,11 +3,13 @@
 //
 
 #include <mapbox/earcut.hpp>
+#include <types.hpp>
 #include "MapTile.h"
 #include "map/polygon_handler.h"
 #include "map/linestring_handler.h"
 #include "MapWideLine.h"
 #include "util/android_log.h"
+#include "PointHandler.h"
 
 MapTile::MapTile(int x, int y, int z): empty(true), x(x), y(y), z(z) {}
 
@@ -53,6 +55,14 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                 continue;
             }
 
+            while (auto property = feature.next_property()) {
+                vtzero::property_value pvalue = property.value();
+                if (pvalue.type() == vtzero::property_value_type::string_value) {
+                    auto stringValue = pvalue.string_value();
+                    auto name = std::string(stringValue);
+                    //LOGI("string_value = %s", name.c_str());
+                }
+            }
 
             if(geomType == vtzero::GeomType::LINESTRING) {
                 auto lineHandler = LineStringHandler();
@@ -178,9 +188,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                         indices[indicesIndex + 1] = indicesIndex / 2 + 1;
                     }
                     linesResultIndicesCount[styleIndex] += indicesAmount;
-                    if (vertices.size() == 0) {
-                        int i = 2;
-                    }
                     simpleLines[geomIndex] = { std::move(vertices), std::move(indices) };
                 }
                 featuresLinesResult[styleIndex].push_front(std::move(simpleLines));
@@ -196,6 +203,10 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                     polygonsIndicesCount[styleIndex] += indices.size();
                     polygonsResult[styleIndex].push_front(MapPolygon { polygon, indices });
                 }
+            } else if (geomType == vtzero::GeomType::POINT) {
+                auto pointHandler = PointHandler();
+                vtzero::decode_point_geometry(feature.geometry(), pointHandler);
+
             }
 
         }

@@ -62,6 +62,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_1/MapStyle.cpp
         map_unit_1/MapFpsCounter.cpp
         map_unit_1/MapSymbols.cpp
+        map_unit_1/PointHandler.cpp
 
         map_unit_2/MapRenderer.cpp
         map_unit_2/MapControls.cpp
@@ -83,6 +84,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/UserMarker.cpp
         map_unit_2/TextureUtils.cpp
         map_unit_2/Symbol.cpp
+        map_unit_2/FromLatLonToSpherePos.cpp
+        map_unit_2/AnimateCameraTo.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

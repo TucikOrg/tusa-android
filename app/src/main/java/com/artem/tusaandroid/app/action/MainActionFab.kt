@@ -23,12 +23,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
-import com.artem.tusaandroid.app.login.InputUniqueName
-import com.artem.tusaandroid.app.login.InputPhone
-import com.artem.tusaandroid.app.login.InputSMS
-import com.artem.tusaandroid.app.login.MainActionStage
-import com.artem.tusaandroid.app.login.PreviewInputPhoneModel
-import com.artem.tusaandroid.app.login.PreviewInputSMSModel
 import com.artem.tusaandroid.app.profile.PreviewProfileCardViewModel
 import com.artem.tusaandroid.app.profile.ProfileCard
 import com.artem.tusaandroid.isPreview
@@ -48,31 +42,7 @@ fun MainActionFab(modifier: Modifier, model: MainActionFabViewModel) {
             },
             modifier = Modifier.navigationBarsPadding()
         ) {
-            when(model.stage) {
-                MainActionStage.START -> {}
-                MainActionStage.INPUT_PHONE -> {
-                    InputPhone(
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewInputPhoneModel()),
-                        rootModel = model
-                    )
-                }
-                MainActionStage.INPUT_SMS -> {
-                    InputSMS(
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewInputSMSModel()),
-                        rootModel = model
-                    )
-                }
-                MainActionStage.INPUT_UNIQUE_NAME -> {
-                    InputUniqueName(
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewProfileCardViewModel()),
-                        rootModel = model
-                    )
-                }
-                MainActionStage.END -> {}
-                MainActionStage.PROFILE -> {
-                    MainActionInModal(model)
-                }
-            }
+            MainActionInModal(model)
         }
     }
 
@@ -82,11 +52,7 @@ fun MainActionFab(modifier: Modifier, model: MainActionFabViewModel) {
         },
         modifier = modifier
     ) {
-        if (model.authenticationState?.authenticated == true) {
-            Icon(painter = painterResource(id = R.drawable.person), contentDescription = "Profile")
-        } else {
-            Icon(painter = painterResource(id = R.drawable.login), contentDescription = "Login")
-        }
+        Icon(painter = painterResource(id = R.drawable.person), contentDescription = "Profile")
     }
 }
 

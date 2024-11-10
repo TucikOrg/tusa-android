@@ -6,6 +6,7 @@
 #define TUSA_ANDROID_MAPCOLORS_H
 
 #include "csscolorparser/csscolorparser.h"
+#include <vector>
 
 class MapColors {
 public:

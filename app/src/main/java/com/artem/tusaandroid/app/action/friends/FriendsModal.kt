@@ -39,7 +39,9 @@ fun FriendsModal(model: FriendViewModel) {
     ModalBottomSheet(
         modifier = Modifier.navigationBarsPadding(),
         sheetState = sheetState,
-        onDismissRequest = { model.showModal.value = false },
+        onDismissRequest = {
+            model.showModal.value = false
+        },
     ) {
         val friends = model.getFriends()
         val requests = model.getRequests()
@@ -113,7 +115,6 @@ fun FriendsModal(model: FriendViewModel) {
             ) {
                 FindFriendButton(
                     model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFindFriendViewModel()),
-                    friendsVM = model
                 )
             }
             Spacer(modifier = Modifier.height(60.dp))

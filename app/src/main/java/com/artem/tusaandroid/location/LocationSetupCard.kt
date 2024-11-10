@@ -28,6 +28,7 @@ import android.location.LocationManager
 import android.provider.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.LaunchedEffect
 
 @Preview
 @Composable
@@ -39,10 +40,13 @@ fun LocationSetupCardPreview() {
 @Composable
 fun LocationSetupCard(model: LocationSetupCardViewModel) {
     val context = LocalContext.current
-
     val coroutineScope = rememberCoroutineScope()
     val permissionState = rememberPermissionState(permission = android.Manifest.permission.ACCESS_FINE_LOCATION)
     if (permissionState.status.isGranted) {
+        LaunchedEffect(Unit) {
+            model.determineInitState(context)
+        }
+
         if (model.gpsDisabledAlert.value) {
             GpsDisabledDialog(model)
         }

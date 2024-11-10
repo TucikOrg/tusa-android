@@ -14,10 +14,10 @@ import javax.microedition.khronos.opengles.GL10
 
 class Renderer(
     private val _assetManager: AssetManager,
-    private val meAvatarState: MeAvatarState,
-    private val lastLocationState: LastLocationState,
-    private val socketListener: SocketListener,
-    private val avatarState: AvatarState
+    private val meAvatarState: MeAvatarState?,
+    private val lastLocationState: LastLocationState?,
+    private val socketListener: SocketListener?,
+    private val avatarState: AvatarState?
 ) : GLSurfaceView.Renderer {
     private var defaultAvatar: ByteArray? = null
     private var artemAvatar: ByteArray? = null
@@ -37,7 +37,7 @@ class Renderer(
             defaultAvatar = asset.readBytes()
         }
 
-        socketListener.getReceiveMessage().locationsBus.addListener(object: EventListener<List<LocationDto>> {
+        socketListener?.getReceiveMessage()?.locationsBus?.addListener(object: EventListener<List<LocationDto>> {
             override fun onEvent(event: List<LocationDto>) {
                 locations = event
             }
@@ -47,7 +47,7 @@ class Renderer(
         executor.execute {
             Thread.sleep(1000)
             while (true) {
-                socketListener.getSendMessage()?.locations()
+                socketListener?.getSendMessage()?.locations()
                 Thread.sleep(10000)
             }
         }
@@ -66,7 +66,7 @@ class Renderer(
         // Update me avatar marker
         // if avatar changed and location exists
         // Добавить маркер или сменить аватарку маркера пользователя
-        if (meAvatarState.getNeedUpdateInRenderFlag() && lastLocationState.lastLocationExists()) {
+        if (meAvatarState?.getNeedUpdateInRenderFlag() == true && lastLocationState?.lastLocationExists() == true) {
             var useMeAvatar = meAvatarState.getAvatarBytes()
             if (useMeAvatar == null) {
                 useMeAvatar = defaultAvatar
@@ -85,7 +85,7 @@ class Renderer(
 
         // Update me avatar location if location changed
         // Изменить местоположение маркера пользователя
-        if (lastLocationState.lastLocationExists() && lastLocationState.getNeedUpdateLastLocationInRenderer()) {
+        if (lastLocationState?.lastLocationExists() == true && lastLocationState.getNeedUpdateLastLocationInRenderer()) {
             val latitude = lastLocationState.getLastLatitude()
             val longitude = lastLocationState.getLastLongitude()
             NativeLibrary.updateMarkerGeo(meAvatarKey, latitude, longitude)
@@ -94,7 +94,7 @@ class Renderer(
 
         // Нужно спрятать маркер пользователя
         // например когда он отключил показ себя на карте
-        if (meAvatarState.getHideMeFlag()) {
+        if (meAvatarState?.getHideMeFlag() == true) {
             NativeLibrary.removeMarker(meAvatarKey)
             meAvatarState.iAmHidden()
         }
@@ -105,7 +105,7 @@ class Renderer(
             val key = location.ownerId.toString()
             val existMarker = NativeLibrary.existMarker(key)
             if (!existMarker) {
-                val useImage = avatarState.getAvatarBytes(location.ownerId)
+                val useImage = avatarState?.getAvatarBytes(location.ownerId)
                 if (useImage != null) {
                     NativeLibrary.addMarker(key, location.latitude, location.longitude, useImage)
                 }
