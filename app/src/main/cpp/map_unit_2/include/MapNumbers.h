@@ -23,8 +23,6 @@ public:
             float forwardRenderingToWorldZoom
     );
 
-    float getDistortion(float epsg4326Latitude) { return mapControls->getDistortion(epsg4326Latitude); }
-
     MapControls *mapControls;
     float planeSize;
     int textureTileSize;

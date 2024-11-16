@@ -98,6 +98,25 @@ public:
         }
         return iteration->second;
     }
+
+    std::string getName(unsigned short style) {
+        auto iteration = names.find(style);
+        if (iteration == names.end()) {
+            return "";
+        }
+
+        return iteration->second;
+    }
+
+    float getFontSize(unsigned short style) {
+        auto iteration = fontSize.find(style);
+        if (iteration == fontSize.end()) {
+            return 0.007f;
+        }
+
+        return iteration->second;
+    }
+
 private:
     std::vector<unsigned short> stylesVec;
     std::set<unsigned short> styles;
@@ -109,6 +128,8 @@ private:
     std::map<unsigned short, bool> forwardRenderingOnly;
     std::map<unsigned short, float> borderFactor;
     std::map<unsigned short, std::unordered_map<short, void*>> visibleZoom;
+    std::map<unsigned short, std::string> names;
+    std::map<unsigned short, float> fontSize;
 
     std::map<unsigned short, float> alphaInterpolateFrom;
     std::map<unsigned short, float> alphaInterpolateTo;
@@ -118,6 +139,7 @@ private:
     bool registerAdminLayer(std::string layerName, uint64_t adminLevel, int& currentIndex);
     bool registerRoadLayer(std::string layerName, std::string className, int& currentIndex);
     bool registerLandUseLayer(std::string layerName, std::string className, int& currentIndex);
+    bool registerPlaceLabel(std::string layerName, layer_map_type props, int& currentIndex);
 };
 
 

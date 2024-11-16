@@ -13,7 +13,7 @@ public:
     TextureShader(AAssetManager* assetManager, const char* vertexShaderName, const char* fragmentShaderName);
 
     GLint getPosLocation() const {return a_pos;}
-    GLint getTileTextureLocation0() const {return u_tile_0;}
+    GLint getTextureLocation() const {return u_tile_0;}
     GLint getTextureCord() const {return a_unit_square_cords;}
 
 private:

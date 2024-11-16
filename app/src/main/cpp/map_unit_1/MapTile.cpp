@@ -48,20 +48,20 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
         std::size_t feature_count = layer.num_features();
         extent = layer.extent();
         while (auto feature = layer.next_feature()) {
+            while (auto property = feature.next_property()) {
+                if (property.key() == "filterrank") {
+                    auto type = property.value().type();
+                }
+                if (property.key() == "symbolrank") {
+                    auto type = property.value().type();
+                }
+            }
+
             auto geomType = feature.geometry_type();
             auto props = create_properties_map<layer_map_type>(feature);
             auto styleIndex = style.determineStyle(layerName, props, z);
             if(styleIndex == 0) {
                 continue;
-            }
-
-            while (auto property = feature.next_property()) {
-                vtzero::property_value pvalue = property.value();
-                if (pvalue.type() == vtzero::property_value_type::string_value) {
-                    auto stringValue = pvalue.string_value();
-                    auto name = std::string(stringValue);
-                    //LOGI("string_value = %s", name.c_str());
-                }
             }
 
             if(geomType == vtzero::GeomType::LINESTRING) {
@@ -71,8 +71,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                 bool isWideLine = style.getIsWideLine(styleIndex);
                 if (isWideLine) {
                     // широкая линия
-                    float width = style.getLineWidth(styleIndex);
-                    float h = width / 2;
                     std::vector<MapWideLine> wideLines(geomSize);
 
                     float nx = 0;
@@ -93,6 +91,8 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                         for(int pointIndex = 0; pointIndex < pointsSize; ++pointIndex) {
                             auto point = point_array[pointIndex];
                             auto isLastPoint = pointIndex == pointsSize - 1;
+
+                            // Нарисует кружочки в начале и в конце дороги
                             if (pointIndex == 0 || isLastPoint) {
                                 unsigned int add = isLastPoint * 8;
                                 unsigned int startFrom = geomIndex * 2 * 4 * 2;
@@ -108,12 +108,12 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                             }
 
                             if (pointIndex + 1 < pointsSize) {
-                                auto nextPoint = point_array[pointIndex + 1];
+                                vtzero::point nextPoint = point_array[pointIndex + 1];
                                 float dx = nextPoint.x - point.x;
                                 float dy = point.y - nextPoint.y;
                                 nx = -dy;
                                 ny = dx;
-                                float len = sqrt(pow(nx, 2.0) + pow(ny, 2.0));
+                                float len = sqrt( pow(nx, 2.0) + pow(ny, 2.0) );
                                 nx = nx / len;
                                 ny = ny / len;
                             }
@@ -206,9 +206,30 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
             } else if (geomType == vtzero::GeomType::POINT) {
                 auto pointHandler = PointHandler();
                 vtzero::decode_point_geometry(feature.geometry(), pointHandler);
+                auto name = style.getName(styleIndex);
+                auto fontSize = style.getFontSize(styleIndex);
+                auto visibleZoom = style.getVisibleZoom(styleIndex);
+                if (pointHandler.points.size() == 1 && !name.empty()) {
+                    auto point = pointHandler.points[0];
+                    float inTilePortion = FLOAT(point.x) / FLOAT(extent);
+                    float mapXTilePosition = inTilePortion + getX();
+                    int n = pow(2, z);
+                    double mapXTilePotion = static_cast<double>(mapXTilePosition) / n;
+                    float longitude = mapXTilePotion * (2 * M_PI) - M_PI;
 
+                    float inTilePortionY = FLOAT(point.y) / FLOAT(extent);
+                    float mapYTilePosition = inTilePortionY + getY();
+                    double mapYTilePortion = 1.0 - static_cast<double>(mapYTilePosition) / n;
+                    float latitude = Utils::EPSG3857_to_EPSG4326_latitude(mapYTilePortion * (2 * M_PI) - M_PI);
+                    resultMarkerTitles.push_back(MarkerMapTitle(
+                            name,
+                            latitude,
+                            longitude,
+                            fontSize,
+                            visibleZoom
+                    ));
+                }
             }
-
         }
     }
 

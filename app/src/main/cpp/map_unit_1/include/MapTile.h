@@ -15,7 +15,7 @@
 #include "MapSimplePoint.h"
 #include "MapSquarePoints.h"
 #include "MapPolygonAggregated.h"
-
+#include "MarkerMapTitle.h"
 
 class MapTile {
 public:
@@ -62,6 +62,7 @@ public:
     std::map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
     std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
     std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
+    std::vector<MarkerMapTitle> resultMarkerTitles;
 
     MapStyle style = MapStyle();
 private:

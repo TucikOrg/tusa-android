@@ -56,7 +56,7 @@ public:
         glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, uvTest.data());
         glEnableVertexAttribArray(textureShader->getTextureCord());
         glBindTexture(GL_TEXTURE_2D, mapTextureForPlanet);
-        glUniform1f(textureShader->getTileTextureLocation0(), 0);
+        glUniform1f(textureShader->getTextureLocation(), 0);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 
@@ -106,7 +106,7 @@ public:
         glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, uvTest.data());
         glEnableVertexAttribArray(textureShader->getTextureCord());
         glBindTexture(GL_TEXTURE_2D, mapTexture);
-        glUniform1f(textureShader->getTileTextureLocation0(), 0);
+        glUniform1f(textureShader->getTextureLocation(), 0);
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     }
 

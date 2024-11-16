@@ -86,6 +86,7 @@ void MapRenderer::renderFrame() {
                 mn.n, leftX, topY, mn.visTileYStart, mn.visTileYEnd,
                 mn.visTileXStartInf, mn.visTileXEndInf
         };
+
         mapTileRender.renderTexture(data);
     }
 
@@ -106,17 +107,30 @@ void MapRenderer::renderFrame() {
 
     mapEnvironment.selectClearColor(mn.zoom);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     mapEnvironment.draw(mn, shadersBucket);
     drawMap.drawMap(drawMapData);
-    markers.drawMarkers(shadersBucket, mn.pvFloat, mn);
 
+    std::vector<MarkerMapTitle*> markerMapTitles = {};
+    for (auto& tile: tiles) {
+        auto tileData = tile.second;
+        for (auto& markerTile : tileData->resultMarkerTitles) {
+            markerMapTitles.push_back(&markerTile);
+        }
+    }
+
+    markers.drawMarkers(shadersBucket, mn.pvFloat,
+                        mn, markerMapTitles, mapSymbols, mapCamera
+                        );
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTexture, xTilesAmount, yTilesAmount);
     auto fps = Utils::floatToString(mapFpsCounter.getFps(), 1);
     auto zoomText = Utils::floatToString(mn.zoom, 1);
-    std::string textInfo = "FPS: " + fps + " Z:" + zoomText;
-    //mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.2f, 0.05f);
+    std::string textInfo = "FPS: " + fps + " Z:" + zoomText +
+            " Lat: " + std::to_string(RAD2DEG(mn.camLatitude)) +
+            " Lon: " + std::to_string(RAD2DEG(mn.camLongitude));
+    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -132,7 +146,7 @@ void MapRenderer::onSurfaceChanged(int screenW, int screenH) {
 
 void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     shadersBucket.compileAllShaders(assetManager);
-    mapSymbols.createFontTextures();
+    mapSymbols.initGl(assetManager);
     mapTileRender.initTilesTexture();
     mapEnvironment.init(planeSize);
 
@@ -141,8 +155,10 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     float moscowLat = DEG2RAD(55.7558);
     float moscowLon = DEG2RAD(37.6176);
-    animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
-    animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
+    //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
+    //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
+    mapControls.setCamPos(DEG2RAD(55.753601), DEG2RAD(37.872562));
+    mapControls.setZoom(17.0);
 }
 
 void MapRenderer::drag(float dx, float dy) {

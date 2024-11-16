@@ -14,6 +14,8 @@
 #include <Eigen/Dense>
 #include "util/eigen_gl.h"
 #include "MapNumbers.h"
+#include "MarkerMapTitle.h"
+#include "MapSymbols.h"
 
 class Markers {
 public:
@@ -21,7 +23,13 @@ public:
     void removeMarker(std::string key);
     void updateMarkerGeo(std::string key, float latitude, float longitude);
     void updateMarkerAvatar(std::string key, unsigned char *imageData, off_t fileSize);
-    void drawMarkers(ShadersBucket& shadersBucket, Eigen::Matrix4f pv, MapNumbers& mapNumbers);
+    void drawMarkers(ShadersBucket& shadersBucket,
+                     Eigen::Matrix4f pv,
+                     MapNumbers& mapNumbers,
+                     std::vector<MarkerMapTitle*> markerMapTitles,
+                     MapSymbols& mapSymbols,
+                     MapCamera& mapCamera
+    );
     bool hasMarker(std::string key);
 private:
     std::map<std::string, UserMarker> userMarkers = {};

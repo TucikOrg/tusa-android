@@ -4,6 +4,7 @@
 
 #include "Markers.h"
 #include "FromLatLonToSpherePos.h"
+#include "MapSymbols.h"
 
 bool Markers::hasMarker(std::string key) {
     return userMarkers.find(key) != userMarkers.end();
@@ -24,9 +25,26 @@ void Markers::addMarker(
     userMarkers[key] = { textureId, latitude, longitude };
 }
 
-void Markers::drawMarkers(ShadersBucket& shadersBucket, Eigen::Matrix4f pv, MapNumbers& mapNumbers) {
+void Markers::drawMarkers(ShadersBucket& shadersBucket,
+                          Eigen::Matrix4f pv,
+                          MapNumbers& mapNumbers,
+                          std::vector<MarkerMapTitle*> markerMapTitles,
+                          MapSymbols& mapSymbols,
+                          MapCamera& mapCamera
+) {
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
+
+    for (auto marker : markerMapTitles) {
+        marker->draw(
+                shadersBucket,
+                pv,
+                mapNumbers,
+                fromLatLonToSpherePos,
+                mapSymbols,
+                mapCamera
+        );
+    }
 
     for (auto marker : userMarkers) {
         marker.second.draw(

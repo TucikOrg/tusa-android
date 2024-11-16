@@ -7,16 +7,21 @@
 
 
 #include <stdint.h>
+#include <vector>
 #include <geometry.hpp>
 
 class PointHandler {
 public:
-    void points_begin(uint32_t count) {
+    std::vector<vtzero::point> points = {};
+    uint index = 0;
 
+    void points_begin(uint32_t count) {
+        points = std::vector<vtzero::point>(count);
     }
 
     void points_point(vtzero::point point) {
-
+        points[index] = point;
+        index++;
     }
 
     void points_end() {

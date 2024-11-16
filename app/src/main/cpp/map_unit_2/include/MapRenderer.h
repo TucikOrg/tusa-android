@@ -47,8 +47,10 @@ private:
 
     float forwardRenderingToWorldZoom = 13.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    int textureTileSizeUnit = 2048;
     std::string textureKey;
+
+    GLuint testTextTexture = 0;
 };
 
 

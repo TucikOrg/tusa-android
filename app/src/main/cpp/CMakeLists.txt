@@ -86,6 +86,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/Symbol.cpp
         map_unit_2/FromLatLonToSpherePos.cpp
         map_unit_2/AnimateCameraTo.cpp
+        map_unit_2/MarkerMapTitle.cpp
+        map_unit_2/TextTexture.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
