@@ -58,6 +58,7 @@ public:
     int getY() {return y; };
     int getZ() {return z; };
 
+    bool uploadedToGPU = false;
     std::map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
     std::map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
     std::map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
@@ -66,8 +67,8 @@ public:
     std::vector<MarkerMapTitle> resultMarkerTitles;
     std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
 
-    std::vector<float> lastPointsTest = {};
-    std::vector<float> firstPointsTest = {};
+//    std::vector<float> lastPointsTest = {};
+//    std::vector<float> firstPointsTest = {};
 
     MapStyle style = MapStyle();
 private:

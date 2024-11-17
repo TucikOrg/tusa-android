@@ -6,11 +6,20 @@
 #define TUSA_ANDROID_MAPPOLYGONAGGREGATED_H
 
 #include <vector>
+#include <GLES2/gl2.h>
 
 class MapPolygonAggregated {
 public:
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
+
+    GLuint vbo;
+    GLuint ibo;
+    size_t iboSize;
+
+    bool canBeDraw() {
+        return vbo != 0 && ibo != 0;
+    }
 };
 
 

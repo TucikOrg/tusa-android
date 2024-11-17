@@ -6,10 +6,17 @@
 #define TUSA_ANDROID_MAPSIMPLEPOINT_H
 
 #include <vector>
+#include <GLES2/gl2.h>
 
 class MapSimplePoint {
 public:
     std::vector<float> vertices;
+
+    GLuint vbo;
+
+    bool canBeDraw() {
+        return vbo != 0;
+    }
 };
 
 

@@ -6,6 +6,7 @@
 #define TUSA_ANDROID_MAPSQUAREPOINTS_H
 
 #include <vector>
+#include <GLES2/gl2.h>
 
 class MapSquarePoints {
 public:
@@ -13,6 +14,16 @@ public:
     std::vector<float> uvs;
     std::vector<unsigned int> indices;
     std::vector<float> shifts;
+
+    GLuint vbo;
+    GLuint vboUVs;
+    GLuint ibo;
+    GLuint vboShifts;
+    size_t iboSize;
+
+    bool canBeDraw() {
+        return vbo != 0;
+    }
 };
 
 

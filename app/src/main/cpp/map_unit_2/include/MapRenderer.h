@@ -18,6 +18,7 @@
 #include "DrawMap.h"
 #include "Markers.h"
 #include "AnimateCameraTo.h"
+#include "TransferTilesToGPU.h"
 
 class MapRenderer {
 public:
@@ -39,6 +40,7 @@ private:
     MapFpsCounter mapFpsCounter = MapFpsCounter();
     MapEnvironment mapEnvironment = MapEnvironment();
     AnimateCameraTo animateCameraTo = AnimateCameraTo();
+    TransferTilesToGPU transferTilesToGpu = TransferTilesToGPU();
     DrawMap drawMap = DrawMap();
     Markers markers = Markers();
     MapTileGetter* mapTileGetter;

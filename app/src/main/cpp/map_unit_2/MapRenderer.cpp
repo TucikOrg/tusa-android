@@ -45,6 +45,12 @@ void MapRenderer::renderFrame() {
             tiles.insert({MapTile::makeKey(tileX, tileY, mn.tileZ), tile});
         }
     }
+
+    // проверяем что тайлы храняться в GPU
+    // если они не в GPU то грузим в GPU
+    transferTilesToGpu.transfer(tiles);
+    transferTilesToGpu.transfer(backgroundTiles);
+
     mapTileGetter->clearActualTiles();
     if (allTilesReady)
         mapControls.allTilesReady();

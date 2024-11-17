@@ -89,6 +89,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/MarkerMapTitle.cpp
         map_unit_2/TextTexture.cpp
         map_unit_2/DrawTextAlongPath.cpp
+        map_unit_2/TransferTilesToGPU.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

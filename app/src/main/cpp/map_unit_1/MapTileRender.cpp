@@ -237,25 +237,35 @@ void MapTileRender::drawLayer(
     glUniform4fv(plainShader->getColorLocation(), 1, colorData);
     if (lineWidth != 0)  glLineWidth(lineWidth);
 
-    if (!polygons.vertices.empty()) {
-        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                              GL_FALSE, 0, polygons.vertices.data()
-        );
+    if (polygons.canBeDraw()) {
+        glBindBuffer(GL_ARRAY_BUFFER, polygons.vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, polygons.ibo);
+
+        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(plainShader->getPosLocation());
-        glDrawElements(GL_TRIANGLES, polygons.indices.size(), GL_UNSIGNED_INT, polygons.indices.data());
+        glDrawElements(GL_TRIANGLES, polygons.iboSize, GL_UNSIGNED_INT, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     bool drawWideLines = canDrawWideLines && isWideLine;
-    if (!lines.vertices.empty() && !drawWideLines) {
+    if (lines.canBeDraw() && !drawWideLines) {
+        glBindBuffer(GL_ARRAY_BUFFER, lines.vbo);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, lines.ibo);
+
         glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT,
-                              GL_FALSE, 0, lines.vertices.data()
+                              GL_FALSE, 0, 0
         );
         glEnableVertexAttribArray(plainShader->getPosLocation());
-        glDrawElements(GL_LINES, lines.indices.size(), GL_UNSIGNED_INT, lines.indices.data());
+        glDrawElements(GL_LINES, lines.iboSize, GL_UNSIGNED_INT, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    if (!tile->resultWideLineAggregatedByStyles[styleIndex].vertices.empty() && drawWideLines) {
-        auto& wideLines = tile->resultWideLineAggregatedByStyles[styleIndex];
+    auto& wideLines = tile->resultWideLineAggregatedByStyles[styleIndex];
+    if (wideLines.canBeDraw() && drawWideLines) {
         glUseProgram(roadShader->program);
         glUniform1f(roadShader->getWidthLocation(), wideLineWidth);
         glUniform1f(roadShader->getBorderFactorLocation(), borderFactor);
@@ -263,13 +273,20 @@ void MapTileRender::drawLayer(
         glUniformMatrix4fv(roadShader->getProjectionLocation(), 1, GL_FALSE, p.data());
         glUniform4fv(roadShader->getColorLocation(), 1, colorData);
         glUniform4fv(roadShader->getBorderColorLocation(), 1, borderColor.data());
-        glVertexAttribPointer(roadShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.vertices.data());
+        glBindBuffer(GL_ARRAY_BUFFER, wideLines.vbo);
+        glVertexAttribPointer(roadShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(roadShader->getPosLocation());
-        glVertexAttribPointer(roadShader->getPerpendicularsLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.perpendiculars.data());
+        glBindBuffer(GL_ARRAY_BUFFER, wideLines.vboPerpendiculars);
+        glVertexAttribPointer(roadShader->getPerpendicularsLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(roadShader->getPerpendicularsLocation());
-        glVertexAttribPointer(roadShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.uv.data());
+        glBindBuffer(GL_ARRAY_BUFFER, wideLines.vboUv);
+        glVertexAttribPointer(roadShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(roadShader->getUVLocation());
-        glDrawElements(GL_TRIANGLES, wideLines.indices.size(), GL_UNSIGNED_INT, wideLines.indices.data());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wideLines.ibo);
+        glDrawElements(GL_TRIANGLES, wideLines.iboSize, GL_UNSIGNED_INT, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
     float simplePointSize = 50.0;
@@ -286,19 +303,26 @@ void MapTileRender::drawLayer(
 
     auto squarePoints = tile->resultSquarePointsAggregatedByStyles[styleIndex];
     auto squarePointsShader = shadersBucket.squarePointShader;
-    if (!squarePoints.vertices.empty() && drawWideLines) {
+    if (squarePoints.canBeDraw() && drawWideLines) {
         glUseProgram(squarePointsShader->program);
         glUniformMatrix4fv(squarePointsShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
         glUniformMatrix4fv(squarePointsShader->getProjectionLocation(), 1, GL_FALSE, p.data());
         glUniform1f(squarePointsShader->getPointSizeLocation(), wideLineWidth - borderFactor * wideLineWidth * 2.0);
         glUniform4fv(squarePointsShader->getColorLocation(), 1, colorData);
-        glVertexAttribPointer(squarePointsShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, squarePoints.vertices.data());
+        glBindBuffer(GL_ARRAY_BUFFER, squarePoints.vbo);
+        glVertexAttribPointer(squarePointsShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(squarePointsShader->getPosLocation());
+        glBindBuffer(GL_ARRAY_BUFFER, squarePoints.vboUVs);
         glVertexAttribPointer(squarePointsShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, squarePoints.uvs.data());
         glEnableVertexAttribArray(squarePointsShader->getUVLocation());
+        glBindBuffer(GL_ARRAY_BUFFER, squarePoints.vboShifts);
         glVertexAttribPointer(squarePointsShader->getShiftLocation(), 2, GL_FLOAT, GL_FALSE, 0, squarePoints.shifts.data());
         glEnableVertexAttribArray(squarePointsShader->getShiftLocation());
-        glDrawElements(GL_TRIANGLES, squarePoints.indices.size(), GL_UNSIGNED_INT, squarePoints.indices.data());
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, squarePoints.ibo);
+        glDrawElements(GL_TRIANGLES, squarePoints.iboSize, GL_UNSIGNED_INT, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
 

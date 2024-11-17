@@ -15,6 +15,11 @@ public:
 
     GLuint vbo;
     GLuint ibo;
+    size_t iboSize;
+
+    bool canBeDraw() {
+        return vbo != 0 && ibo != 0;
+    }
 };
 
 

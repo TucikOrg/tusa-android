@@ -6,6 +6,7 @@
 #define TUSA_ANDROID_MAPWIDELINE_H
 
 #include <vector>
+#include <GLES2/gl2.h>
 
 class MapWideLine {
 public:
@@ -13,6 +14,16 @@ public:
     std::vector<unsigned int> indices;
     std::vector<float> perpendiculars;
     std::vector<float> uv;
+
+    GLuint vboUv;
+    GLuint vbo;
+    GLuint vboPerpendiculars;
+    GLuint ibo;
+    size_t iboSize;
+
+    bool canBeDraw() {
+        return vbo != 0 && ibo != 0;
+    }
 };
 
 
