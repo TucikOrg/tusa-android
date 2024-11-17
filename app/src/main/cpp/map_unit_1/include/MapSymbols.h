@@ -29,7 +29,7 @@ public:
     void loadFont(AAssetManager *assetManager);
 
     TextTexture renderTextTexture(
-            std::string text,
+            std::wstring text,
             CSSColorParser::Color color,
             ShadersBucket &shadersBucket,
             MapCamera& mapCamera,
@@ -37,7 +37,7 @@ public:
     );
 
     void renderText2D(
-            std::string text,
+            std::wstring text,
             float x,
             float y,
             float symbolScale,
@@ -46,7 +46,7 @@ public:
             ShadersBucket &shadersBucket
     );
     void renderText3D(
-            std::string text,
+            std::wstring text,
             float x,
             float y,
             float z,
@@ -55,19 +55,17 @@ public:
             Eigen::Matrix4f matrix,
             ShadersBucket &shadersBucket
     );
-    TextTexture getTextTexture(std::string text);
+    TextTexture getTextTexture(std::wstring text);
 
-    Symbol getSymbol(char c);
+    Symbol getSymbol(wchar_t c);
 private:
     void createFontTextures();
-    void prepareCharForRendering(unsigned short charcode);
+    void prepareWCharForRendering(wchar_t wchar);
 
-    bool loadOnlySelectedCharCodes = false;
-    std::vector<unsigned short> selectedCharCodesForLoading = {'1', '2', '3', '4', '5', '6', '7', '8', '9'};
     FT_Face face;
     FT_Library ft;
-    std::unordered_map<char, Symbol> symbols = {};
-    std::unordered_map<std::string, TextTexture> textTextures;
+    std::unordered_map<wchar_t, Symbol> symbols = {};
+    std::unordered_map<std::wstring, TextTexture> textTextures;
 
     GLuint framebuffer;
 };

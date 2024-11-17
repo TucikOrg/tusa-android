@@ -3,7 +3,6 @@
 //
 
 #include "MapRenderer.h"
-
 #include <cmath>
 #include "MapColors.h"
 
@@ -84,7 +83,8 @@ void MapRenderer::renderFrame() {
                 mn.forwardRenderingToWorld,
                 mn.tileZ,
                 mn.n, leftX, topY, mn.visTileYStart, mn.visTileYEnd,
-                mn.visTileXStartInf, mn.visTileXEndInf
+                mn.visTileXStartInf, mn.visTileXEndInf,
+                mapSymbols
         };
 
         mapTileRender.renderTexture(data);
@@ -102,7 +102,8 @@ void MapRenderer::renderFrame() {
         leftX, topY, mapTileRender, mn.view, mn.projection, shadersBucket, mn.zoom,
         mn.visTileYStart, mn.visTileYEnd, mn.visTileXStartInf, mn.visTileXEndInf, mn.segments,
         mn.planetVStart, mn.planetVEnd, mn.planetUStart, mn.planetUEnd, mn.planetVDelta, planeSize, mn.verticesShift,
-        mn.planetUDelta, mn.sphereModelMatrixFloat, mn.transition, mn.EPSG3857CamLat, mn.shiftUTex, mn.scaleUTex, mapEnvironment
+        mn.planetUDelta, mn.sphereModelMatrixFloat, mn.transition, mn.EPSG3857CamLat,
+        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols
     };
 
     mapEnvironment.selectClearColor(mn.zoom);
@@ -125,11 +126,11 @@ void MapRenderer::renderFrame() {
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTexture, xTilesAmount, yTilesAmount);
-    auto fps = Utils::floatToString(mapFpsCounter.getFps(), 1);
-    auto zoomText = Utils::floatToString(mn.zoom, 1);
-    std::string textInfo = "FPS: " + fps + " Z:" + zoomText +
-            " Lat: " + std::to_string(RAD2DEG(mn.camLatitude)) +
-            " Lon: " + std::to_string(RAD2DEG(mn.camLongitude));
+    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
+    auto zoomText = Utils::floatToWString(mn.zoom, 1);
+    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
+            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
+            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
     mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
 }
 

@@ -35,6 +35,7 @@ public:
             Eigen::Matrix4f pvm,
             float zoom,
             bool isForwardRendering,
+            MapSymbols& mapSymbols,
             unsigned short from = 0,
             unsigned short to = 0
     );

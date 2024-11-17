@@ -16,6 +16,7 @@
 #include "MapSquarePoints.h"
 #include "MapPolygonAggregated.h"
 #include "MarkerMapTitle.h"
+#include "DrawTextAlongPath.h"
 
 class MapTile {
 public:
@@ -63,6 +64,10 @@ public:
     std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
     std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
     std::vector<MarkerMapTitle> resultMarkerTitles;
+    std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
+
+    std::vector<float> lastPointsTest = {};
+    std::vector<float> firstPointsTest = {};
 
     MapStyle style = MapStyle();
 private:

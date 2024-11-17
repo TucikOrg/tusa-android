@@ -41,10 +41,13 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
     std::map<unsigned short, unsigned int> wideLinesPointsCount = {};
     std::map<unsigned short, unsigned int> wideLinesResultIndicesCount = {};
 
+    // Текст вдоль дорог
+    std::vector<DrawTextAlongPath> textAlongPath;
+
     while (auto layer = tile.next_layer()) {
         auto layerName = layer.name().to_string();
 
-        // количестов отдельных объектов геометрии
+        // Количестов отдельных объектов геометрии
         std::size_t feature_count = layer.num_features();
         extent = layer.extent();
         while (auto feature = layer.next_feature()) {
@@ -55,16 +58,23 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                 if (property.key() == "symbolrank") {
                     auto type = property.value().type();
                 }
+
+//                if (property.value().type() == vtzero::property_value_type::string_value) {
+//                    LOGI("key = %s value = %s",
+//                         std::string(property.key()).data(),
+//                         std::string(property.value().string_value()).data()
+//                    );
+//                }
             }
 
             auto geomType = feature.geometry_type();
             auto props = create_properties_map<layer_map_type>(feature);
             auto styleIndex = style.determineStyle(layerName, props, z);
-            if(styleIndex == 0) {
+            if (styleIndex == 0) {
                 continue;
             }
 
-            if(geomType == vtzero::GeomType::LINESTRING) {
+            if (geomType == vtzero::GeomType::LINESTRING) {
                 auto lineHandler = LineStringHandler();
                 vtzero::decode_linestring_geometry(feature.geometry(), lineHandler);
                 size_t geomSize = lineHandler.lines.size();
@@ -72,41 +82,80 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                 if (isWideLine) {
                     // широкая линия
                     std::vector<MapWideLine> wideLines(geomSize);
+                    auto name = boost::get<std::string>(props["name"]);
+                    auto wName = Utils::stringToWstring(name);
+                    LOGI("Name = %s", name.data());
 
-                    float nx = 0;
-                    float ny = 0;
-                    std::vector<float> verticesSquarePoints(geomSize * 2 * 4 * 2);
-                    squarePointsCount[styleIndex] += geomSize * 2;
                     for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
                         const auto& point_array = lineHandler.lines[geomIndex];
+                        textAlongPath.push_back(DrawTextAlongPath(wName, point_array));
+
                         const size_t pointsSize = point_array.size();
-                        const size_t wideLinePointsSize = pointsSize * 2;
+                        std::vector<float> verticesSquarePoints(pointsSize * 4 * 2);
+
+                        // потому что нужна дополнительная точка на каждую центральную точку на дороге
+                        size_t pointSizeMidInsert = pointsSize;
+                        if (pointsSize > 2) {
+                            pointSizeMidInsert += (pointsSize - 2);
+                        }
+
+                        size_t wideLinePointsSize = pointSizeMidInsert * 2;
                         wideLinesPointsCount[styleIndex] += wideLinePointsSize;
                         std::vector<float> vertices(wideLinePointsSize * 2);
                         std::vector<float> uv(wideLinePointsSize * 2);
                         std::vector<float> perpendiculars(wideLinePointsSize * 2);
                         std::vector<float> pointsVertices(wideLinePointsSize);
-                        std::vector<float> shiftVector(wideLinePointsSize);
                         std::vector<float> color = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
+
+                        uint verticesIndex = 0;
+                        uint uvIndex = 0;
+                        uint perpendicularsIndex = 0;
+                        uint pointsVerticesIndex = 0;
+
+                        float nx = 0;
+                        float ny = 0;
                         for(int pointIndex = 0; pointIndex < pointsSize; ++pointIndex) {
                             auto point = point_array[pointIndex];
                             auto isLastPoint = pointIndex == pointsSize - 1;
+                            auto isFirstPoint = pointIndex == 0;
 
-                            // Нарисует кружочки в начале и в конце дороги
-                            if (pointIndex == 0 || isLastPoint) {
-                                unsigned int add = isLastPoint * 8;
-                                unsigned int startFrom = geomIndex * 2 * 4 * 2;
-                                // square point to draw line endings
-                                verticesSquarePoints[startFrom + 0 + add] = point.x;
-                                verticesSquarePoints[startFrom+ 1 + add] = -point.y;
-                                verticesSquarePoints[startFrom + 2 + add] = point.x;
-                                verticesSquarePoints[startFrom + 3 + add] = -point.y;
-                                verticesSquarePoints[startFrom + 4 + add] = point.x;
-                                verticesSquarePoints[startFrom + 5 + add] = -point.y;
-                                verticesSquarePoints[startFrom + 6 + add] = point.x;
-                                verticesSquarePoints[startFrom + 7 + add] = -point.y;
+                            // на конечном отрезке мы дублируем точку еще раз с теми же нормалями
+                            // то есть вот мы начали вести дорогу, сохраняли нормали один раз,
+                            // пришли в следующую точку дороги и опять использовали предыдущие нормали
+                            // то есть дорога рисуется прямоугольниками
+                            if (isFirstPoint == false && isLastPoint == false) {
+                                pointsVertices[pointsVerticesIndex++] = point.x;
+                                pointsVertices[pointsVerticesIndex++] = -point.y;
+
+                                vertices[verticesIndex++] = point.x;
+                                vertices[verticesIndex++] = -point.y;
+                                vertices[verticesIndex++] = point.x;
+                                vertices[verticesIndex++] = -point.y;
+
+                                uv[uvIndex++] = 0;
+                                uv[uvIndex++] = 0;
+                                uv[uvIndex++] = 1;
+                                uv[uvIndex++] = 0;
+
+                                perpendiculars[perpendicularsIndex++] = nx;
+                                perpendiculars[perpendicularsIndex++] = ny;
+                                perpendiculars[perpendicularsIndex++] = -nx;
+                                perpendiculars[perpendicularsIndex++] = -ny;
                             }
 
+                            // На каждом стыке дороги рисовать кружочки
+                            squarePointsCount[styleIndex] += 1;
+                            unsigned int startFrom = pointIndex * 8;
+                            verticesSquarePoints[startFrom + 0] = point.x;
+                            verticesSquarePoints[startFrom + 1] = -point.y;
+                            verticesSquarePoints[startFrom + 2] = point.x;
+                            verticesSquarePoints[startFrom + 3] = -point.y;
+                            verticesSquarePoints[startFrom + 4] = point.x;
+                            verticesSquarePoints[startFrom + 5] = -point.y;
+                            verticesSquarePoints[startFrom + 6] = point.x;
+                            verticesSquarePoints[startFrom + 7] = -point.y;
+
+                            // рассчитать перпендикуляры относительно следующей точки дороги
                             if (pointIndex + 1 < pointsSize) {
                                 vtzero::point nextPoint = point_array[pointIndex + 1];
                                 float dx = nextPoint.x - point.x;
@@ -118,28 +167,38 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                                 ny = ny / len;
                             }
 
-                            pointsVertices[pointIndex * 2 + 0] = point.x;
-                            pointsVertices[pointIndex * 2 + 1] = -point.y;
+//                            if (isLastPoint) {
+//                                lastPointsTest.push_back(point.x);
+//                                lastPointsTest.push_back(-point.y);
+//                            }
+//
+//                            if (isFirstPoint) {
+//                                firstPointsTest.push_back(point.x);
+//                                firstPointsTest.push_back(-point.y);
+//                            }
 
-                            vertices[pointIndex * 4 + 0] = point.x;
-                            vertices[pointIndex * 4 + 1] = -point.y;
-                            vertices[pointIndex * 4 + 2] = point.x;
-                            vertices[pointIndex * 4 + 3] = -point.y;
+                            pointsVertices[pointsVerticesIndex++] = point.x;
+                            pointsVertices[pointsVerticesIndex++] = -point.y;
 
-                            uv[pointIndex * 4 + 0] = 0;
-                            uv[pointIndex * 4 + 1] = 0;
-                            uv[pointIndex * 4 + 2] = 1;
-                            uv[pointIndex * 4 + 3] = 0;
+                            vertices[verticesIndex++] = point.x;
+                            vertices[verticesIndex++] = -point.y;
+                            vertices[verticesIndex++] = point.x;
+                            vertices[verticesIndex++] = -point.y;
 
-                            perpendiculars[pointIndex * 4 + 0] = nx;
-                            perpendiculars[pointIndex * 4 + 1] = ny;
-                            perpendiculars[pointIndex * 4 + 2] = -nx;
-                            perpendiculars[pointIndex * 4 + 3] = -ny;
+                            uv[uvIndex++] = 0;
+                            uv[uvIndex++] = 0;
+                            uv[uvIndex++] = 1;
+                            uv[uvIndex++] = 0;
+
+                            perpendiculars[perpendicularsIndex++] = nx;
+                            perpendiculars[perpendicularsIndex++] = ny;
+                            perpendiculars[perpendicularsIndex++] = -nx;
+                            perpendiculars[perpendicularsIndex++] = -ny;
                         }
 
-                        size_t indicesAmount = (pointsSize - 1) * 6;
+                        size_t indicesAmount = (pointSizeMidInsert - 1) * 6;
                         std::vector<unsigned int> indices(indicesAmount);
-                        for(int i = 0; i < pointsSize - 1; i++) {
+                        for(int i = 0; i < pointSizeMidInsert - 1; i++) {
                             unsigned int pointNum = i * 2;
                             unsigned int startI = i * 6;
                             indices[startI + 0] = 0 + pointNum;
@@ -158,9 +217,9 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                              std::move(perpendiculars),
                              std::move(uv)
                         };
-                    }
 
-                    squarePoints[styleIndex].push_front(std::move(verticesSquarePoints));
+                        squarePoints[styleIndex].push_front(std::move(verticesSquarePoints));
+                    }
                     featuresWideLinesResult[styleIndex].push_front(std::move(wideLines));
                 }
 
@@ -207,6 +266,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                 auto pointHandler = PointHandler();
                 vtzero::decode_point_geometry(feature.geometry(), pointHandler);
                 auto name = style.getName(styleIndex);
+                auto wName = Utils::stringToWstring(name);
                 auto fontSize = style.getFontSize(styleIndex);
                 auto visibleZoom = style.getVisibleZoom(styleIndex);
                 if (pointHandler.points.size() == 1 && !name.empty()) {
@@ -222,7 +282,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                     double mapYTilePortion = 1.0 - static_cast<double>(mapYTilePosition) / n;
                     float latitude = Utils::EPSG3857_to_EPSG4326_latitude(mapYTilePortion * (2 * M_PI) - M_PI);
                     resultMarkerTitles.push_back(MarkerMapTitle(
-                            name,
+                            wName,
                             latitude,
                             longitude,
                             fontSize,
@@ -380,6 +440,8 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
     }
 
     style.createStylesVec();
+
+    resultDrawTextAlongPath = textAlongPath;
 }
 
 bool MapTile::cover(std::array<int, 3> otherTile) {

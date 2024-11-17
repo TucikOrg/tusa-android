@@ -56,6 +56,7 @@ public:
     float& shiftUTex;
     float& scaleUTex;
     MapEnvironment& mapEnvironment;
+    MapSymbols& mapSymbols;
 };
 
 

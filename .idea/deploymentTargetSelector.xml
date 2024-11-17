@@ -27,7 +27,7 @@
       </SelectionState>
       <SelectionState runConfigName="PreviewTucikMap">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2024-11-15T08:13:32.740101Z">
+        <DropdownSelection timestamp="2024-11-16T13:40:07.159815Z">
           <Target type="DEFAULT_BOOT">
             <handle>
               <DeviceId pluginId="PhysicalDevice" identifier="serial=RF8X704YKYJ" />

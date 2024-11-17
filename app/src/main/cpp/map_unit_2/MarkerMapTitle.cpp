@@ -28,9 +28,9 @@ void MarkerMapTitle::draw(ShadersBucket &shadersBucket,
     float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
 
     CSSColorParser::Color color = CSSColorParser::parse("rgb(0, 0, 0)");
-    auto textTexture = mapSymbols.getTextTexture(name);
+    auto textTexture = mapSymbols.getTextTexture(wname);
     if (textTexture.isEmpty()) {
-        textTexture = mapSymbols.renderTextTexture(name, color, shadersBucket, mapCamera, 2.0f);
+        textTexture = mapSymbols.renderTextTexture(wname, color, shadersBucket, mapCamera, 2.0f);
     }
 
     float scaleSizeOfTexture = 0.005 * scale;

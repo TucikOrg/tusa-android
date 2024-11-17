@@ -27,23 +27,24 @@ void MapTileRender::initTilesTexture() {
 }
 
 void MapTileRender::renderTexture(RenderTextureData &data) {
-    auto textureTileSize = data.textureTileSize;
-    auto xTilesAmount = data.xTilesAmount;
-    auto yTilesAmount = data.yTilesAmount;
-    auto mapCamera = data.mapCamera;
-    auto backgroundTiles = data.backgroundTiles;
-    auto tiles = data.tiles;
-    auto forwardRenderingToWorld = data.forwardRenderingToWorld;
-    auto tileZ = data.tileZ;
-    auto zoom = data.zoom;
-    auto shadersBucket = data.shadersBucket;
-    auto n = data.n;
-    auto leftX = data.leftX;
-    auto topY = data.topY;
-    auto visTileYStart = data.visTileYStart;
-    auto visTileYEnd = data.visTileYEnd;
-    auto visTileXStartInf = data.visTileXStartInf;
-    auto visTileXEndInf = data.visTileXEndInf;
+    auto& textureTileSize = data.textureTileSize;
+    auto&  xTilesAmount = data.xTilesAmount;
+    auto&  yTilesAmount = data.yTilesAmount;
+    auto& mapCamera = data.mapCamera;
+    auto&  backgroundTiles = data.backgroundTiles;
+    auto& tiles = data.tiles;
+    auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
+    auto& tileZ = data.tileZ;
+    auto& zoom = data.zoom;
+    auto& shadersBucket = data.shadersBucket;
+    auto& n = data.n;
+    auto& leftX = data.leftX;
+    auto& topY = data.topY;
+    auto& visTileYStart = data.visTileYStart;
+    auto& visTileYEnd = data.visTileYEnd;
+    auto& visTileXStartInf = data.visTileXStartInf;
+    auto& visTileXEndInf = data.visTileXEndInf;
+    auto& mapSymbols = data.mapSymbols;
 
     float textureWidth = textureTileSize * xTilesAmount;
     float textureHeight = textureTileSize * yTilesAmount;
@@ -93,7 +94,8 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
                     vTileMatrix,
                     pvTileMatrix,
                     zoom,
-                    forwardRenderingToWorld
+                    forwardRenderingToWorld,
+                    mapSymbols
             );
         }
     }
@@ -124,11 +126,11 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
                     vTileMatrix,
                     pvTileMatrix,
                     zoom,
-                    forwardRenderingToWorld
+                    forwardRenderingToWorld,
+                    mapSymbols
             );
         }
     }
-
 
     glDisable(GL_SCISSOR_TEST);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -144,6 +146,7 @@ void MapTileRender::renderTile(
         Eigen::Matrix4f pvm,
         float zoom,
         bool isForwardRendering,
+        MapSymbols& mapSymbols,
         unsigned short from,
         unsigned short to
 ) {
@@ -159,17 +162,23 @@ void MapTileRender::renderTile(
 
     for (unsigned short styleIndex = from; styleIndex < to; styleIndex++) {
         auto style = styles[styleIndex];
-        drawLayer(shadersBucket, tile, p, vm, pvm, style, zoom, isForwardRendering);
+        drawLayer(
+            shadersBucket,
+            tile, p, vm, pvm,
+            style, zoom,
+            isForwardRendering
+        );
     }
 
-//    auto plainShader = shadersBucket.plainShader;
-//    glUseProgram(plainShader->program);
-//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
-//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, tile->poi.data());
-//    glEnableVertexAttribArray(plainShader->getPosLocation());
-//    glUniform1f(plainShader->getPointSizeLocation(), 10.0f);
-//    glUniform4f(plainShader->getColorLocation(), 1.0f, 0.0f, 0.0f, 1.0f);
-//    glDrawArrays(GL_POINTS, 0, tile->testPoints.size() / 2);
+    // Рисуем текст вдоль дорог
+//    if (zoom > 15) {
+//        std::vector<DrawTextAlongPath> drawTextAlongPath = tile->resultDrawTextAlongPath;
+//        for (auto& text: drawTextAlongPath) {
+//            auto point = text.points[0];
+//            auto color = CSSColorParser::parse("rgb(255, 0, 0)");
+//            mapSymbols.renderText2D(text.wname, point.x, -point.y, 1.0f, color, pvm, shadersBucket);
+//        }
+//    }
 }
 
 GLuint MapTileRender::getTilesTexture() {
@@ -293,27 +302,53 @@ void MapTileRender::drawLayer(
     }
 
 
+
     // тестирование
-    if (!tile->resultWideLineAggregatedByStyles[styleIndex].vertices.empty() && drawWideLines) {
-        // рисуем точки границы дороги
-        auto& wideLines = tile->resultWideLineAggregatedByStyles[styleIndex];
-        glUseProgram(roadShader->program);
-        glUniform1f(roadShader->getWidthLocation(), wideLineWidth);
-        glUniform1f(roadShader->getBorderFactorLocation(), borderFactor);
-        glUniformMatrix4fv(roadShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
-        glUniformMatrix4fv(roadShader->getProjectionLocation(), 1, GL_FALSE, p.data());
-        glUniform4fv(roadShader->getColorLocation(), 1, colorData);
-        glUniform4fv(roadShader->getBorderColorLocation(), 1, borderColor.data());
-        glVertexAttribPointer(roadShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.vertices.data());
-        glEnableVertexAttribArray(roadShader->getPosLocation());
-        glVertexAttribPointer(roadShader->getPerpendicularsLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.perpendiculars.data());
-        glEnableVertexAttribArray(roadShader->getPerpendicularsLocation());
-        glVertexAttribPointer(roadShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.uv.data());
-        glEnableVertexAttribArray(roadShader->getUVLocation());
-        glUniform1f(roadShader->getPointSizeLocation(), 20.0f);
-        glUniform4f(roadShader->getColorLocation(), 1.0f, 0.0f, 0.0f, 1.0f);
-        glDrawArrays(GL_POINTS, 0, wideLines.vertices.size() / 2.0);
-    }
+//    if (!tile->resultWideLineAggregatedByStyles[styleIndex].vertices.empty() && drawWideLines) {
+//        // рисуем точки границы дороги
+//        auto& wideLines = tile->resultWideLineAggregatedByStyles[styleIndex];
+//        glUseProgram(roadShader->program);
+//        glUniform1f(roadShader->getWidthLocation(), wideLineWidth);
+//        glUniform1f(roadShader->getBorderFactorLocation(), borderFactor);
+//        glUniformMatrix4fv(roadShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
+//        glUniformMatrix4fv(roadShader->getProjectionLocation(), 1, GL_FALSE, p.data());
+//        glUniform4fv(roadShader->getColorLocation(), 1, colorData);
+//        glUniform4fv(roadShader->getBorderColorLocation(), 1, borderColor.data());
+//        glVertexAttribPointer(roadShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.vertices.data());
+//        glEnableVertexAttribArray(roadShader->getPosLocation());
+//        glVertexAttribPointer(roadShader->getPerpendicularsLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.perpendiculars.data());
+//        glEnableVertexAttribArray(roadShader->getPerpendicularsLocation());
+//        glVertexAttribPointer(roadShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.uv.data());
+//        glEnableVertexAttribArray(roadShader->getUVLocation());
+//        glUniform1f(roadShader->getPointSizeLocation(), 20.0f);
+//        glUniform4f(roadShader->getColorLocation(), 1.0f, 0.0f, 0.0f, 1.0f);
+//        glDrawArrays(GL_POINTS, 0, wideLines.vertices.size() / 2.0);
+//
+//        glUseProgram(plainShader->program);
+//        glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+//        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+//        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, wideLines.vertices.data());
+//        glEnableVertexAttribArray(plainShader->getPosLocation());
+//        glUniform4f(plainShader->getColorLocation(), 1.0f, 0.0f, 0.0f, 1.0f);
+//        glDrawArrays(GL_POINTS, 0, wideLines.vertices.size() / 2.0);
+//    }
+
+    // тестовые точки
+//    glUseProgram(plainShader->program);
+//    glUniform1f(plainShader->getPointSizeLocation(), 40.0f);
+//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, tile->lastPointsTest.data());
+//    glEnableVertexAttribArray(plainShader->getPosLocation());
+//    glUniform4f(plainShader->getColorLocation(), 0.0f, 1.0f, 0.0f, 1.0f);
+//    glDrawArrays(GL_POINTS, 0, tile->lastPointsTest.size() / 2.0);
+//
+//    glUseProgram(plainShader->program);
+//    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, tile->firstPointsTest.data());
+//    glEnableVertexAttribArray(plainShader->getPosLocation());
+//    glUniform4f(plainShader->getColorLocation(), 0.0f, 0.0f, 1.0f, 1.0f);
+//    glDrawArrays(GL_POINTS, 0, tile->firstPointsTest.size() / 2.0);
 }
 
 void MapTileRender::drawBackground(

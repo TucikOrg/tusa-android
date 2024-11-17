@@ -324,17 +324,26 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
 bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, int& currentIndex) {
     uint64_t symbolRank = 0;
     std::string type = "";
+    std::string name = "";
     if (layerName == "place_label") {
         symbolRank = boost::get<uint64_t>(props["symbolrank"]);
         if (symbolRank == 6) {
             int i = 1;
         }
         type = boost::get<std::string>(props["type"]);
+
+        if (props.find("name_ru") != props.end()) {
+            auto nameProperty = props["name_ru"];
+            name = boost::get<std::string>(nameProperty);
+        }
+
+        if (name == "") {
+            auto nameProperty = props["name"];
+            name = boost::get<std::string>(nameProperty);
+        }
     }
 
     if (layerName == "place_label" && symbolRank == 2) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(0, 3);
@@ -343,8 +352,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && symbolRank == 3) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(2, 9);
@@ -353,8 +360,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && symbolRank == 4) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
@@ -363,8 +368,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && symbolRank == 5) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(4, 9);
@@ -373,8 +376,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && symbolRank == 6) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
@@ -383,8 +384,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "state") {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(5, 9);
@@ -393,8 +392,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "village") {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
@@ -403,8 +400,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "hamlet") {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(13, 15);
@@ -413,8 +408,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city")) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(6, 15);
@@ -423,8 +416,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "town")) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(9, 15);
@@ -433,8 +424,6 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "quarter" || type == "neighbourhood")) {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
@@ -443,14 +432,16 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "suburb") {
-        auto nameProperty = props["name_en"];
-        std::string name = boost::get<std::string>(nameProperty);
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(10, 15);
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
+
+    if (layerName == "place_label") {
+        LOGI("type = %s", type.c_str());
+    }
 
     return false;
 }
@@ -477,6 +468,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
     int currentIndex = 1;
     std::string className;
     std::string type;
+    std::string name;
     uint64_t filterRank;
     uint64_t symbolRank;
     for (auto prop : props) {
@@ -491,6 +483,13 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         }
         if (prop.first == "filterRank") {
             filterRank = boost::get<uint64_t>(prop.second);
+        }
+        if (prop.first == "name") {
+            name = boost::get<std::string>(prop.second);
+
+            if (name == "улица Октября") {
+                int i = 1;
+            }
         }
     }
 

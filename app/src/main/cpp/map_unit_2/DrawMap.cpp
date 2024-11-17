@@ -6,48 +6,49 @@
 
 
 void DrawMap::drawMap(DrawMapData& data) {
-    auto forwardRenderingToWorld = data.forwardRenderingToWorld;
-    auto tilesSwiped = data.tilesSwiped;
-    auto EPSGLonNormInfNegative = data.EPSGLonNormInfNegative;
-    auto planeModelMatrix = data.planeModelMatrix;
-    auto leftXVertex = data.leftXVertex;
-    auto topYVertex = data.topYVertex;
-    auto rightXVertex = data.rightXVertex;
-    auto bottomYVertex = data.bottomYVertex;
-    auto yTilesAmount = data.yTilesAmount;
-    auto pv = data.pv;
-    auto mapCamera = data.mapCamera;
-    auto visXTilesDelta = data.visXTilesDelta;
-    auto backgroundTiles = data.backgroundTiles;
-    auto tiles = data.tiles;
-    auto tileZ = data.tileZ;
-    auto n = data.n;
-    auto leftX = data.leftX;
-    auto topY = data.topY;
-    auto mapTileRender = data.mapTileRender;
-    auto view = data.view;
-    auto projection = data.projection;
-    auto shadersBucket = data.shadersBucket;
-    auto zoom = data.zoom;
-    auto visTileYStart = data.visTileYStart;
-    auto visTileYEnd = data.visTileYEnd;
-    auto visTileXStartInf = data.visTileXStartInf;
-    auto visTileXEndInf = data.visTileXEndInf;
-    auto segments = data.segments;
-    auto planetVStart = data.planetVStart;
-    auto planetVEnd = data.planetVEnd;
-    auto planetUStart = data.planetUStart;
-    auto planetUEnd = data.planetUEnd;
-    auto planetVDelta = data.planetVDelta;
-    auto planetUDelta = data.planetUDelta;
-    auto planeSize = data.planeSize;
-    auto verticesShift = data.verticesShift;
-    auto sphereModelMatrixFloat = data.sphereModelMatrixFloat;
-    auto transition = data.transition;
-    auto EPSG3857CamLat = data.EPSG3857CamLat;
-    auto shiftUTex = data.shiftUTex;
-    auto scaleUTex = data.scaleUTex;
-    auto mapEnvironment = data.mapEnvironment;
+    auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
+    auto& tilesSwiped = data.tilesSwiped;
+    auto& EPSGLonNormInfNegative = data.EPSGLonNormInfNegative;
+    auto& planeModelMatrix = data.planeModelMatrix;
+    auto& leftXVertex = data.leftXVertex;
+    auto& topYVertex = data.topYVertex;
+    auto& rightXVertex = data.rightXVertex;
+    auto& bottomYVertex = data.bottomYVertex;
+    auto& yTilesAmount = data.yTilesAmount;
+    auto& pv = data.pv;
+    auto& mapCamera = data.mapCamera;
+    auto& visXTilesDelta = data.visXTilesDelta;
+    auto& backgroundTiles = data.backgroundTiles;
+    auto& tiles = data.tiles;
+    auto& tileZ = data.tileZ;
+    auto& n = data.n;
+    auto& leftX = data.leftX;
+    auto& topY = data.topY;
+    auto& mapTileRender = data.mapTileRender;
+    auto& view = data.view;
+    auto& projection = data.projection;
+    auto& shadersBucket = data.shadersBucket;
+    auto& zoom = data.zoom;
+    auto& visTileYStart = data.visTileYStart;
+    auto& visTileYEnd = data.visTileYEnd;
+    auto& visTileXStartInf = data.visTileXStartInf;
+    auto& visTileXEndInf = data.visTileXEndInf;
+    auto& segments = data.segments;
+    auto& planetVStart = data.planetVStart;
+    auto& planetVEnd = data.planetVEnd;
+    auto& planetUStart = data.planetUStart;
+    auto& planetUEnd = data.planetUEnd;
+    auto& planetVDelta = data.planetVDelta;
+    auto& planetUDelta = data.planetUDelta;
+    auto& planeSize = data.planeSize;
+    auto& verticesShift = data.verticesShift;
+    auto& sphereModelMatrixFloat = data.sphereModelMatrixFloat;
+    auto& transition = data.transition;
+    auto& EPSG3857CamLat = data.EPSG3857CamLat;
+    auto& shiftUTex = data.shiftUTex;
+    auto& scaleUTex = data.scaleUTex;
+    auto& mapEnvironment = data.mapEnvironment;
+    auto& mapSymbols = data.mapSymbols;
 
     if (forwardRenderingToWorld) {
         double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
@@ -114,7 +115,8 @@ void DrawMap::drawMap(DrawMapData& data) {
                         vTileMatrix.cast<float>(),
                         pvTileMatrix.cast<float>(),
                         zoom,
-                        forwardRenderingToWorld
+                        forwardRenderingToWorld,
+                        mapSymbols
                 );
             }
         }
@@ -146,7 +148,8 @@ void DrawMap::drawMap(DrawMapData& data) {
                         vTileMatrix.cast<float>(),
                         pvTileMatrix.cast<float>(),
                         zoom,
-                        forwardRenderingToWorld
+                        forwardRenderingToWorld,
+                        mapSymbols
                 );
             }
         }

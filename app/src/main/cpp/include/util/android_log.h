@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <locale>
 #include "csscolorparser/csscolorparser.h"
 #define LOG_TAG "GL_ARTEM"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -24,7 +25,23 @@
 
 class Utils {
 public:
+    static std::wstring stringToWstring(const std::string& str) {
+        std::setlocale(LC_ALL, "en_US.UTF-8"); // Set locale for UTF-8
+        size_t size = mbstowcs(nullptr, str.c_str(), 0) + 1;
+        std::wstring wstr(size, L'\0');
+        mbstowcs(&wstr[0], str.c_str(), size);
+        wstr.pop_back(); // Remove null terminator
+        return wstr;
+    }
 
+    std::string wstringToString(const std::wstring& wstr) {
+        std::setlocale(LC_ALL, "en_US.UTF-8"); // Set locale for UTF-8
+        size_t size = wcstombs(nullptr, wstr.c_str(), 0) + 1;
+        std::string str(size, '\0');
+        wcstombs(&str[0], wstr.c_str(), size);
+        str.pop_back(); // Remove null terminator
+        return str;
+    }
 
     static float normalizeXTile(float infTile, int n) {
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
@@ -32,6 +49,12 @@ public:
 
     static std::string floatToString(float value, int precision) {
         std::ostringstream out;
+        out << std::fixed << std::setprecision(precision) << value;
+        return out.str();
+    }
+
+    static std::wstring floatToWString(float value, int precision) {
+        std::wostringstream out;
         out << std::fixed << std::setprecision(precision) << value;
         return out.str();
     }

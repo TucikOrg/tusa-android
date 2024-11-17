@@ -27,20 +27,19 @@ void MapSymbols::loadFont(AAssetManager *assetManager) {
 void MapSymbols::createFontTextures() {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-    if(loadOnlySelectedCharCodes) {
-        for(auto& selectedChar : selectedCharCodesForLoading) {
-            prepareCharForRendering(selectedChar);
-        }
-        return;
+    // Load English characters (ASCII)
+    for(unsigned long charcode = 0; charcode <= 255; charcode++) {
+        prepareWCharForRendering(charcode);
     }
 
-    for(unsigned short charcode = 0; charcode <= 255; charcode++) {
-        prepareCharForRendering(charcode);
+    // Load Russian characters (basic range)
+    for (unsigned long charcode = 0x0410; charcode <= 0x044F; charcode++) {
+        prepareWCharForRendering(charcode);
     }
 }
 
-void MapSymbols::prepareCharForRendering(unsigned short charcode) {
-    if(FT_Load_Char(face, charcode, FT_LOAD_RENDER)) {
+void MapSymbols::prepareWCharForRendering(wchar_t wchar) {
+    if(FT_Load_Char(face, wchar, FT_LOAD_RENDER)) {
         return;
     }
 
@@ -74,11 +73,11 @@ void MapSymbols::prepareCharForRendering(unsigned short charcode) {
             face->glyph->advance.x
     );
 
-    symbols.insert(std::pair<char, Symbol>(charcode, symbol));
+    symbols.insert(std::pair<wchar_t, Symbol>(wchar, symbol));
 }
 
 void MapSymbols::renderText2D(
-    std::string text,
+    std::wstring text,
     float x,
     float y,
     float symbolScale,
@@ -90,9 +89,8 @@ void MapSymbols::renderText2D(
 
     float textWidth = 0;
     float sumHeight = 0;
-    std::string::const_iterator iterator;
-    for(iterator = text.begin(); iterator != text.end(); iterator++) {
-        auto symbol = getSymbol(*iterator);
+    for (auto textChar : text) {
+        auto symbol = getSymbol(textChar);
 
         float w = symbol.width * symbolScale;
         float h = symbol.rows * symbolScale;
@@ -154,20 +152,21 @@ void MapSymbols::renderText2D(
     }
 }
 
-Symbol MapSymbols::getSymbol(char c) {
+Symbol MapSymbols::getSymbol(wchar_t c) {
+    auto test = symbols[c];
+    auto pp = symbols;
     return symbols[c];
 }
 
-void MapSymbols::renderText3D(std::string text, float x, float y, float z, float symbolScale,
+void MapSymbols::renderText3D(std::wstring text, float x, float y, float z, float symbolScale,
                               CSSColorParser::Color color, Eigen::Matrix4f matrix,
                               ShadersBucket &shadersBucket) {
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
 
     float textWidth = 0;
     float sumHeight = 0;
-    std::string::const_iterator iterator;
-    for(iterator = text.begin(); iterator != text.end(); iterator++) {
-        auto symbol = getSymbol(*iterator);
+    for(auto& symbolChar : text) {
+        auto symbol = getSymbol(symbolChar);
 
         float w = symbol.width * symbolScale;
         float h = symbol.rows * symbolScale;
@@ -230,7 +229,7 @@ void MapSymbols::renderText3D(std::string text, float x, float y, float z, float
 }
 
 TextTexture MapSymbols::renderTextTexture(
-        std::string text,
+        std::wstring text,
         CSSColorParser::Color color,
         ShadersBucket &shadersBucket,
         MapCamera& mapCamera,
@@ -242,8 +241,8 @@ TextTexture MapSymbols::renderTextTexture(
     float textureHeight = 0;
     float maxTop = 0;
     std::string::const_iterator iterator;
-    for (iterator = text.begin(); iterator != text.end(); iterator++) {
-        auto symbol = getSymbol(*iterator);
+    for (auto charSymbol : text) {
+        Symbol symbol = getSymbol(charSymbol);
         float w = symbol.width * symbolScale;
         float h = symbol.rows * symbolScale;
         float top = h - symbol.bitmapTop * symbolScale;
@@ -332,7 +331,7 @@ TextTexture MapSymbols::renderTextTexture(
     return textTextures[text];
 }
 
-TextTexture MapSymbols::getTextTexture(std::string text) {
+TextTexture MapSymbols::getTextTexture(std::wstring text) {
     auto cachedTextureIterator = textTextures.find(text);
     if (cachedTextureIterator != textTextures.end()) {
         return cachedTextureIterator->second;

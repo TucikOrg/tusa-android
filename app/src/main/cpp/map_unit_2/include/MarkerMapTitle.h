@@ -15,13 +15,13 @@
 class MarkerMapTitle {
 public:
     MarkerMapTitle(
-        std::string name,
+        std::wstring wname,
         float latitude,
         float longitude,
         float fontSize,
         std::unordered_map<short, void*> visibleZoom
     ):
-        name(name),
+        wname(wname),
         latitude(latitude),
         longitude(longitude),
         fontSize(fontSize),
@@ -39,7 +39,7 @@ public:
     );
 
 private:
-    std::string name;
+    std::wstring wname;
     float latitude;
     float longitude;
     float fontSize;
