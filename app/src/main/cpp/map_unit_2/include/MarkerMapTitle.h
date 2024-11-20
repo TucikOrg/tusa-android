@@ -38,8 +38,8 @@ public:
             MapCamera& mapCamera
     );
 
-private:
     std::wstring wname;
+private:
     float latitude;
     float longitude;
     float fontSize;

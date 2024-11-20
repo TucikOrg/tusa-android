@@ -10,6 +10,7 @@
 #include <string>
 #include <Eigen/Core>
 #include <map>
+#include <vector>
 #include "TextTexture.h"
 #include "csscolorparser/csscolorparser.h"
 #include "ft2build.h"
@@ -17,6 +18,7 @@
 #include "Symbol.h"
 #include "shader/shaders_bucket.h"
 #include "MapCamera.h"
+#include "PrepareCharAtlas.h"
 
 class MapSymbols {
 public:
@@ -25,16 +27,9 @@ public:
         FT_Done_FreeType(ft);
     }
 
-    void initGl(AAssetManager *assetManager);
+    void initGl(AAssetManager *assetManager, MapCamera& mapCamera, ShadersBucket& shadersBucket);
     void loadFont(AAssetManager *assetManager);
-
-    TextTexture renderTextTexture(
-            std::wstring text,
-            CSSColorParser::Color color,
-            ShadersBucket &shadersBucket,
-            MapCamera& mapCamera,
-            float symbolScale
-    );
+    GLuint getAtlasTexture() { return charsAtlas; }
 
     void renderText2D(
             std::wstring text,
@@ -45,7 +40,8 @@ public:
             Eigen::Matrix4f matrix,
             ShadersBucket &shadersBucket
     );
-    void renderText3D(
+
+    void renderText3DByAtlas(
             std::wstring text,
             float x,
             float y,
@@ -55,19 +51,22 @@ public:
             Eigen::Matrix4f matrix,
             ShadersBucket &shadersBucket
     );
-    TextTexture getTextTexture(std::wstring text);
 
     Symbol getSymbol(wchar_t c);
+
+    float atlasWidth;
+    float atlasHeight;
+
 private:
-    void createFontTextures();
-    void prepareWCharForRendering(wchar_t wchar);
+    void createFontTextures(MapCamera& mapCamera, ShadersBucket& shadersBucket);
+    void prepareWCharForRendering(wchar_t wchar, PrepareCharAtlas& prepareCharAtlas);
 
     FT_Face face;
     FT_Library ft;
     std::unordered_map<wchar_t, Symbol> symbols = {};
-    std::unordered_map<std::wstring, TextTexture> textTextures;
 
     GLuint framebuffer;
+    GLuint charsAtlas;
 };
 
 

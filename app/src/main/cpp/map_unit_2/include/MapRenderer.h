@@ -5,7 +5,8 @@
 #ifndef TUSA_ANDROID_MAPRENDERER_H
 #define TUSA_ANDROID_MAPRENDERER_H
 
-
+#include <string>
+#include <vector>
 #include "MapSymbols.h"
 #include "MapTileGetter.h"
 #include "MapFpsCounter.h"
@@ -51,8 +52,9 @@ private:
     float planeSize = 10000000;
     int textureTileSizeUnit = 2048;
     std::string textureKey;
+    bool renderTestTextsAtlas = true;
 
-    GLuint testTextTexture = 0;
+    void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
 };
 
 

@@ -343,101 +343,111 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         }
     }
 
-    if (layerName == "place_label" && symbolRank == 2) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(0, 3);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
+//    if (layerName == "place_label" && symbolRank == 2) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(0, 3);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && symbolRank == 3) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(2, 4);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && symbolRank == 4) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(3, 5);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && symbolRank == 5) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(4, 6);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && symbolRank == 6) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(5, 6);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
 
-    if (layerName == "place_label" && symbolRank == 3) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(2, 9);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && symbolRank == 4) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && symbolRank == 5) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(4, 9);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && symbolRank == 6) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && type == "state") {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(5, 9);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
+//    if (layerName == "place_label" && type == "state") {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(5, 9);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
     if (layerName == "place_label" && type == "village") {
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
+        visibleZoom[currentIndex] = fromToZoomsVisible(11, 15);
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
+//
+//    if (layerName == "place_label" && type == "hamlet") {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(13, 15);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+
+    if (layerName == "place_label" && (type == "country")) {
+        fontSize[currentIndex] = 0.01f;
+        names[currentIndex] = name;
+        visibleZoom[currentIndex] = fromToZoomsVisible(0, 4);
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && type == "hamlet") {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(13, 15);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city")) {
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(6, 15);
+        visibleZoom[currentIndex] = fromToZoomsVisible(6, 11);
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
-
-    if (layerName == "place_label" && (type == "town")) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(9, 15);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && (type == "quarter" || type == "neighbourhood")) {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && type == "suburb") {
-        fontSize[currentIndex] = 0.01f;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(10, 15);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
+//
+//    if (layerName == "place_label" && (type == "town")) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(9, 15);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && (type == "quarter" || type == "neighbourhood")) {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
+//
+//    if (layerName == "place_label" && type == "suburb") {
+//        fontSize[currentIndex] = 0.01f;
+//        names[currentIndex] = name;
+//        visibleZoom[currentIndex] = fromToZoomsVisible(10, 15);
+//        addStyle(currentIndex);
+//        return true;
+//    } else currentIndex++;
 
     if (layerName == "place_label") {
         LOGI("type = %s", type.c_str());

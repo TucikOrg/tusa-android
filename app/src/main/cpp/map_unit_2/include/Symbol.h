@@ -18,7 +18,8 @@ public:
             unsigned int rows,
             FT_Int bitmapLeft,
             FT_Int bitmapTop,
-            FT_Pos advance
+            FT_Pos advance,
+            wchar_t symbol
     );
 
     unsigned int textureId;
@@ -27,6 +28,26 @@ public:
     FT_Int bitmapLeft;
     FT_Int bitmapTop;
     FT_Pos advance;
+
+    float atlasX = 0;
+    float atlasY = 0;
+    wchar_t symbol;
+
+    float startU(float maxW) {
+        return atlasX / maxW;
+    }
+
+    float endU(float maxW) {
+        return (atlasX + width) / maxW;
+    }
+
+    float startV(float maxH) {
+        return atlasY / maxH;
+    }
+
+    float endV(float maxH) {
+        return (atlasY + rows) / maxH;
+    }
 };
 
 
