@@ -50,7 +50,7 @@ private:
 
     float forwardRenderingToWorldZoom = 13.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 2048;
+    int textureTileSizeUnit = 1024;
     std::string textureKey;
     bool renderTestTextsAtlas = true;
 

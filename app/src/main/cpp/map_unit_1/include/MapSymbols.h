@@ -52,6 +52,16 @@ public:
             ShadersBucket &shadersBucket
     );
 
+    void renderText2DByAtlas(
+            std::wstring text,
+            float x,
+            float y,
+            float symbolScale,
+            CSSColorParser::Color color,
+            Eigen::Matrix4f matrix,
+            ShadersBucket &shadersBucket
+    );
+
     Symbol getSymbol(wchar_t c);
 
     float atlasWidth;

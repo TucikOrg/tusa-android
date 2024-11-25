@@ -41,9 +41,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
     std::map<unsigned short, unsigned int> wideLinesPointsCount = {};
     std::map<unsigned short, unsigned int> wideLinesResultIndicesCount = {};
 
-    // Текст вдоль дорог
-    std::vector<DrawTextAlongPath> textAlongPath;
-
     while (auto layer = tile.next_layer()) {
         auto layerName = layer.name().to_string();
 
@@ -67,6 +64,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
 //                }
             }
 
+            uint64_t featureId = feature.id();
             auto geomType = feature.geometry_type();
             auto props = create_properties_map<layer_map_type>(feature);
             auto styleIndex = style.determineStyle(layerName, props, z);
@@ -84,11 +82,22 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                     std::vector<MapWideLine> wideLines(geomSize);
                     auto name = boost::get<std::string>(props["name"]);
                     auto wName = Utils::stringToWstring(name);
-                    LOGI("Name = %s", name.data());
 
                     for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
-                        const auto& point_array = lineHandler.lines[geomIndex];
-                        textAlongPath.push_back(DrawTextAlongPath(wName, point_array));
+                        auto point_array = lineHandler.lines[geomIndex];
+
+                        // add streets names
+                        if (name != "") {
+                            auto textPtr = resultDrawTextAlongPath.find(featureId);
+                            if (textPtr == resultDrawTextAlongPath.end()) {
+                                resultDrawTextAlongPath[featureId] = DrawTextAlongPath { wName, point_array };
+                            } else {
+                                for (auto point : point_array) {
+                                    textPtr->second.points.push_back(point);
+                                }
+                            }
+                        }
+
 
                         const size_t pointsSize = point_array.size();
                         std::vector<float> verticesSquarePoints(pointsSize * 4 * 2);
@@ -167,15 +176,15 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                                 ny = ny / len;
                             }
 
-//                            if (isLastPoint) {
-//                                lastPointsTest.push_back(point.x);
-//                                lastPointsTest.push_back(-point.y);
-//                            }
-//
-//                            if (isFirstPoint) {
-//                                firstPointsTest.push_back(point.x);
-//                                firstPointsTest.push_back(-point.y);
-//                            }
+                            if (isLastPoint) {
+                                lastPointsTest.push_back(point.x);
+                                lastPointsTest.push_back(-point.y);
+                            }
+
+                            if (isFirstPoint) {
+                                firstPointsTest.push_back(point.x);
+                                firstPointsTest.push_back(-point.y);
+                            }
 
                             pointsVertices[pointsVerticesIndex++] = point.x;
                             pointsVertices[pointsVerticesIndex++] = -point.y;
@@ -440,8 +449,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
     }
 
     style.createStylesVec();
-
-    resultDrawTextAlongPath = textAlongPath;
 }
 
 bool MapTile::cover(std::array<int, 3> otherTile) {

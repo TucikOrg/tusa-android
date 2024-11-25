@@ -15,6 +15,15 @@ void MapRenderer::renderFrame() {
 
     animateCameraTo.animateTick(mapFpsCounter, mapControls);
 
+    if (mn.zoom > 10) {
+        textureTileSizeUnit = 1024;
+    } else if (mn.zoom > 3) {
+        textureTileSizeUnit = 1024;
+    } else {
+        textureTileSizeUnit = 512;
+    }
+
+
     // определяем тайлы и ключ
     bool allTilesReady = true;
     int existTiles = 0;
@@ -62,6 +71,7 @@ void MapRenderer::renderFrame() {
             std::to_string(mn.visTileXEndInf) +
             std::to_string(mn.tileZ) +
             std::to_string(backgroundTiles.size()) +
+            std::to_string(textureTileSizeUnit) +
             std::to_string(existTiles);
 
     glEnable(GL_BLEND);
@@ -127,7 +137,6 @@ void MapRenderer::renderFrame() {
             titles[markerTile.wname] = nullptr;
         }
     }
-    LOGI("titles amount = %i", markerMapTitles.size());
 
     markers.drawMarkers(shadersBucket, mn.pvFloat,
                         mn, markerMapTitles, mapSymbols, mapCamera
@@ -142,70 +151,7 @@ void MapRenderer::renderFrame() {
             L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
     mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
 
-//    if (renderTestTextsAtlas) {
-//        std::vector<std::wstring> wstrings;
-//        wstrings.push_back(L"TEST");
-//        wstrings.push_back(L"Привет");
-//        wstrings.push_back(L"Россия");
-//        wstrings.push_back(L"Артем");
-//        wstrings.push_back(L"Гриша");
-//        wstrings.push_back(L"Вова");
-//        wstrings.push_back(L"Иван");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        wstrings.push_back(L"Южная Африка");
-//        mapSymbols.renderNewTextsAtlas(
-//                wstrings,
-//                mapCamera,
-//                shadersBucket,
-//                CSSColorParser::parse("rgb(0, 0, 0)")
-//        );
-//
-//        renderTestTextsAtlas = false;
-//    }
-
-   // drawTestTexture(mapSymbols.getTextsAtlas(), 0.9, 0.9, 0.05);
-
-//    float width = 0.5f;
-//    float height = 0.3f;
-//    auto textureShader = shadersBucket.textureShader;
-//    float ratio = mapCamera.getRatio();
-//    std::vector<float> testVertices = {
-//            -ratio,         -1.0f,
-//            -ratio + width, -1.0f,
-//            -ratio + width, -1.0f + height,
-//            -ratio,         -1.0f + height
-//    };
-//    auto text = mapSymbols.getTextInAtlas(L"Россия");
-//    float atlasW = mapSymbols.textsAtlasWidth;
-//    float atlasH = mapSymbols.textsAtlasHeight;
-//    auto startU = text->startU(atlasW);
-//    auto endU = text->endU(atlasW);
-//    auto startV = text->startV(atlasH);
-//    auto endV = text->endV(atlasH);
-//    std::vector<float> textureCords = {
-//            startU, startV,
-//            endU, startV,
-//            endU, endV,
-//            startU, endV
-//    };
-//
-//    Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(-ratio, ratio, -1, 1, 0.1, 1);
-//    Eigen::Matrix4f viewTest = mapCamera.createView(0, 0, 1, 0, 0, 0);
-//    Eigen::Matrix4f pvTest = projectionTest * viewTest;
-//    glUseProgram(textureShader->program);
-//    glUniformMatrix4fv(textureShader->getMatrixLocation(), 1, GL_FALSE, pvTest.data());
-//    glVertexAttribPointer(textureShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, testVertices.data());
-//    glEnableVertexAttribArray(textureShader->getPosLocation());
-//    glVertexAttribPointer(textureShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords.data());
-//    glEnableVertexAttribArray(textureShader->getTextureCord());
-//    glBindTexture(GL_TEXTURE_2D, mapSymbols.getTextsAtlas());
-//    glUniform1f(textureShader->getTextureLocation(), 0);
-//    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+    //drawTestTexture(mapSymbols.getAtlasTexture(), 0.9, 0.9, 0.05);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -232,8 +178,8 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    //mapControls.setCamPos(DEG2RAD(55.753601), DEG2RAD(37.872562));
-    //mapControls.setZoom(17.0);
+    mapControls.setCamPos(DEG2RAD(55.753601), DEG2RAD(37.872562));
+    mapControls.setZoom(17.0);
 }
 
 void MapRenderer::drag(float dx, float dy) {

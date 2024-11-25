@@ -11,13 +11,15 @@ void MarkerMapTitle::draw(ShadersBucket &shadersBucket,
                           MapSymbols& mapSymbols,
                           MapCamera& mapCamera
 ) {
+    auto& currentZoom = mapNumbers.zoom;
     glDisable(GL_DEPTH_TEST);
     auto camLatitude = mapNumbers.camLatitude;
     auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
-    double noZTestDelta = M_PI / 2;
+    double tooFarDelta = M_PI / pow(2, currentZoom);
+
     bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
-    bool enableDepthTest = abs(camLatitude - latitude) > noZTestDelta || abs(camLongitudeNormalized - longitude) > noZTestDelta;
-    if (enableDepthTest || visibleZoomSkip) {
+    bool tooFarSkip = abs(camLatitude - latitude) > tooFarDelta || abs(camLongitudeNormalized - longitude) > tooFarDelta;
+    if (tooFarSkip || visibleZoomSkip) {
         return;
     }
 
@@ -27,5 +29,5 @@ void MarkerMapTitle::draw(ShadersBucket &shadersBucket,
     float markerZ = position[2];
     float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
     CSSColorParser::Color color = CSSColorParser::parse("rgb(0, 0, 0)");
-    mapSymbols.renderText3DByAtlas(wname, markerX, markerY, markerZ, 0.01 * scale, color, pv, shadersBucket);
+    mapSymbols.renderText3DByAtlas(wname, markerX, markerY, markerZ, fontSize * scale, color, pv, shadersBucket);
 }

@@ -10,11 +10,6 @@
 
 class DrawTextAlongPath {
 public:
-    DrawTextAlongPath(
-            std::wstring wname,
-            std::vector<vtzero::point> points
-    ): wname(wname), points(points) {  }
-
     std::wstring wname;
     std::vector<vtzero::point> points;
 };

@@ -99,6 +99,7 @@ public:
                 wideLine.vboPerpendiculars = vboPerpendiculars;
                 wideLine.ibo = ibo;
                 wideLine.iboSize = wideLine.indices.size();
+                wideLine.verticesSize = wideLine.vertices.size();
 
                 wideLine.uv.clear();
                 wideLine.perpendiculars.clear();

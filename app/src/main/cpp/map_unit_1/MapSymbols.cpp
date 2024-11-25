@@ -216,6 +216,84 @@ void MapSymbols::initGl(AAssetManager *assetManager, MapCamera& mapCamera, Shade
     createFontTextures(mapCamera, shadersBucket);
 }
 
+void MapSymbols::renderText2DByAtlas(
+        std::wstring text,
+        float xWorld,
+        float yWorld,
+        float symbolScale,
+        CSSColorParser::Color color,
+        Eigen::Matrix4f matrix,
+        ShadersBucket &shadersBucket
+) {
+    auto atlasW = atlasWidth;
+    auto atlasH = atlasHeight;
+    std::vector<std::tuple<Symbol, float, float, float>> forRender {};
+    auto symbolShader = shadersBucket.symbolShader;
+    glUseProgram(symbolShader->program);
+    glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
+    glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+    glUniform1i(symbolShader->getTextureLocation(), 0);
+    GLfloat red   = static_cast<GLfloat>(color.r) / 255;
+    GLfloat green = static_cast<GLfloat>(color.g) / 255;
+    GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
+    glUniform3f(symbolShader->getColorLocation(), red, green, blue);
+
+    float textureWidth = 0;
+    float textureHeight = 0;
+    float maxTop = 0;
+    std::string::const_iterator iterator;
+    for (auto charSymbol : text) {
+        Symbol symbol = getSymbol(charSymbol);
+        float w = symbol.width * symbolScale;
+        float h = symbol.rows * symbolScale;
+        float top = h - symbol.bitmapTop * symbolScale;
+        if (top > maxTop) maxTop = top;
+
+        float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+        textureWidth += xPixelsShift;
+        if (textureHeight < h + top) textureHeight = h + top;
+        forRender.push_back({symbol, w, h, xPixelsShift});
+    }
+
+    float halfWidth = textureWidth / 2.0;
+    float halfHeight = textureHeight / 2.0;
+    float x = 0;
+    float y = maxTop;
+    for(auto& charRender : forRender) {
+        Symbol symbol = std::get<0>(charRender);
+        float w = std::get<1>(charRender);
+        float h = std::get<2>(charRender);
+        float pixelsShift = std::get<3>(charRender);
+        float xPos = x + symbol.bitmapLeft * symbolScale + xWorld - halfWidth;
+        float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) + yWorld - halfHeight;
+        float points[] = {
+                xPos, yPos,
+                xPos + w, yPos,
+                xPos + w, (yPos + h),
+                xPos, (yPos + h),
+        };
+
+        auto startU = symbol.startU(atlasW);
+        auto endU = symbol.endU(atlasW);
+        auto startV = symbol.startV(atlasH);
+        auto endV = symbol.endV(atlasH);
+        std::vector<float> textureCords = {
+                startU, startV,
+                endU, startV,
+                endU, endV,
+                startU, endV
+        };
+
+        glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords.data());
+        glEnableVertexAttribArray(symbolShader->getTextureCord());
+        glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, points);
+        glEnableVertexAttribArray(symbolShader->getPosLocation());
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+        x += pixelsShift;
+    }
+}
+
 void MapSymbols::renderText3DByAtlas(
         std::wstring text,
         float xWorld, float yWorld, float zWorld, float symbolScale,

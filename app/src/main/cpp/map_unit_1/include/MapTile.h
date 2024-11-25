@@ -65,10 +65,10 @@ public:
     std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
     std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
     std::vector<MarkerMapTitle> resultMarkerTitles;
-    std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
+    std::unordered_map<uint64_t, DrawTextAlongPath> resultDrawTextAlongPath;
 
-//    std::vector<float> lastPointsTest = {};
-//    std::vector<float> firstPointsTest = {};
+    std::vector<float> lastPointsTest = {};
+    std::vector<float> firstPointsTest = {};
 
     MapStyle style = MapStyle();
 private:

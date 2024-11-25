@@ -20,6 +20,7 @@ public:
     GLuint vboPerpendiculars;
     GLuint ibo;
     size_t iboSize;
+    size_t verticesSize;
 
     bool canBeDraw() {
         return vbo != 0 && ibo != 0;
