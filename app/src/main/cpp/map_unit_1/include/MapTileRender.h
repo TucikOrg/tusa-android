@@ -36,6 +36,7 @@ public:
             float zoom,
             bool isForwardRendering,
             MapSymbols& mapSymbols,
+            float elapsedTime = 0,
             unsigned short from = 0,
             unsigned short to = 0
     );

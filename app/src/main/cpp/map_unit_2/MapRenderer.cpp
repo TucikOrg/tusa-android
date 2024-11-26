@@ -119,7 +119,7 @@ void MapRenderer::renderFrame() {
         mn.visTileYStart, mn.visTileYEnd, mn.visTileXStartInf, mn.visTileXEndInf, mn.segments,
         mn.planetVStart, mn.planetVEnd, mn.planetUStart, mn.planetUEnd, mn.planetVDelta, planeSize, mn.verticesShift,
         mn.planetUDelta, mn.sphereModelMatrixFloat, mn.transition, mn.EPSG3857CamLat,
-        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols
+        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter
     };
 
     mapEnvironment.selectClearColor(mn.zoom);
@@ -155,9 +155,9 @@ void MapRenderer::renderFrame() {
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
-    mapTileGetter = new MapTileGetter(env, request_tile);
-    mapTileGetter->getOrRequest(0, 0, 0);
     mapSymbols.loadFont(assetManager);
+    mapTileGetter = new MapTileGetter(env, request_tile, mapSymbols);
+    mapTileGetter->getOrRequest(0, 0, 0);
 }
 
 void MapRenderer::onSurfaceChanged(int screenW, int screenH) {
@@ -178,8 +178,8 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    mapControls.setCamPos(DEG2RAD(55.753601), DEG2RAD(37.872562));
-    mapControls.setZoom(17.0);
+    mapControls.setCamPos(DEG2RAD(55.7553), DEG2RAD(37.8667));
+    mapControls.setZoom(18.0);
 }
 
 void MapRenderer::drag(float dx, float dy) {

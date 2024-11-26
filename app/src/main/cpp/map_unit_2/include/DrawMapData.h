@@ -57,6 +57,7 @@ public:
     float& scaleUTex;
     MapEnvironment& mapEnvironment;
     MapSymbols& mapSymbols;
+    MapFpsCounter& mapFpsCounter;
 };
 
 

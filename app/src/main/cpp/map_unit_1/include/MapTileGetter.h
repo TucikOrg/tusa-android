@@ -17,7 +17,7 @@
 
 class MapTileGetter {
 public:
-    MapTileGetter(JNIEnv *env, jobject& request_tile);
+    MapTileGetter(JNIEnv *env, jobject& request_tile, MapSymbols& mapSymbols);
     ~MapTileGetter();
     MapTile* getOrRequest(int x, int y, int z, bool forceMem = false);
     MapTile* findExistParent(int x, int y, int z);
@@ -33,6 +33,7 @@ private:
     jobject requestTileGlobal;
     JNIEnv *mainEnv;
     MapTile emptyTile = MapTile(-1, -1, -1);
+    MapSymbols& mapSymbols;
 
     std::unordered_map<uint64_t, void*> pushedToNetwork;
     std::stack<std::array<int, 3>> networkTilesStack;

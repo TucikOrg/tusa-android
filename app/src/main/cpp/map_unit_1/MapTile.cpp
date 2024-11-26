@@ -13,7 +13,7 @@
 
 MapTile::MapTile(int x, int y, int z): empty(true), x(x), y(y), z(z) {}
 
-MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
+MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& mapSymbols)
         :  x(x), y(y), z(z), empty(false) {
 
     // Полигоны
@@ -86,18 +86,10 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                     for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
                         auto point_array = lineHandler.lines[geomIndex];
 
-                        // add streets names
                         if (name != "") {
-                            auto textPtr = resultDrawTextAlongPath.find(featureId);
-                            if (textPtr == resultDrawTextAlongPath.end()) {
-                                resultDrawTextAlongPath[featureId] = DrawTextAlongPath { wName, point_array };
-                            } else {
-                                for (auto point : point_array) {
-                                    textPtr->second.points.push_back(point);
-                                }
-                            }
+                            // add streets names
+                            parseRoadTitleText(wName, point_array, mapSymbols, 2.0);
                         }
-
 
                         const size_t pointsSize = point_array.size();
                         std::vector<float> verticesSquarePoints(pointsSize * 4 * 2);
@@ -176,15 +168,15 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile)
                                 ny = ny / len;
                             }
 
-                            if (isLastPoint) {
-                                lastPointsTest.push_back(point.x);
-                                lastPointsTest.push_back(-point.y);
-                            }
+//                            if (isLastPoint) {
+//                                lastPointsTest.push_back(point.x);
+//                                lastPointsTest.push_back(-point.y);
+//                            }
 
-                            if (isFirstPoint) {
-                                firstPointsTest.push_back(point.x);
-                                firstPointsTest.push_back(-point.y);
-                            }
+//                            if (isFirstPoint) {
+//                                firstPointsTest.push_back(point.x);
+//                                firstPointsTest.push_back(-point.y);
+//                            }
 
                             pointsVertices[pointsVerticesIndex++] = point.x;
                             pointsVertices[pointsVerticesIndex++] = -point.y;
@@ -486,6 +478,129 @@ bool MapTile::coverOneOther(int x1, int y1, int z1, int x2, int y2, int z2) {
            (transformed_y1 <= y2 && y2 < transformed_y1 + scale);
 }
 
+void MapTile::parseRoadTitleText(
+        std::wstring& useStreetName,
+        std::vector<vtzero::point>& point_array,
+        MapSymbols& mapSymbols,
+        float symbolScale
+) {
+    std::vector<std::tuple<Symbol, float, float, float>> forRender {};
+    float textWidth = 0;
+    float textHeight = 0;
+    float maxTop = 0;
+    for (auto charSymbol : useStreetName) {
+        Symbol symbol = mapSymbols.getSymbol(charSymbol);
+        float w = symbol.width * symbolScale;
+        float h = symbol.rows * symbolScale;
+        float top = h - symbol.bitmapTop * symbolScale;
+        if (top > maxTop) maxTop = top;
+
+        float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+        textWidth += xPixelsShift;
+        if (textHeight < h + top) textHeight = h + top;
+        forRender.push_back({symbol, w, h, xPixelsShift});
+    }
+
+    // находим регионы пути где направления соответсвуют определенным
+    {
+        // ищем регионы первого типа
+        std::vector<std::vector<vtzero::point>> regionsType;
+        std::vector<vtzero::point> region = { point_array[0] };
+        for (int i = 1; i < point_array.size(); i++) {
+            auto& firstPoint = point_array[i - 1];
+            auto& secondPoint = point_array[i];
+            Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
+            bool cond1 = direction.x() > 0 && direction.y() > 0;
+            bool cond2 = direction.x() > 0 && direction.y() < 0;
+            if (cond1 || cond2) {
+                region.push_back(secondPoint);
+                continue;
+            }
+
+            if (region.size() >= 2) {
+                regionsType.push_back(region);
+            }
+
+            region.clear();
+            region.push_back(secondPoint);
+        }
+        if (region.size() >= 2) {
+            regionsType.push_back(region);
+        }
+
+
+        for(auto& points : regionsType) {
+            // Calculate full length of path
+            float sumLength = 0;
+            for (int i = 1; i < points.size(); i++) {
+                auto& firstPoint = points[i - 1];
+                auto& secondPoint = points[i];
+                float distance = sqrt( pow(firstPoint.x - secondPoint.x, 2.0) + pow(-firstPoint.y + secondPoint.y, 2.0) );
+                sumLength += distance;
+            }
+
+            if (sumLength - 100 < textWidth) {
+                // не поместится поэтому пропускаем
+                continue;
+            }
+
+            auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
+            resultDrawTextAlongPath.push_back(DrawTextAlongPath {
+                useStreetName, points, randomColor, 1, forRender,
+                textWidth, textHeight, maxTop, sumLength
+            });
+        }
+    }
+
+    {
+        // ищем регионы второго типа
+        std::vector<std::vector<vtzero::point>> regionsType;
+        std::vector<vtzero::point> region = { point_array[0] };
+        for (int i = 1; i < point_array.size(); i++) {
+            auto& firstPoint = point_array[i - 1];
+            auto& secondPoint = point_array[i];
+            Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
+            bool cond1 = direction.x() < 0 && direction.y() < 0;
+            bool cond2 = direction.x() < 0 && direction.y() > 0;
+            if (cond1 || cond2) {
+                region.insert(region.begin(), secondPoint);
+                continue;
+            }
+
+            if (region.size() >= 2) {
+                regionsType.push_back(region);
+            }
+
+            region.clear();
+            region.push_back(secondPoint);
+        }
+        if (region.size() >= 2) {
+            regionsType.push_back(region);
+        }
+
+        for(auto& points : regionsType) {
+            // Calculate full length of path
+            float sumLength = 0;
+            for (int i = 1; i < points.size(); i++) {
+                auto& firstPoint = points[i - 1];
+                auto& secondPoint = points[i];
+                float distance = sqrt( pow(firstPoint.x - secondPoint.x, 2.0) + pow(-firstPoint.y + secondPoint.y, 2.0) );
+                sumLength += distance;
+            }
+
+            if (sumLength - 100 < textWidth) {
+                // не поместится поэтому пропускаем
+                continue;
+            }
+
+            auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
+            resultDrawTextAlongPath.push_back(DrawTextAlongPath {
+                useStreetName, points, randomColor, 2, forRender,
+                textWidth, textHeight, maxTop, sumLength
+            });
+        }
+    }
+}
 
 
 

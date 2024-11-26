@@ -49,6 +49,7 @@ void DrawMap::drawMap(DrawMapData& data) {
     auto& scaleUTex = data.scaleUTex;
     auto& mapEnvironment = data.mapEnvironment;
     auto& mapSymbols = data.mapSymbols;
+    auto& mapFpsCounter = data.mapFpsCounter;
 
     if (forwardRenderingToWorld) {
         double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
@@ -149,7 +150,8 @@ void DrawMap::drawMap(DrawMapData& data) {
                         pvTileMatrix.cast<float>(),
                         zoom,
                         forwardRenderingToWorld,
-                        mapSymbols
+                        mapSymbols,
+                        mapFpsCounter.getTimeElapsed()
                 );
             }
         }

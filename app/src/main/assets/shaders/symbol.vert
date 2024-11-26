@@ -6,8 +6,9 @@ attribute vec2 a_textureCord;
 varying vec2 textureCord;
 
 uniform mat4 u_matrix;
+uniform mat4 u_projection;
 
 void main() {
-    gl_Position = u_matrix * vertexPosition;
+    gl_Position = u_projection * u_matrix * vertexPosition;
     textureCord = a_textureCord;
 }

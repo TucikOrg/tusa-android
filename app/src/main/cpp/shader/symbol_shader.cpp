@@ -18,4 +18,5 @@ SymbolShader::SymbolShader(AAssetManager *assetManager,
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
     u_text = glGetUniformLocation(program, "u_tile_0");
+    u_projection = glGetUniformLocation(program, "u_projection");
 }

@@ -39,11 +39,10 @@ Eigen::Matrix4f MapCamera::createView(
 
 Eigen::Matrix4d MapCamera::createViewD(
         float camX, float camY, float camZ,
-        float targetX, float targetY, float targetZ
+        float targetX, float targetY, float targetZ, Eigen::Vector3d up
 ) {
     Eigen::Vector3d cameraPosition = Eigen::Vector3d(camX, camY, camZ);
     Eigen::Vector3d target(targetX, targetY, targetZ);
-    Eigen::Vector3d up(0.0, 1.0, 0.0);
     Eigen::Matrix4d viewMatrix = EigenGL::createViewMatrix(cameraPosition, target, up);
     return std::move(viewMatrix);
 }

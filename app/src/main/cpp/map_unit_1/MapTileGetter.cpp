@@ -15,7 +15,7 @@ MapTileGetter::~MapTileGetter() {
     mainEnv->DeleteGlobalRef(requestTileGlobal);
 }
 
-MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile): mainEnv(env) {
+MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile, MapSymbols& mapSymbols): mainEnv(env), mapSymbols(mapSymbols) {
     JavaVM* gJvm = nullptr;
     env->GetJavaVM(&gJvm);
 
@@ -81,7 +81,7 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
 
     vtzero::vector_tile vectorTile(tileData);
-    MapTile* mapTile = new MapTile(x, y, z, vectorTile);
+    MapTile* mapTile = new MapTile(x, y, z, vectorTile, mapSymbols);
 
     cacheMutex2.lock();
     cacheTiles.insert({key, mapTile});

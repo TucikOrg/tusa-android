@@ -191,8 +191,10 @@ void MapSymbols::renderText2D(
                 0, 1, 2
         };
 
+        Eigen::Matrix4f identity = Eigen::Matrix4f::Identity();
         glUseProgram(symbolShader->program);
         glUniform3f(symbolShader->getColorLocation(), red, green, blue);
+        glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, identity.data());
         glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
         glBindTexture(GL_TEXTURE_2D, textureId);
         glUniform1i(symbolShader->getTextureLocation(), 0);
@@ -225,11 +227,13 @@ void MapSymbols::renderText2DByAtlas(
         Eigen::Matrix4f matrix,
         ShadersBucket &shadersBucket
 ) {
+    Eigen::Matrix4f identity = Eigen::Matrix4f::Identity();
     auto atlasW = atlasWidth;
     auto atlasH = atlasHeight;
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
     auto symbolShader = shadersBucket.symbolShader;
     glUseProgram(symbolShader->program);
+    glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, identity.data());
     glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
     glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
     glUniform1i(symbolShader->getTextureLocation(), 0);
@@ -300,11 +304,13 @@ void MapSymbols::renderText3DByAtlas(
         CSSColorParser::Color color, Eigen::Matrix4f matrix,
         ShadersBucket &shadersBucket) {
 
+    Eigen::Matrix4f identity = Eigen::Matrix4f::Identity();
     auto atlasW = atlasWidth;
     auto atlasH = atlasHeight;
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
     auto symbolShader = shadersBucket.symbolShader;
     glUseProgram(symbolShader->program);
+    glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, identity.data());
     glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, matrix.data());
     glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
     glUniform1i(symbolShader->getTextureLocation(), 0);

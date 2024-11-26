@@ -21,7 +21,7 @@
 class MapTile {
 public:
     MapTile(int x, int y, int z);
-    MapTile(int x, int y, int z, vtzero::vector_tile& tile);
+    MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& mapSymbols);
 
     bool cover(std::array<int, 3> otherTile);
 
@@ -65,7 +65,7 @@ public:
     std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
     std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
     std::vector<MarkerMapTitle> resultMarkerTitles;
-    std::unordered_map<uint64_t, DrawTextAlongPath> resultDrawTextAlongPath;
+    std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
 
     std::vector<float> lastPointsTest = {};
     std::vector<float> firstPointsTest = {};
@@ -78,6 +78,13 @@ private:
     int y;
     uint32_t extent;
     bool empty;
+
+    void parseRoadTitleText(
+        std::wstring& useStreetName,
+        std::vector<vtzero::point>& point_array,
+        MapSymbols& mapSymbols,
+        float symbolScale
+    );
 };
 
 

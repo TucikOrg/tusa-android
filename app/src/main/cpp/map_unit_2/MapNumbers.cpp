@@ -55,7 +55,7 @@ MapNumbers::MapNumbers(
     sphereModelMatrix = EigenGL::createRotationMatrixAxis(EPSG4326CamLat, Eigen::Vector3d {1.0, 0.0, 0.0});
 
     projection = mapCamera.createPerspectiveProjectionD(nearPlane, farPlane);
-    view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0);
+    view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0, Eigen::Vector3d(0.0, 1.0, 0.0));
     pv = projection * view;
 
     pvFloat = pv.cast<float>();
