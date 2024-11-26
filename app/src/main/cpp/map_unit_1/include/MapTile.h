@@ -47,8 +47,8 @@ public:
         return extent;
     }
 
-    unsigned int getLastStyle() {
-        return lastStyle;
+    unsigned int getMaxStyleIndex() {
+        return maxStyleIndex;
     }
 
     std::array<int,3> getTileCords() {
@@ -72,12 +72,12 @@ public:
 
     MapStyle style = MapStyle();
 private:
-    unsigned short lastStyle = 0;
     int z;
     int x;
     int y;
     uint32_t extent;
     bool empty;
+    unsigned int maxStyleIndex = 0;
 
     void parseRoadTitleText(
         std::wstring& useStreetName,
@@ -85,6 +85,8 @@ private:
         MapSymbols& mapSymbols,
         float symbolScale
     );
+
+    void latAndLonFromTilePoint(vtzero::point point, float& latitude, float& longitude);
 };
 
 

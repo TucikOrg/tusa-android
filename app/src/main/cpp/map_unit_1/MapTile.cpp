@@ -72,6 +72,10 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 continue;
             }
 
+            if (maxStyleIndex < styleIndex) {
+                maxStyleIndex = styleIndex;
+            }
+
             if (geomType == vtzero::GeomType::LINESTRING) {
                 auto lineHandler = LineStringHandler();
                 vtzero::decode_linestring_geometry(feature.geometry(), lineHandler);
@@ -87,7 +91,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                         auto point_array = lineHandler.lines[geomIndex];
 
                         if (name != "") {
-                            // add streets names
+                            // Добавить названия на улицы
                             parseRoadTitleText(wName, point_array, mapSymbols, 2.0);
                         }
 
@@ -478,6 +482,19 @@ bool MapTile::coverOneOther(int x1, int y1, int z1, int x2, int y2, int z2) {
            (transformed_y1 <= y2 && y2 < transformed_y1 + scale);
 }
 
+void MapTile::latAndLonFromTilePoint(vtzero::point point, float& latitude, float& longitude) {
+    float inTilePortion = FLOAT(point.x) / FLOAT(extent);
+    float mapXTilePosition = inTilePortion + getX();
+    int n = pow(2, z);
+    double mapXTilePotion = static_cast<double>(mapXTilePosition) / n;
+    longitude = mapXTilePotion * (2 * M_PI) - M_PI;
+
+    float inTilePortionY = FLOAT(point.y) / FLOAT(extent);
+    float mapYTilePosition = inTilePortionY + getY();
+    double mapYTilePortion = 1.0 - static_cast<double>(mapYTilePosition) / n;
+    latitude = Utils::EPSG3857_to_EPSG4326_latitude(mapYTilePortion * (2 * M_PI) - M_PI);
+}
+
 void MapTile::parseRoadTitleText(
         std::wstring& useStreetName,
         std::vector<vtzero::point>& point_array,
@@ -502,20 +519,30 @@ void MapTile::parseRoadTitleText(
     }
 
     // находим регионы пути где направления соответсвуют определенным
-    {
-        // ищем регионы первого типа
+    for (int t = 0; t <= 1; t++) {
         std::vector<std::vector<vtzero::point>> regionsType;
         std::vector<vtzero::point> region = { point_array[0] };
         for (int i = 1; i < point_array.size(); i++) {
             auto& firstPoint = point_array[i - 1];
             auto& secondPoint = point_array[i];
             Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
-            bool cond1 = direction.x() > 0 && direction.y() > 0;
-            bool cond2 = direction.x() > 0 && direction.y() < 0;
-            if (cond1 || cond2) {
-                region.push_back(secondPoint);
-                continue;
+
+            if (t == 0) {
+                bool cond1 = direction.x() > 0 && direction.y() > 0;
+                bool cond2 = direction.x() > 0 && direction.y() < 0;
+                if (cond1 || cond2) {
+                    region.push_back(secondPoint);
+                    continue;
+                }
+            } else if (t == 1) {
+                bool cond1 = direction.x() < 0 && direction.y() < 0;
+                bool cond2 = direction.x() < 0 && direction.y() > 0;
+                if (cond1 || cond2) {
+                    region.insert(region.begin(), secondPoint);
+                    continue;
+                }
             }
+
 
             if (region.size() >= 2) {
                 regionsType.push_back(region);
@@ -539,64 +566,15 @@ void MapTile::parseRoadTitleText(
                 sumLength += distance;
             }
 
-            if (sumLength - 100 < textWidth) {
-                // не поместится поэтому пропускаем
-                continue;
-            }
+            auto point = points[points.size() / 2];
+            float latitude;
+            float longitude;
+            latAndLonFromTilePoint(point, latitude, longitude);
 
             auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
             resultDrawTextAlongPath.push_back(DrawTextAlongPath {
                 useStreetName, points, randomColor, 1, forRender,
-                textWidth, textHeight, maxTop, sumLength
-            });
-        }
-    }
-
-    {
-        // ищем регионы второго типа
-        std::vector<std::vector<vtzero::point>> regionsType;
-        std::vector<vtzero::point> region = { point_array[0] };
-        for (int i = 1; i < point_array.size(); i++) {
-            auto& firstPoint = point_array[i - 1];
-            auto& secondPoint = point_array[i];
-            Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
-            bool cond1 = direction.x() < 0 && direction.y() < 0;
-            bool cond2 = direction.x() < 0 && direction.y() > 0;
-            if (cond1 || cond2) {
-                region.insert(region.begin(), secondPoint);
-                continue;
-            }
-
-            if (region.size() >= 2) {
-                regionsType.push_back(region);
-            }
-
-            region.clear();
-            region.push_back(secondPoint);
-        }
-        if (region.size() >= 2) {
-            regionsType.push_back(region);
-        }
-
-        for(auto& points : regionsType) {
-            // Calculate full length of path
-            float sumLength = 0;
-            for (int i = 1; i < points.size(); i++) {
-                auto& firstPoint = points[i - 1];
-                auto& secondPoint = points[i];
-                float distance = sqrt( pow(firstPoint.x - secondPoint.x, 2.0) + pow(-firstPoint.y + secondPoint.y, 2.0) );
-                sumLength += distance;
-            }
-
-            if (sumLength - 100 < textWidth) {
-                // не поместится поэтому пропускаем
-                continue;
-            }
-
-            auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
-            resultDrawTextAlongPath.push_back(DrawTextAlongPath {
-                useStreetName, points, randomColor, 2, forRender,
-                textWidth, textHeight, maxTop, sumLength
+                textWidth, textHeight, maxTop, sumLength, latitude, longitude
             });
         }
     }

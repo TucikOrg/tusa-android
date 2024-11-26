@@ -6,6 +6,7 @@
 #define TUSA_ANDROID_DRAWMAP_H
 
 #include "DrawMapData.h"
+#include "ByLayersDraw.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
 

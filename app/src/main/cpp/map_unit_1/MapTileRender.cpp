@@ -45,6 +45,7 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
     auto& visTileXStartInf = data.visTileXStartInf;
     auto& visTileXEndInf = data.visTileXEndInf;
     auto& mapSymbols = data.mapSymbols;
+    auto& mapNumbers = data.mapNumbers;
 
     float textureWidth = textureTileSize * xTilesAmount;
     float textureHeight = textureTileSize * yTilesAmount;
@@ -95,7 +96,8 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
                     pvTileMatrix,
                     zoom,
                     forwardRenderingToWorld,
-                    mapSymbols
+                    mapSymbols,
+                    mapNumbers
             );
         }
     }
@@ -127,7 +129,8 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
                     pvTileMatrix,
                     zoom,
                     forwardRenderingToWorld,
-                    mapSymbols
+                    mapSymbols,
+                    mapNumbers
             );
         }
     }
@@ -138,13 +141,15 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
 }
 
 void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
-                                   Eigen::Matrix4f vm, Eigen::Matrix4f p, ShadersBucket& shadersBucket) {
+                                   Eigen::Matrix4f vm, Eigen::Matrix4f p,
+                                   ShadersBucket& shadersBucket,
+                                   MapNumbers& mapNumbers, float elapsedTime) {
+    float symbolScale = 2.0;
     auto atlasW = mapSymbols.atlasWidth;
     auto atlasH = mapSymbols.atlasHeight;
-    auto color = CSSColorParser::parse("rgb(255, 0, 0)");
-    float symbolScale = 2.0;
+    auto color = CSSColorParser::parse("rgb(0, 0, 0)");
     auto drawTextAlongPath = tile->resultDrawTextAlongPath;
-
+    glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     // тестирование
     // рисуем точки по которым идет текст
 //        auto plainShader = shadersBucket.plainShader;
@@ -162,7 +167,6 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
 //            }
 //        }
 
-    glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     auto symbolShader = shadersBucket.symbolShader;
     glUseProgram(symbolShader->program);
 
@@ -175,13 +179,30 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
     glUniform3f(symbolShader->getColorLocation(), red, green, blue);
 
     for (auto& drawTextItem: drawTextAlongPath) {
-        auto text = drawTextItem.wname;
-        auto points = drawTextItem.points;
+        auto sumLength = drawTextItem.legthOfPath;
         auto textWidth = drawTextItem.textWidth;
+        if (sumLength - 100 < textWidth) {
+            // не поместится поэтому пропускаем
+            continue;
+        }
+
+        auto points = drawTextItem.points;
         auto textHeight = drawTextItem.textHeight;
         auto maxTop = drawTextItem.maxTop;
         auto forRender = drawTextItem.forRender;
-        auto sumLength = drawTextItem.legthOfPath;
+
+        auto& latitude = drawTextItem.latitude;
+        auto& longitude = drawTextItem.longitude;
+
+        auto& currentZoom = mapNumbers.zoom;
+        auto camLatitude = mapNumbers.camLatitude;
+        auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
+        double tooFarDelta = (1.5 * M_PI) / pow(2, currentZoom);
+
+        bool tooFarSkip = abs(camLatitude - latitude) > tooFarDelta || abs(camLongitudeNormalized - longitude) > tooFarDelta;
+        if (tooFarSkip) {
+            continue;
+        }
 
         //float startTextFrom = abs(sin(elapsedTime / 9)) * (sumLength - textWidth);
         float startTextFrom = sumLength / 2 - textWidth / 2;
@@ -235,7 +256,7 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                 float yPos = pointY;
 
                 Eigen::Vector2f translateBitmapLeft = symbol.bitmapLeft * symbolScale * normalToDirection;
-                Eigen::Vector2f translateTopSymbol = (maxTop - (symbol.rows - symbol.bitmapTop) * symbolScale) * normalToDirection;
+                Eigen::Vector2f translateTopSymbol = (maxTop - (symbol.rows - symbol.bitmapTop)) * symbolScale * normalToDirection;
                 Eigen::Vector2f shiftTextByNormal = normalToDirection * -shiftTextValue;
 
                 Eigen::Matrix4f vmChar = vm *
@@ -295,12 +316,12 @@ void MapTileRender::renderTile(
         float zoom,
         bool isForwardRendering,
         MapSymbols& mapSymbols,
+        MapNumbers& mapNumbers,
         float elapsedTime,
         unsigned short from,
         unsigned short to
 ) {
     auto styles = tile->style.getStylesVec();
-    auto stylesSet = tile->style.getStyles();
     auto stylesSize = styles.size();
     if (to == 0)
         to = stylesSize;
@@ -321,7 +342,7 @@ void MapTileRender::renderTile(
 
     // Рисуем текст вдоль дорог
     if (zoom > 15) {
-        renderPathText(tile, mapSymbols, vm, p, shadersBucket);
+        renderPathText(tile, mapSymbols, vm, p, shadersBucket, mapNumbers, elapsedTime);
     }
 }
 

@@ -29,6 +29,7 @@ public:
     int& visTileXStartInf;
     int& visTileXEndInf;
     MapSymbols& mapSymbols;
+    MapNumbers& mapNumbers;
 };
 
 

@@ -36,22 +36,13 @@ public:
             float zoom,
             bool isForwardRendering,
             MapSymbols& mapSymbols,
+            MapNumbers& mapNumbers,
             float elapsedTime = 0,
             unsigned short from = 0,
             unsigned short to = 0
     );
 
     void renderTexture(RenderTextureData &data);
-
-    GLuint getTilesTexture();
-    GLuint getMapTexture() {
-        return mapTexture;
-    }
-private:
-    void drawBackground(
-            ShadersBucket& shadersBucket,
-            Eigen::Matrix4f pvm
-    );
 
     void drawLayer(
             ShadersBucket& shadersBucket,
@@ -64,10 +55,22 @@ private:
             bool isForwardRendering
     );
 
+    void drawBackground(
+            ShadersBucket& shadersBucket,
+            Eigen::Matrix4f pvm
+    );
+
     void renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                         Eigen::Matrix4f vm, Eigen::Matrix4f p,
-                        ShadersBucket& shadersBucket
-                        );
+                        ShadersBucket& shadersBucket, MapNumbers& mapNumbers,
+                        float elapsedTime
+    );
+
+    GLuint getTilesTexture();
+    GLuint getMapTexture() {
+        return mapTexture;
+    }
+private:
 
     float extent = 4096;
     GLuint tilesTexture;

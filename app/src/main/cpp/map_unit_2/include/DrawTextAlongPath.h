@@ -20,6 +20,8 @@ public:
     float textHeight = 0;
     float maxTop = 0;
     float legthOfPath;
+    float latitude;
+    float longitude;
 };
 
 

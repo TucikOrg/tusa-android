@@ -50,6 +50,7 @@ void DrawMap::drawMap(DrawMapData& data) {
     auto& mapEnvironment = data.mapEnvironment;
     auto& mapSymbols = data.mapSymbols;
     auto& mapFpsCounter = data.mapFpsCounter;
+    auto& mapNumbers = data.mapNumbers;
 
     if (forwardRenderingToWorld) {
         double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
@@ -117,12 +118,16 @@ void DrawMap::drawMap(DrawMapData& data) {
                         pvTileMatrix.cast<float>(),
                         zoom,
                         forwardRenderingToWorld,
-                        mapSymbols
+                        mapSymbols,
+                        mapNumbers
                 );
             }
         }
+        glDisable(GL_SCISSOR_TEST);
 
         // рисуем актуальные тайлы
+        unsigned int maxStyle = 0;
+        std::vector<ByLayersDraw> drawByLayers = {};
         for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
             for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
                 int tileX = Utils::normalizeXTile(tileXInf, n);
@@ -138,24 +143,57 @@ void DrawMap::drawMap(DrawMapData& data) {
                 Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
                 Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
                 Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
-                int scissorX = ceil(viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX);
-                int scissorY = ceil(viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY);
-                glScissor(scissorX, scissorY, ceil(viewportTileSizeX), ceil(viewportTileSizeY));
-                mapTileRender.renderTile(
+                auto stylesSet = tile->style.getStyles();
+                drawByLayers.push_back(ByLayersDraw { tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>(), stylesSet });
+
+                if (maxStyle < tile->getMaxStyleIndex()) {
+                    maxStyle = tile->getMaxStyleIndex();
+                }
+            }
+        }
+
+//        for (auto& drawTile : drawByLayers) {
+//            auto &pvTileMatrix = drawTile.pvTileMatrix;
+//            mapTileRender.drawBackground(shadersBucket, pvTileMatrix.cast<float>());
+//        }
+
+        for (unsigned int styleIndex = 0; styleIndex <= maxStyle; styleIndex++) {
+            for (auto& drawTile : drawByLayers) {
+                auto tile = drawTile.mapTile;
+                auto& vTileMatrix = drawTile.vTileMatrix;
+                auto& pvTileMatrix = drawTile.pvTileMatrix;
+                if (drawTile.styles.find(styleIndex) == drawTile.styles.end()) {
+                    continue;
+                }
+
+                mapTileRender.drawLayer(
                         shadersBucket,
                         tile,
-                        mapCamera,
                         projection.cast<float>(),
-                        vTileMatrix.cast<float>(),
-                        pvTileMatrix.cast<float>(),
-                        zoom,
-                        forwardRenderingToWorld,
+                        vTileMatrix,
+                        pvTileMatrix,
+                        styleIndex, zoom,
+                        true
+                );
+            }
+        }
+
+        if (zoom > 15) {
+            for (auto& drawTile : drawByLayers) {
+                auto tile = drawTile.mapTile;
+                auto& vTileMatrix = drawTile.vTileMatrix;
+                mapTileRender.renderPathText(
+                        tile,
                         mapSymbols,
+                        vTileMatrix,
+                        projection.cast<float>(),
+                        shadersBucket,
+                        mapNumbers,
                         mapFpsCounter.getTimeElapsed()
                 );
             }
         }
-        glDisable(GL_SCISSOR_TEST);
+
     } else {
         std::vector<float> planetEPSG3857;
         std::vector<float> planetTexUV;

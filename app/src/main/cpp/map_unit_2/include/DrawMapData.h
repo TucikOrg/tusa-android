@@ -58,6 +58,7 @@ public:
     MapEnvironment& mapEnvironment;
     MapSymbols& mapSymbols;
     MapFpsCounter& mapFpsCounter;
+    MapNumbers& mapNumbers;
 };
 
 

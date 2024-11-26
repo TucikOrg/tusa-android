@@ -15,15 +15,6 @@ void MapRenderer::renderFrame() {
 
     animateCameraTo.animateTick(mapFpsCounter, mapControls);
 
-    if (mn.zoom > 10) {
-        textureTileSizeUnit = 1024;
-    } else if (mn.zoom > 3) {
-        textureTileSizeUnit = 1024;
-    } else {
-        textureTileSizeUnit = 512;
-    }
-
-
     // определяем тайлы и ключ
     bool allTilesReady = true;
     int existTiles = 0;
@@ -100,7 +91,7 @@ void MapRenderer::renderFrame() {
                 mn.tileZ,
                 mn.n, leftX, topY, mn.visTileYStart, mn.visTileYEnd,
                 mn.visTileXStartInf, mn.visTileXEndInf,
-                mapSymbols
+                mapSymbols, mn
         };
 
         mapTileRender.renderTexture(data);
@@ -119,7 +110,7 @@ void MapRenderer::renderFrame() {
         mn.visTileYStart, mn.visTileYEnd, mn.visTileXStartInf, mn.visTileXEndInf, mn.segments,
         mn.planetVStart, mn.planetVEnd, mn.planetUStart, mn.planetUEnd, mn.planetVDelta, planeSize, mn.verticesShift,
         mn.planetUDelta, mn.sphereModelMatrixFloat, mn.transition, mn.EPSG3857CamLat,
-        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter
+        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter, mn
     };
 
     mapEnvironment.selectClearColor(mn.zoom);

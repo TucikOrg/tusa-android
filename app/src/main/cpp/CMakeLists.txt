@@ -92,6 +92,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/TransferTilesToGPU.cpp
         map_unit_2/SymbolInAtlas.cpp
         map_unit_2/PrepareCharAtlas.cpp
+        map_unit_2/ByLayersDraw.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
