@@ -145,6 +145,12 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                                    ShadersBucket& shadersBucket,
                                    MapNumbers& mapNumbers, float elapsedTime) {
     float symbolScale = 2.0;
+    if (mapNumbers.zoom >= 16 && mapNumbers.zoom <= 17) {
+        symbolScale = 3.0 - (mapNumbers.zoom - 16) * 2.0;
+    } else if (mapNumbers.zoom > 17) {
+        symbolScale = 1.0;
+    }
+
     auto atlasW = mapSymbols.atlasWidth;
     auto atlasH = mapSymbols.atlasHeight;
     auto color = CSSColorParser::parse("rgb(0, 0, 0)");
@@ -179,17 +185,30 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
     glUniform3f(symbolShader->getColorLocation(), red, green, blue);
 
     for (auto& drawTextItem: drawTextAlongPath) {
+        std::vector<std::tuple<Symbol, float, float, float>> forRender {};
+        float textWidth = 0;
+        float textHeight = 0;
+        float maxTop = 0;
+        for (auto charSymbol : drawTextItem.wname) {
+            Symbol symbol = mapSymbols.getSymbol(charSymbol);
+            float w = symbol.width * symbolScale;
+            float h = symbol.rows * symbolScale;
+            float top = h - symbol.bitmapTop * symbolScale;
+            if (top > maxTop) maxTop = top;
+
+            float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+            textWidth += xPixelsShift;
+            if (textHeight < h + top) textHeight = h + top;
+            forRender.push_back({symbol, w, h, xPixelsShift});
+        }
+
         auto sumLength = drawTextItem.legthOfPath;
-        auto textWidth = drawTextItem.textWidth;
-        if (sumLength - 100 < textWidth) {
+        if (sumLength - 250 < textWidth) {
             // не поместится поэтому пропускаем
             continue;
         }
 
         auto points = drawTextItem.points;
-        auto textHeight = drawTextItem.textHeight;
-        auto maxTop = drawTextItem.maxTop;
-        auto forRender = drawTextItem.forRender;
 
         auto& latitude = drawTextItem.latitude;
         auto& longitude = drawTextItem.longitude;

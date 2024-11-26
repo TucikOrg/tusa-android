@@ -92,7 +92,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
 
                         if (name != "") {
                             // Добавить названия на улицы
-                            parseRoadTitleText(wName, point_array, mapSymbols, 2.0);
+                            parseRoadTitleText(wName, point_array, mapSymbols, 2.0, featureId);
                         }
 
                         const size_t pointsSize = point_array.size();
@@ -499,7 +499,8 @@ void MapTile::parseRoadTitleText(
         std::wstring& useStreetName,
         std::vector<vtzero::point>& point_array,
         MapSymbols& mapSymbols,
-        float symbolScale
+        float symbolScale,
+        uint64_t featureId
 ) {
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
     float textWidth = 0;
@@ -520,7 +521,7 @@ void MapTile::parseRoadTitleText(
 
     // находим регионы пути где направления соответсвуют определенным
     for (int t = 0; t <= 1; t++) {
-        std::vector<std::vector<vtzero::point>> regionsType;
+        std::vector<std::vector<vtzero::point>> regions;
         std::vector<vtzero::point> region = { point_array[0] };
         for (int i = 1; i < point_array.size(); i++) {
             auto& firstPoint = point_array[i - 1];
@@ -545,18 +546,18 @@ void MapTile::parseRoadTitleText(
 
 
             if (region.size() >= 2) {
-                regionsType.push_back(region);
+                regions.push_back(region);
             }
 
             region.clear();
             region.push_back(secondPoint);
         }
         if (region.size() >= 2) {
-            regionsType.push_back(region);
+            regions.push_back(region);
         }
 
 
-        for(auto& points : regionsType) {
+        for(auto& points : regions) {
             // Calculate full length of path
             float sumLength = 0;
             for (int i = 1; i < points.size(); i++) {
@@ -574,7 +575,7 @@ void MapTile::parseRoadTitleText(
             auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
             resultDrawTextAlongPath.push_back(DrawTextAlongPath {
                 useStreetName, points, randomColor, 1, forRender,
-                textWidth, textHeight, maxTop, sumLength, latitude, longitude
+                textWidth, textHeight, maxTop, sumLength, latitude, longitude, featureId
             });
         }
     }

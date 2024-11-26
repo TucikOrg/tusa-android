@@ -83,7 +83,8 @@ private:
         std::wstring& useStreetName,
         std::vector<vtzero::point>& point_array,
         MapSymbols& mapSymbols,
-        float symbolScale
+        float symbolScale,
+        uint64_t featureId
     );
 
     void latAndLonFromTilePoint(vtzero::point point, float& latitude, float& longitude);

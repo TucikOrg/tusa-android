@@ -22,6 +22,7 @@ public:
     float legthOfPath;
     float latitude;
     float longitude;
+    uint64_t featureId;
 };
 
 

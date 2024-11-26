@@ -129,8 +129,12 @@ void MapRenderer::renderFrame() {
         }
     }
 
+    if (markerMapTitles.empty() == false) {
+        savedMarkerMapTitles = markerMapTitles;
+    }
+
     markers.drawMarkers(shadersBucket, mn.pvFloat,
-                        mn, markerMapTitles, mapSymbols, mapCamera
+                        mn, savedMarkerMapTitles, mapSymbols, mapCamera
     );
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);

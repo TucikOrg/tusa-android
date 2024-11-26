@@ -47,6 +47,7 @@ private:
     MapTileGetter* mapTileGetter;
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
+    std::vector<MarkerMapTitle*> savedMarkerMapTitles = {};
 
     float forwardRenderingToWorldZoom = 13.0f;
     float planeSize = 10000000;
