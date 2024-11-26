@@ -137,6 +137,154 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
     mapCamera.glViewportDeviceSize();
 }
 
+void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
+                                   Eigen::Matrix4f vm, Eigen::Matrix4f p, ShadersBucket& shadersBucket) {
+    auto atlasW = mapSymbols.atlasWidth;
+    auto atlasH = mapSymbols.atlasHeight;
+    auto color = CSSColorParser::parse("rgb(255, 0, 0)");
+    float symbolScale = 2.0;
+    auto drawTextAlongPath = tile->resultDrawTextAlongPath;
+
+    // тестирование
+    // рисуем точки по которым идет текст
+//        auto plainShader = shadersBucket.plainShader;
+//        for (auto& drawTextItem: drawTextAlongPath) {
+//            auto randomColor = drawTextItem.color;
+//            for (auto point : drawTextItem.points) {
+//                float data1[] = { FLOAT(point.x), FLOAT(-point.y) };
+//                glUseProgram(plainShader->program);
+//                glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, data1);
+//                glEnableVertexAttribArray(plainShader->getPosLocation());
+//                glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+//                glUniform1f(plainShader->getPointSizeLocation(), 40.0f);
+//                glUniform4f(plainShader->getColorLocation(), randomColor[0], randomColor[1], randomColor[2], 1.0);
+//                glDrawArrays(GL_POINTS, 0, 1);
+//            }
+//        }
+
+    glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
+    auto symbolShader = shadersBucket.symbolShader;
+    glUseProgram(symbolShader->program);
+
+    glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, p.data());
+    glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+    glUniform1i(symbolShader->getTextureLocation(), 0);
+    GLfloat red   = static_cast<GLfloat>(color.r) / 255;
+    GLfloat green = static_cast<GLfloat>(color.g) / 255;
+    GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
+    glUniform3f(symbolShader->getColorLocation(), red, green, blue);
+
+    for (auto& drawTextItem: drawTextAlongPath) {
+        auto text = drawTextItem.wname;
+        auto points = drawTextItem.points;
+        auto textWidth = drawTextItem.textWidth;
+        auto textHeight = drawTextItem.textHeight;
+        auto maxTop = drawTextItem.maxTop;
+        auto forRender = drawTextItem.forRender;
+        auto sumLength = drawTextItem.legthOfPath;
+
+        //float startTextFrom = abs(sin(elapsedTime / 9)) * (sumLength - textWidth);
+        float startTextFrom = sumLength / 2 - textWidth / 2;
+
+        // calculate start point index
+        int startPointIndex = 0;
+        for (int i = 1; i < points.size(); i++) {
+            auto& firstPoint = points[i - 1];
+            auto& secondPoint = points[i];
+            float distance = sqrt( pow(secondPoint.x - firstPoint.x, 2.0) + pow(secondPoint.y - firstPoint.y, 2.0) );
+            if (distance <= startTextFrom) {
+                startTextFrom -= distance;
+                continue;
+            }
+
+            startPointIndex = i;
+            break;
+        }
+
+        // start draw text
+        int forRenderIndex = 0;
+        for (int i = startPointIndex; i < points.size(); i++) {
+            auto& firstPoint = points[i - 1];
+            auto& secondPoint = points[i];
+            float availableDistance = sqrt( pow(secondPoint.x - firstPoint.x, 2.0) + pow(secondPoint.y - firstPoint.y, 2.0) ) - startTextFrom;
+            Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
+            direction.normalize();
+
+            Eigen::Vector2f xVector(1.0f, 0.0f);
+            float dotProduct = direction.dot(xVector);
+            float angleRadians = std::acos(dotProduct);
+            float shiftTextValue = textHeight / 2;
+            float symbolDiff = startTextFrom; startTextFrom = 0;
+            if (direction.x() > 0 && direction.y() < 0) {
+                angleRadians *= -1;
+            }
+
+            while(availableDistance > 0 && forRenderIndex < forRender.size() && forRenderIndex >= 0) {
+                Eigen::Vector2f diff = direction * symbolDiff;
+                Eigen::Vector2f normalToDirection = Eigen::Vector2f(-direction.y(), direction.x());
+
+                float pointX = firstPoint.x + diff.x();
+                float pointY = -firstPoint.y + diff.y();
+                auto charRender = forRender[forRenderIndex];
+                Symbol symbol = std::get<0>(charRender);
+                float w = std::get<1>(charRender);
+                float h = std::get<2>(charRender);
+                float pixelsShift = std::get<3>(charRender);
+
+                float xPos = pointX;
+                float yPos = pointY;
+
+                Eigen::Vector2f translateBitmapLeft = symbol.bitmapLeft * symbolScale * normalToDirection;
+                Eigen::Vector2f translateTopSymbol = (maxTop - (symbol.rows - symbol.bitmapTop) * symbolScale) * normalToDirection;
+                Eigen::Vector2f shiftTextByNormal = normalToDirection * -shiftTextValue;
+
+                Eigen::Matrix4f vmChar = vm *
+                                         EigenGL::createTranslationMatrix(
+                                                 translateBitmapLeft.x() + translateTopSymbol.x() + shiftTextByNormal.x(),
+                                                 translateBitmapLeft.y() + translateTopSymbol.y() + shiftTextByNormal.y(),
+                                                 0
+                                         ) *
+                                         EigenGL::createTranslationMatrix(xPos, yPos, 0) *
+                                         EigenGL::createRotationMatrixZ(angleRadians) *
+                                         EigenGL::createTranslationMatrix(-xPos, -yPos, 0);
+                glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, vmChar.data());
+
+                // Draw symbol
+                float vertices[] = {
+                        xPos, yPos,
+                        xPos + w, yPos,
+                        xPos + w, yPos + h,
+                        xPos, yPos + h,
+                };
+                auto startU = symbol.startU(atlasW);
+                auto endU = symbol.endU(atlasW);
+                auto startV = symbol.startV(atlasH);
+                auto endV = symbol.endV(atlasH);
+                std::vector<float> textureCords = {
+                        startU, startV,
+                        endU, startV,
+                        endU, endV,
+                        startU, endV
+                };
+                glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords.data());
+                glEnableVertexAttribArray(symbolShader->getTextureCord());
+                glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices);
+                glEnableVertexAttribArray(symbolShader->getPosLocation());
+                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+
+                symbolDiff += pixelsShift;
+                availableDistance -= pixelsShift;
+
+                forRenderIndex++;
+            }
+
+            if (availableDistance < 0) {
+                startTextFrom = -1 * availableDistance;
+            }
+        }
+    }
+}
+
 void MapTileRender::renderTile(
         ShadersBucket &shadersBucket,
         MapTile *tile,
@@ -173,150 +321,7 @@ void MapTileRender::renderTile(
 
     // Рисуем текст вдоль дорог
     if (zoom > 15) {
-        auto atlasW = mapSymbols.atlasWidth;
-        auto atlasH = mapSymbols.atlasHeight;
-        auto color = CSSColorParser::parse("rgb(255, 0, 0)");
-        float symbolScale = 2.0;
-        auto drawTextAlongPath = tile->resultDrawTextAlongPath;
-
-        // тестирование
-        // рисуем точки по которым идет текст
-//        auto plainShader = shadersBucket.plainShader;
-//        for (auto& drawTextItem: drawTextAlongPath) {
-//            auto randomColor = drawTextItem.color;
-//            for (auto point : drawTextItem.points) {
-//                float data1[] = { FLOAT(point.x), FLOAT(-point.y) };
-//                glUseProgram(plainShader->program);
-//                glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, data1);
-//                glEnableVertexAttribArray(plainShader->getPosLocation());
-//                glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
-//                glUniform1f(plainShader->getPointSizeLocation(), 40.0f);
-//                glUniform4f(plainShader->getColorLocation(), randomColor[0], randomColor[1], randomColor[2], 1.0);
-//                glDrawArrays(GL_POINTS, 0, 1);
-//            }
-//        }
-
-        glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
-        auto symbolShader = shadersBucket.symbolShader;
-        glUseProgram(symbolShader->program);
-
-        glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, p.data());
-        glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-        glUniform1i(symbolShader->getTextureLocation(), 0);
-        GLfloat red   = static_cast<GLfloat>(color.r) / 255;
-        GLfloat green = static_cast<GLfloat>(color.g) / 255;
-        GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
-        glUniform3f(symbolShader->getColorLocation(), red, green, blue);
-
-        for (auto& drawTextItem: drawTextAlongPath) {
-            auto text = drawTextItem.wname;
-            auto points = drawTextItem.points;
-            auto textWidth = drawTextItem.textWidth;
-            auto textHeight = drawTextItem.textHeight;
-            auto maxTop = drawTextItem.maxTop;
-            auto forRender = drawTextItem.forRender;
-            auto sumLength = drawTextItem.legthOfPath;
-
-            //float startTextFrom = abs(sin(elapsedTime / 9)) * (sumLength - textWidth);
-            float startTextFrom = sumLength / 2 - textWidth / 2;
-
-            // calculate start point index
-            int startPointIndex = 0;
-            for (int i = 1; i < points.size(); i++) {
-                auto& firstPoint = points[i - 1];
-                auto& secondPoint = points[i];
-                float distance = sqrt( pow(secondPoint.x - firstPoint.x, 2.0) + pow(secondPoint.y - firstPoint.y, 2.0) );
-                if (distance <= startTextFrom) {
-                    startTextFrom -= distance;
-                    continue;
-                }
-
-                startPointIndex = i;
-                break;
-            }
-
-            // start draw text
-            int forRenderIndex = 0;
-            for (int i = startPointIndex; i < points.size(); i++) {
-                auto& firstPoint = points[i - 1];
-                auto& secondPoint = points[i];
-                float availableDistance = sqrt( pow(secondPoint.x - firstPoint.x, 2.0) + pow(secondPoint.y - firstPoint.y, 2.0) ) - startTextFrom;
-                Eigen::Vector2f direction = Eigen::Vector2f(secondPoint.x - firstPoint.x, -secondPoint.y + firstPoint.y);
-                direction.normalize();
-
-                Eigen::Vector2f xVector(1.0f, 0.0f);
-                float dotProduct = direction.dot(xVector);
-                float angleRadians = std::acos(dotProduct);
-                float shiftTextValue = textHeight / 2;
-                float symbolDiff = startTextFrom; startTextFrom = 0;
-                if (direction.x() > 0 && direction.y() < 0) {
-                    angleRadians *= -1;
-                }
-
-                while(availableDistance > 0 && forRenderIndex < forRender.size() && forRenderIndex >= 0) {
-                    Eigen::Vector2f diff = direction * symbolDiff;
-                    Eigen::Vector2f normalToDirection = Eigen::Vector2f(-direction.y(), direction.x());
-
-                    float pointX = firstPoint.x + diff.x();
-                    float pointY = -firstPoint.y + diff.y();
-                    auto charRender = forRender[forRenderIndex];
-                    Symbol symbol = std::get<0>(charRender);
-                    float w = std::get<1>(charRender);
-                    float h = std::get<2>(charRender);
-                    float pixelsShift = std::get<3>(charRender);
-
-                    float xPos = pointX;
-                    float yPos = pointY;
-
-                    Eigen::Vector2f translateBitmapLeft = symbol.bitmapLeft * symbolScale * normalToDirection;
-                    Eigen::Vector2f translateTopSymbol = (maxTop - (symbol.rows - symbol.bitmapTop) * symbolScale) * normalToDirection;
-                    Eigen::Vector2f shiftTextByNormal = normalToDirection * -shiftTextValue;
-
-                    Eigen::Matrix4f vmChar = vm *
-                            EigenGL::createTranslationMatrix(
-                                    translateBitmapLeft.x() + translateTopSymbol.x() + shiftTextByNormal.x(),
-                                    translateBitmapLeft.y() + translateTopSymbol.y() + shiftTextByNormal.y(),
-                                    0
-                            ) *
-                            EigenGL::createTranslationMatrix(xPos, yPos, 0) *
-                            EigenGL::createRotationMatrixZ(angleRadians) *
-                            EigenGL::createTranslationMatrix(-xPos, -yPos, 0);
-                    glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, vmChar.data());
-
-                    // Draw symbol
-                    float vertices[] = {
-                            xPos, yPos,
-                            xPos + w, yPos,
-                            xPos + w, yPos + h,
-                            xPos, yPos + h,
-                    };
-                    auto startU = symbol.startU(atlasW);
-                    auto endU = symbol.endU(atlasW);
-                    auto startV = symbol.startV(atlasH);
-                    auto endV = symbol.endV(atlasH);
-                    std::vector<float> textureCords = {
-                            startU, startV,
-                            endU, startV,
-                            endU, endV,
-                            startU, endV
-                    };
-                    glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords.data());
-                    glEnableVertexAttribArray(symbolShader->getTextureCord());
-                    glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices);
-                    glEnableVertexAttribArray(symbolShader->getPosLocation());
-                    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-
-                    symbolDiff += pixelsShift;
-                    availableDistance -= pixelsShift;
-
-                    forRenderIndex++;
-                }
-
-                if (availableDistance < 0) {
-                    startTextFrom = -1 * availableDistance;
-                }
-            }
-        }
+        renderPathText(tile, mapSymbols, vm, p, shadersBucket);
     }
 }
 

@@ -64,6 +64,11 @@ private:
             bool isForwardRendering
     );
 
+    void renderPathText(MapTile* tile, MapSymbols& mapSymbols,
+                        Eigen::Matrix4f vm, Eigen::Matrix4f p,
+                        ShadersBucket& shadersBucket
+                        );
+
     float extent = 4096;
     GLuint tilesTexture;
     GLuint tilesFrameBuffer;
