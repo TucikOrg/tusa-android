@@ -304,7 +304,7 @@ void MapSymbols::renderText3DByAtlas(
         CSSColorParser::Color color, Eigen::Matrix4f matrix,
         ShadersBucket &shadersBucket) {
 
-    glBindTexture(GL_TEXTURE_2D, getAtlasTexture());
+
     Eigen::Matrix4f identity = Eigen::Matrix4f::Identity();
     auto atlasW = atlasWidth;
     auto atlasH = atlasHeight;

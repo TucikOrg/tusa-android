@@ -19,7 +19,7 @@ void MarkerMapTitle::draw(ShadersBucket &shadersBucket,
 
     bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
     bool tooFarSkip = abs(camLatitude - latitude) > tooFarDelta || abs(camLongitudeNormalized - longitude) > tooFarDelta;
-    if (tooFarSkip || visibleZoomSkip) {
+    if (visibleZoomSkip) {
         return;
     }
 

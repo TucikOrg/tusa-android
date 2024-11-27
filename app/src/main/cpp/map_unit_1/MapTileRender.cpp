@@ -364,9 +364,9 @@ void MapTileRender::renderTile(
     }
 
     // Рисуем текст вдоль дорог
-    if (zoom > 15) {
-        renderPathText(tile, mapSymbols, vm, p, shadersBucket, mapNumbers, elapsedTime);
-    }
+//    if (zoom > 15) {
+//        renderPathText(tile, mapSymbols, vm, p, shadersBucket, mapNumbers, elapsedTime);
+//    }
 }
 
 GLuint MapTileRender::getTilesTexture() {

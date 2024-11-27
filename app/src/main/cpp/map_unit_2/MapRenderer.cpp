@@ -117,7 +117,15 @@ void MapRenderer::renderFrame() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     mapEnvironment.draw(mn, shadersBucket);
-    drawMap.drawMap(drawMapData);
+    if (mn.forwardRenderingToWorld) {
+        glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
+        drawMap.drawMapForward(drawMapData);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, mapTileRender.getMapTexture());
+        drawMap.drawMapViaTexture(drawMapData);
+        glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
+    }
+
 
     std::unordered_map<std::wstring, void*> titles = {};
     std::vector<MarkerMapTitle*> markerMapTitles = {};
@@ -128,7 +136,6 @@ void MapRenderer::renderFrame() {
             titles[markerTile.wname] = nullptr;
         }
     }
-
     if (markerMapTitles.empty() == false) {
         savedMarkerMapTitles = markerMapTitles;
     }
@@ -165,6 +172,7 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     mapSymbols.initGl(assetManager, mapCamera, shadersBucket);
     mapTileRender.initTilesTexture();
     mapEnvironment.init(planeSize);
+    markers.initGL();
 
     int maxTextureSize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
@@ -174,7 +182,7 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
     mapControls.setCamPos(DEG2RAD(55.7499), DEG2RAD(37.6265));
-    mapControls.setZoom(18.0);
+    mapControls.setZoom(1.0);
 }
 
 void MapRenderer::drag(float dx, float dy) {

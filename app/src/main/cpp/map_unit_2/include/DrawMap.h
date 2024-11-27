@@ -12,7 +12,8 @@
 
 class DrawMap {
 public:
-    void drawMap(DrawMapData& data);
+    void drawMapForward(DrawMapData& data);
+    void drawMapViaTexture(DrawMapData& data);
 private:
     float extent = 4096;
 };

@@ -39,7 +39,7 @@ public:
     );
 
     std::wstring wname;
-private:
+public:
     float latitude;
     float longitude;
     float fontSize;

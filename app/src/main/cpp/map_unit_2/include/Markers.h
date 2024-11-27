@@ -19,6 +19,7 @@
 
 class Markers {
 public:
+    void initGL();
     void addMarker(std::string key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
     void removeMarker(std::string key);
     void updateMarkerGeo(std::string key, float latitude, float longitude);
@@ -33,6 +34,12 @@ public:
     bool hasMarker(std::string key);
 private:
     std::map<std::string, UserMarker> userMarkers = {};
+
+    GLuint titlesVBO;
+    GLuint titlesUvVBO;
+    GLuint titlesIBO;
+    size_t iboSize = 0;
+    size_t previousFrameTitlesSize = 0;
 };
 
 
