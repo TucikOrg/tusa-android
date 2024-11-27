@@ -15,6 +15,7 @@
 #include <iostream>
 #include <sstream>
 #include <locale>
+#include "IntersectionBox.h"
 #include "csscolorparser/csscolorparser.h"
 #define LOG_TAG "GL_ARTEM"
 #define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
@@ -25,6 +26,18 @@
 
 class Utils {
 public:
+    static bool doBoxesIntersect(const IntersectionBox& box1, const IntersectionBox& box2) {
+        // Check if one box is to the left of the other
+        if (box1.endX < box2.startX || box2.endX < box1.startX)
+            return false;
+
+        // Check if one box is above the other
+        if (box1.endY < box2.startY || box2.endY < box1.startY)
+            return false;
+
+        return true; // Boxes overlap
+    }
+
     static std::wstring stringToWstring(const std::string& str) {
         std::setlocale(LC_ALL, "en_US.UTF-8"); // Set locale for UTF-8
         size_t size = mbstowcs(nullptr, str.c_str(), 0) + 1;

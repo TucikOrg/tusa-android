@@ -382,7 +382,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && (type == "city") && symbolRank <= 9) {
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(6, 9);
+        visibleZoom[currentIndex] = fromToZoomsVisible(6, 10);
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -438,7 +438,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "suburb") {
         fontSize[currentIndex] = 0.01f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(12, 14);
+        visibleZoom[currentIndex] = fromToZoomsVisible(11, 14);
         addStyle(currentIndex);
         return true;
     } else currentIndex++;

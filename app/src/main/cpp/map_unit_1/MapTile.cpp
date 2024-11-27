@@ -575,7 +575,8 @@ void MapTile::parseRoadTitleText(
             auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
             resultDrawTextAlongPath.push_back(DrawTextAlongPath {
                 useStreetName, points, randomColor, 1, forRender,
-                textWidth, textHeight, maxTop, sumLength, latitude, longitude, featureId
+                textWidth, textHeight, maxTop, sumLength, latitude, longitude, featureId,
+                MapTile::makeKey(getX(), getY(), getZ())
             });
         }
     }

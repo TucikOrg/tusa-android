@@ -35,9 +35,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
 
-
-    glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     for (auto marker : markerMapTitles) {
+
         marker->draw(
                 shadersBucket,
                 pv,

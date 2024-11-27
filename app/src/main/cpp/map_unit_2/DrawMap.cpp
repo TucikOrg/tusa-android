@@ -123,75 +123,114 @@ void DrawMap::drawMap(DrawMapData& data) {
                 );
             }
         }
-        glDisable(GL_SCISSOR_TEST);
 
+        bool byLayerDraw = mapNumbers.zoom > 15;
         // рисуем актуальные тайлы
-        unsigned int maxStyle = 0;
-        std::vector<ByLayersDraw> drawByLayers = {};
-        for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
-            for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
-                int tileX = Utils::normalizeXTile(tileXInf, n);
-                auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
-                if (tile->isEmpty()) {
-                    continue;
-                }
-                double translateXIndex = xPos;
-                double translateYIndex = tileY - visTileYStart;
-                double translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
-                double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
-                auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
-                Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
-                Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
-                auto stylesSet = tile->style.getStyles();
-                drawByLayers.push_back(ByLayersDraw { tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>(), stylesSet });
+        if (byLayerDraw) {
+            glDisable(GL_SCISSOR_TEST);
+            unsigned int maxStyle = 0;
+            std::vector<ByLayersDraw> drawByLayers = {};
+            for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
+                for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
+                    int tileX = Utils::normalizeXTile(tileXInf, n);
+                    auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
+                    if (tile->isEmpty()) {
+                        continue;
+                    }
+                    double translateXIndex = xPos;
+                    double translateYIndex = tileY - visTileYStart;
+                    double translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
+                    double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+                    auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                    Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
+                    Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
+                    Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
+                    auto stylesSet = tile->style.getStyles();
+                    drawByLayers.push_back(ByLayersDraw { tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>(), stylesSet });
 
-                if (maxStyle < tile->getMaxStyleIndex()) {
-                    maxStyle = tile->getMaxStyleIndex();
+                    if (maxStyle < tile->getMaxStyleIndex()) {
+                        maxStyle = tile->getMaxStyleIndex();
+                    }
                 }
             }
-        }
 
 //        for (auto& drawTile : drawByLayers) {
 //            auto &pvTileMatrix = drawTile.pvTileMatrix;
 //            mapTileRender.drawBackground(shadersBucket, pvTileMatrix.cast<float>());
 //        }
 
-        for (unsigned int styleIndex = 0; styleIndex <= maxStyle; styleIndex++) {
-            for (auto& drawTile : drawByLayers) {
-                auto tile = drawTile.mapTile;
-                auto& vTileMatrix = drawTile.vTileMatrix;
-                auto& pvTileMatrix = drawTile.pvTileMatrix;
-                if (drawTile.styles.find(styleIndex) == drawTile.styles.end()) {
-                    continue;
+            for (unsigned int styleIndex = 0; styleIndex <= maxStyle; styleIndex++) {
+                for (auto& drawTile : drawByLayers) {
+                    auto tile = drawTile.mapTile;
+                    auto& vTileMatrix = drawTile.vTileMatrix;
+                    auto& pvTileMatrix = drawTile.pvTileMatrix;
+                    if (drawTile.styles.find(styleIndex) == drawTile.styles.end()) {
+                        continue;
+                    }
+
+                    mapTileRender.drawLayer(
+                            shadersBucket,
+                            tile,
+                            projection.cast<float>(),
+                            vTileMatrix,
+                            pvTileMatrix,
+                            styleIndex, zoom,
+                            true
+                    );
                 }
-
-                mapTileRender.drawLayer(
-                        shadersBucket,
-                        tile,
-                        projection.cast<float>(),
-                        vTileMatrix,
-                        pvTileMatrix,
-                        styleIndex, zoom,
-                        true
-                );
             }
-        }
 
-        if (zoom > 15) {
-            for (auto& drawTile : drawByLayers) {
-                auto tile = drawTile.mapTile;
-                auto& vTileMatrix = drawTile.vTileMatrix;
-                mapTileRender.renderPathText(
-                        tile,
-                        mapSymbols,
-                        vTileMatrix,
-                        projection.cast<float>(),
-                        shadersBucket,
-                        mapNumbers,
-                        mapFpsCounter.getTimeElapsed()
-                );
+            if (zoom > 15) {
+                for (auto& drawTile : drawByLayers) {
+                    auto tile = drawTile.mapTile;
+                    auto& vTileMatrix = drawTile.vTileMatrix;
+                    mapTileRender.renderPathText(
+                            tile,
+                            mapSymbols,
+                            vTileMatrix,
+                            projection.cast<float>(),
+                            shadersBucket,
+                            mapNumbers,
+                            mapFpsCounter.getTimeElapsed()
+                    );
+                }
             }
+        } else {
+            // рисуем по тайлам. Тайл рисуем целиком и потом следующий тайл
+            for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
+                for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
+                    int tileX = Utils::normalizeXTile(tileXInf, n);
+                    auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
+                    if (tile->isEmpty()) {
+                        continue;
+                    }
+                    double translateXIndex = xPos;
+                    double translateYIndex = tileY - visTileYStart;
+                    double translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
+                    double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
+                    auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
+                    Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
+                    Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
+                    Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
+                    int scissorX = ceil(viewportBLX + (translateXIndex - shiftXTileP) * viewportTileSizeX);
+                    int scissorY = ceil(viewportBLY + yTilesAmount * viewportTileSizeY - (translateYIndex + 1.0) * viewportTileSizeY);
+                    glScissor(scissorX, scissorY, ceil(viewportTileSizeX), ceil(viewportTileSizeY));
+                    mapTileRender.renderTile(
+                            shadersBucket,
+                            tile,
+                            mapCamera,
+                            projection.cast<float>(),
+                            vTileMatrix.cast<float>(),
+                            pvTileMatrix.cast<float>(),
+                            zoom,
+                            forwardRenderingToWorld,
+                            mapSymbols,
+                            mapNumbers,
+                            mapFpsCounter.getTimeElapsed()
+                    );
+                }
+            }
+            glDisable(GL_SCISSOR_TEST);
         }
 
     } else {

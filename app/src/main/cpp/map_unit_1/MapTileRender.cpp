@@ -145,11 +145,11 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                                    ShadersBucket& shadersBucket,
                                    MapNumbers& mapNumbers, float elapsedTime) {
     float symbolScale = 2.0;
-    if (mapNumbers.zoom >= 16 && mapNumbers.zoom <= 17) {
-        symbolScale = 3.0 - (mapNumbers.zoom - 16) * 2.0;
-    } else if (mapNumbers.zoom > 17) {
-        symbolScale = 1.0;
-    }
+//    if (mapNumbers.zoom >= 16 && mapNumbers.zoom <= 17) {
+//        symbolScale = 3.0 - (mapNumbers.zoom - 16) * 2.0;
+//    } else if (mapNumbers.zoom > 17) {
+//        symbolScale = 1.0;
+//    }
 
     auto atlasW = mapSymbols.atlasWidth;
     auto atlasH = mapSymbols.atlasHeight;
@@ -184,7 +184,9 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
     GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
     glUniform3f(symbolShader->getColorLocation(), red, green, blue);
 
-    for (auto& drawTextItem: drawTextAlongPath) {
+    for (int drIndex = 0; drIndex < drawTextAlongPath.size(); drIndex++) {
+        auto& drawTextItem = drawTextAlongPath[drIndex];
+
         std::vector<std::tuple<Symbol, float, float, float>> forRender {};
         float textWidth = 0;
         float textHeight = 0;
@@ -209,18 +211,16 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
         }
 
         auto points = drawTextItem.points;
-
         auto& latitude = drawTextItem.latitude;
         auto& longitude = drawTextItem.longitude;
-
         auto& currentZoom = mapNumbers.zoom;
         auto camLatitude = mapNumbers.camLatitude;
         auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
-        double tooFarDelta = (1.5 * M_PI) / pow(2, currentZoom);
+        double tooFarDelta = (2.0 * M_PI) / pow(2, currentZoom);
 
         bool tooFarSkip = abs(camLatitude - latitude) > tooFarDelta || abs(camLongitudeNormalized - longitude) > tooFarDelta;
         if (tooFarSkip) {
-            continue;
+            //continue;
         }
 
         //float startTextFrom = abs(sin(elapsedTime / 9)) * (sumLength - textWidth);
@@ -241,6 +241,7 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
             break;
         }
 
+        std::vector<DrawSymbol> drawSymbols = {};
         // start draw text
         int forRenderIndex = 0;
         for (int i = startPointIndex; i < points.size(); i++) {
@@ -287,10 +288,9 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                                          EigenGL::createTranslationMatrix(xPos, yPos, 0) *
                                          EigenGL::createRotationMatrixZ(angleRadians) *
                                          EigenGL::createTranslationMatrix(-xPos, -yPos, 0);
-                glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, vmChar.data());
 
                 // Draw symbol
-                float vertices[] = {
+                std::vector<float> vertices = {
                         xPos, yPos,
                         xPos + w, yPos,
                         xPos + w, yPos + h,
@@ -306,21 +306,25 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                         endU, endV,
                         startU, endV
                 };
-                glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, textureCords.data());
-                glEnableVertexAttribArray(symbolShader->getTextureCord());
-                glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, vertices);
-                glEnableVertexAttribArray(symbolShader->getPosLocation());
-                glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+                drawSymbols.push_back(DrawSymbol { vertices, textureCords, vmChar });
 
                 symbolDiff += pixelsShift;
                 availableDistance -= pixelsShift;
-
                 forRenderIndex++;
             }
 
             if (availableDistance < 0) {
                 startTextFrom = -1 * availableDistance;
             }
+        }
+
+        for (auto& drawSymbol : drawSymbols) {
+            glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, drawSymbol.vmChar.data());
+            glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, drawSymbol.textureCords.data());
+            glEnableVertexAttribArray(symbolShader->getTextureCord());
+            glVertexAttribPointer(symbolShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, drawSymbol.vertices.data());
+            glEnableVertexAttribArray(symbolShader->getPosLocation());
+            glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
         }
     }
 }
@@ -508,7 +512,6 @@ void MapTileRender::drawLayer(
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
-
 
 
     // тестирование

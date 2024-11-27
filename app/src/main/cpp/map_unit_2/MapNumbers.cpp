@@ -77,8 +77,8 @@ MapNumbers::MapNumbers(
         visYTilesDelta = 1.0;
     }
     if (tileZ >= 15) {
-        visXTilesDelta = 1.0;
         visYTilesDelta = 1.0;
+        visXTilesDelta = 1.0;
     }
 
     textureTileSize = textureTileSizeUnit;

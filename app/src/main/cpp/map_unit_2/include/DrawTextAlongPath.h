@@ -23,6 +23,7 @@ public:
     float latitude;
     float longitude;
     uint64_t featureId;
+    uint64_t tileId;
 };
 
 

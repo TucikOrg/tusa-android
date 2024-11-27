@@ -49,11 +49,10 @@ private:
     MapTest mapTest = MapTest();
     std::vector<MarkerMapTitle*> savedMarkerMapTitles = {};
 
-    float forwardRenderingToWorldZoom = 13.0f;
+    float forwardRenderingToWorldZoom = 5.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    int textureTileSizeUnit = 2048;
     std::string textureKey;
-    bool renderTestTextsAtlas = true;
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
 };
