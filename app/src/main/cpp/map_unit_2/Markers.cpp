@@ -35,36 +35,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
 
-    float points[] = {
-            0, 0, 0, // position
-            0, 0 // latitude and longitude
-    };
-
-    auto titlesMapShader = shadersBucket.titlesMapShader;
-    glUseProgram(titlesMapShader->program);
-    glUniformMatrix4fv(titlesMapShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glUniform4f(titlesMapShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1i(titlesMapShader->getTextureLocation(), 0);
-    glUniform3f(titlesMapShader->getColorLocation(), 1.0, 0.0, 0.0);
-    glVertexAttribPointer(titlesMapShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(titlesMapShader->getTextureCord());
-    glVertexAttribPointer(titlesMapShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, points);
-    glEnableVertexAttribArray(titlesMapShader->getPosLocation());
-    glVertexAttribPointer(titlesMapShader->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, 3, points);
-    glEnableVertexAttribArray(titlesMapShader->getLatLonLocation());
-    Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
-    Eigen::Vector3f axisLat = fromLatLonToSpherePos.axisLatitude.cast<float>();
-    Eigen::Vector3f pointOnSphere = fromLatLonToSpherePos.pointOnSphere.cast<float>();
-    glUniform3f(titlesMapShader->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
-    glUniform3f(titlesMapShader->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
-    glUniform3f(titlesMapShader->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
-    glUniform1f(titlesMapShader->getRadiusLocation(), mapNumbers.radius);
-    glDrawArrays(GL_POINTS, 0, 1);
-    return;
-
     // Если количество маркеров другое то пересоздаем буффера
-    //if (previousFrameTitlesSize != markerMapTitles.size()) {
-    if (true) {
+    if (previousFrameTitlesSize != markerMapTitles.size()) {
         previousFrameTitlesSize = markerMapTitles.size();
 
         unsigned int symbolsAmount = 0;
@@ -87,7 +59,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 continue;
             }
             symbolsAmount += marker->wname.size();
-            symbolsVerticesSize += marker->wname.size() * 12;
+            symbolsVerticesSize += marker->wname.size() * 16;
             symbolsUVSize += marker->wname.size() * 8;
         }
         std::vector<float> symbolsVertices(symbolsVerticesSize);
@@ -112,10 +84,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 continue;
             }
 
-            Eigen::Vector3d position = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude);
-            float markerX = position[0];
-            float markerY = position[1];
-            float markerZ = position[2];
             float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
             float symbolScale = fontSize * scale;
 
@@ -149,14 +117,13 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 float w = std::get<1>(charRender);
                 float h = std::get<2>(charRender);
                 float pixelsShift = std::get<3>(charRender);
-                float xPos = x + symbol.bitmapLeft * symbolScale + markerX - halfWidth;
-                float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) + markerY - halfHeight;
-                float zPos = markerZ;
+                float xPos = x + symbol.bitmapLeft * symbolScale - halfWidth;
+                float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) - halfHeight;
                 float points[] = {
-                        xPos, yPos, zPos,
-                        xPos + w, yPos, zPos,
-                        xPos + w, (yPos + h), zPos,
-                        xPos, (yPos + h), zPos
+                        -latitude, -longitude,  xPos, yPos,
+                        -latitude, -longitude,  xPos + w, yPos,
+                        -latitude, -longitude,  xPos + w, yPos + h,
+                        -latitude, -longitude,  xPos, yPos + h,
                 };
                 for (float cord : points) {
                     symbolsVertices[symbolsVerticesIndex++] = cord;
@@ -212,30 +179,36 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
     }
 
-    Eigen::Matrix4f identity = Eigen::Matrix4f::Identity();
     CSSColorParser::Color color = CSSColorParser::parse("rgb(0, 0, 0)");
     GLfloat red   = static_cast<GLfloat>(color.r) / 255;
     GLfloat green = static_cast<GLfloat>(color.g) / 255;
     GLfloat blue  = static_cast<GLfloat>(color.b) / 255;
+    auto titlesMapShader = shadersBucket.titlesMapShader;
+    glUseProgram(titlesMapShader->program);
+    Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
+    Eigen::Vector3f axisLat = fromLatLonToSpherePos.axisLatitude.cast<float>();
+    Eigen::Vector3f pointOnSphere = fromLatLonToSpherePos.pointOnSphere.cast<float>();
+    glUniform3f(titlesMapShader->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+    glUniform3f(titlesMapShader->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+    glUniform3f(titlesMapShader->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+    glUniform1f(titlesMapShader->getRadiusLocation(), mapNumbers.radius);
 
-    auto symbolShader = shadersBucket.symbolShader;
-    glUseProgram(symbolShader->program);
-    glUniformMatrix4fv(symbolShader->getProjectionMatrix(), 1, GL_FALSE, identity.data());
-    glUniformMatrix4fv(symbolShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glUniform4f(symbolShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1i(symbolShader->getTextureLocation(), 0);
-    glUniform3f(symbolShader->getColorLocation(), red, green, blue);
+    glUniformMatrix4fv(titlesMapShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+    glUniform4f(titlesMapShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+    glUniform1i(titlesMapShader->getTextureLocation(), 0);
+    glUniform3f(titlesMapShader->getColorLocation(), red, green, blue);
     glBindBuffer(GL_ARRAY_BUFFER, titlesUvVBO);
-    glVertexAttribPointer(symbolShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(symbolShader->getTextureCord());
+    glVertexAttribPointer(titlesMapShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(titlesMapShader->getTextureCord());
     glBindBuffer(GL_ARRAY_BUFFER, titlesVBO);
-    glVertexAttribPointer(symbolShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(symbolShader->getPosLocation());
+    glVertexAttribPointer(titlesMapShader->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), 0);
+    glEnableVertexAttribArray(titlesMapShader->getLatLonLocation());
+    glVertexAttribPointer(titlesMapShader->getShiftLocation(), 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+    glEnableVertexAttribArray(titlesMapShader->getShiftLocation());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, titlesIBO);
     glDrawElements(GL_TRIANGLES, iboSize, GL_UNSIGNED_INT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-
 
     for (auto marker : userMarkers) {
         marker.second.draw(

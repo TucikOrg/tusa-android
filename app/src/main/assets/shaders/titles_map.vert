@@ -3,6 +3,7 @@ precision highp float;
 attribute vec4 vertexPosition;
 attribute vec2 a_textureCord;
 attribute vec2 a_latLon;
+attribute vec2 a_shift;
 
 uniform mat4 u_matrix;
 uniform vec3 u_axisLatitude;
@@ -43,12 +44,13 @@ void main() {
     );
 
     // Compute marker direction in sphere
-    vec3 markerDirectionSphere = rotationLongitude * (rotationLatitude * u_pointOnSphere);
+    //vec3 markerDirectionSphere = rotationLongitude * (rotationLatitude * u_pointOnSphere);
+    vec3 markerDirectionSphere = rotationLongitude * rotationLatitude * u_pointOnSphere;
 
     // Compute the final location on the sphere
     vec3 markerPointLocation = markerDirectionSphere * u_radius;
 
     gl_PointSize = 20.0;
-    gl_Position = u_matrix * (vertexPosition + vec4(markerPointLocation.xy, markerPointLocation.z - u_radius, 0.0));
+    gl_Position = u_matrix * vec4(markerPointLocation.xy + a_shift, markerPointLocation.z - u_radius, 1.0);
     textureCord = a_textureCord;
 }

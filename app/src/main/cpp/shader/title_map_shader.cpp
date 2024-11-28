@@ -17,6 +17,7 @@ TitleMapShader::TitleMapShader(AAssetManager *assetManager,
     a_pos = glGetAttribLocation(program, "vertexPosition");
     a_textureCord = glGetAttribLocation(program, "a_textureCord");
     a_latLon = glGetAttribLocation(program, "a_latLon");
+    a_shift = glGetAttribLocation(program, "a_shift");
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
     u_text = glGetUniformLocation(program, "u_tile_0");

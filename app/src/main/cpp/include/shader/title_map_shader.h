@@ -18,6 +18,7 @@ public:
     GLint getTextureCord() const {return a_textureCord;}
     GLint getLatLonLocation() const {return a_latLon;}
     GLint getAxisLatitudeLocation() const {return u_axisLatitude;}
+    GLint getShiftLocation() const {return a_shift;}
     GLint getAxisLongitudeLocation() const {return u_axisLongitude;}
     GLint getPointOnSphereLocation() const {return u_pointOnSphere;}
     GLint getRadiusLocation() const {return u_radius;}
@@ -32,6 +33,7 @@ private:
     GLint u_pointOnSphere;
     GLint u_radius;
     GLint a_latLon;
+    GLint a_shift;
 };
 
 
