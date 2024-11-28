@@ -4,7 +4,10 @@ attribute vec4 vertexPosition;
 attribute vec2 a_textureCord;
 attribute vec2 a_latLon;
 attribute vec2 a_shift;
+attribute vec2 a_border_direction;
 
+uniform float u_border;
+uniform float u_scale;
 uniform mat4 u_matrix;
 uniform vec3 u_axisLatitude;
 uniform vec3 u_axisLongitude;
@@ -51,6 +54,6 @@ void main() {
     vec3 markerPointLocation = markerDirectionSphere * u_radius;
 
     gl_PointSize = 20.0;
-    gl_Position = u_matrix * vec4(markerPointLocation.xy + a_shift, markerPointLocation.z - u_radius, 1.0);
+    gl_Position = u_matrix * vec4(markerPointLocation.xy + (a_shift + a_border_direction * u_border) * u_scale, markerPointLocation.z - u_radius, 1.0);
     textureCord = a_textureCord;
 }

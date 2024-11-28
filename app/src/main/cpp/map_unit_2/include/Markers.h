@@ -38,7 +38,7 @@ private:
     GLuint titlesVBO;
     GLuint titlesIBO;
     size_t iboSize = 0;
-    size_t previousFrameTitlesSize = 0;
+    size_t refreshTitlesKey = 0;
 };
 
 

@@ -62,6 +62,7 @@ MapNumbers::MapNumbers(
     planeModelMatrixFloat = planeModelMatrix.cast<float>();
     sphereModelMatrixFloat = sphereModelMatrix.cast<float>();
 
+    textureTileSize = textureTileSizeUnit;
     visYTilesDelta = 1.0;
     visXTilesDelta = 1.0;
     if (n == 1) {
@@ -71,6 +72,7 @@ MapNumbers::MapNumbers(
     if (n == 4) {
         visXTilesDelta = 2.0;
         visYTilesDelta = 2.0;
+        textureTileSize = textureTileSizeUnit / 2;
     }
     if (tileZ >= 14) {
         visXTilesDelta = 1.0;
@@ -81,7 +83,7 @@ MapNumbers::MapNumbers(
         visXTilesDelta = 1.0;
     }
 
-    textureTileSize = textureTileSizeUnit;
+
     forwardRenderingToWorld = zoom >= forwardRenderingToWorldZoom;
 
     double camYNorm = (EPSG3857CamLatNorm - 1.0) / -2.0;

@@ -22,6 +22,9 @@ public:
     GLint getAxisLongitudeLocation() const {return u_axisLongitude;}
     GLint getPointOnSphereLocation() const {return u_pointOnSphere;}
     GLint getRadiusLocation() const {return u_radius;}
+    GLint getScaleLocation() const {return u_scale;}
+    GLint getBorderLocation() const {return u_border;}
+    GLint getBorderDirection() const {return a_border_direction;}
 
 private:
     GLint a_textureCord;
@@ -32,8 +35,11 @@ private:
     GLint u_axisLongitude;
     GLint u_pointOnSphere;
     GLint u_radius;
+    GLint u_scale;
+    GLint u_border;
     GLint a_latLon;
     GLint a_shift;
+    GLint a_border_direction;
 };
 
 
