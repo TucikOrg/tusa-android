@@ -22,6 +22,7 @@
 #include "road_shader.h"
 #include "SimplePointShader.h"
 #include "SquarePointShader.h"
+#include "title_map_shader.h"
 #include <boost/shared_ptr.hpp>
 
 class ShadersBucket {
@@ -44,6 +45,7 @@ public:
     std::shared_ptr<Planet3Shader> planet3Shader;
     std::shared_ptr<SimplePointShader> simplePointShader;
     std::shared_ptr<SquarePointShader> squarePointShader;
+    std::shared_ptr<TitleMapShader> titlesMapShader;
 };
 
 

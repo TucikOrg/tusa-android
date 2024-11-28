@@ -20,7 +20,6 @@ TitleMapShader::TitleMapShader(AAssetManager *assetManager,
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
     u_text = glGetUniformLocation(program, "u_tile_0");
-    u_projection = glGetUniformLocation(program, "u_projection");
     u_axisLatitude = glGetUniformLocation(program, "u_axisLatitude");
     u_axisLongitude = glGetUniformLocation(program, "u_axisLongitude");
     u_pointOnSphere = glGetUniformLocation(program, "u_pointOnSphere");

@@ -42,6 +42,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/planet3_f_rend.cpp
         shader/road_shader.cpp
         shader/space_dark_shader.cpp
+        shader/title_map_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp

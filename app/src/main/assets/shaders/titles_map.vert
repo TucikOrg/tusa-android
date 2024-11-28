@@ -4,14 +4,13 @@ attribute vec4 vertexPosition;
 attribute vec2 a_textureCord;
 attribute vec2 a_latLon;
 
-varying vec2 textureCord;
-
 uniform mat4 u_matrix;
-uniform mat4 u_projection;
 uniform vec3 u_axisLatitude;
 uniform vec3 u_axisLongitude;
 uniform vec3 u_pointOnSphere;
 uniform float u_radius;
+
+varying vec2 textureCord;
 
 void main() {
     mat3 rotationLatitude = mat3(
@@ -48,7 +47,8 @@ void main() {
 
     // Compute the final location on the sphere
     vec3 markerPointLocation = markerDirectionSphere * u_radius;
-    
-    gl_Position = u_projection * u_matrix * (vertexPosition + vec4(markerPointLocation.xyz, 0.0));
+
+    gl_PointSize = 20.0;
+    gl_Position = u_matrix * (vertexPosition + vec4(markerPointLocation.xy, markerPointLocation.z - u_radius, 0.0));
     textureCord = a_textureCord;
 }

@@ -35,8 +35,36 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
 
+    float points[] = {
+            0, 0, 0, // position
+            0, 0 // latitude and longitude
+    };
+
+    auto titlesMapShader = shadersBucket.titlesMapShader;
+    glUseProgram(titlesMapShader->program);
+    glUniformMatrix4fv(titlesMapShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+    glUniform4f(titlesMapShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+    glUniform1i(titlesMapShader->getTextureLocation(), 0);
+    glUniform3f(titlesMapShader->getColorLocation(), 1.0, 0.0, 0.0);
+    glVertexAttribPointer(titlesMapShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(titlesMapShader->getTextureCord());
+    glVertexAttribPointer(titlesMapShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, points);
+    glEnableVertexAttribArray(titlesMapShader->getPosLocation());
+    glVertexAttribPointer(titlesMapShader->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, 3, points);
+    glEnableVertexAttribArray(titlesMapShader->getLatLonLocation());
+    Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
+    Eigen::Vector3f axisLat = fromLatLonToSpherePos.axisLatitude.cast<float>();
+    Eigen::Vector3f pointOnSphere = fromLatLonToSpherePos.pointOnSphere.cast<float>();
+    glUniform3f(titlesMapShader->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+    glUniform3f(titlesMapShader->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+    glUniform3f(titlesMapShader->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+    glUniform1f(titlesMapShader->getRadiusLocation(), mapNumbers.radius);
+    glDrawArrays(GL_POINTS, 0, 1);
+    return;
+
     // Если количество маркеров другое то пересоздаем буффера
-    if (previousFrameTitlesSize != markerMapTitles.size()) {
+    //if (previousFrameTitlesSize != markerMapTitles.size()) {
+    if (true) {
         previousFrameTitlesSize = markerMapTitles.size();
 
         unsigned int symbolsAmount = 0;

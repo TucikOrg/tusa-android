@@ -52,6 +52,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     spaceDarkShader = std::shared_ptr<SpaceDarkShader>(new SpaceDarkShader(
             assetManager, "shaders/space_dark.vert", "shaders/space_dark.frag"
     ));
+    titlesMapShader = std::shared_ptr<TitleMapShader>(new TitleMapShader(
+            assetManager, "shaders/titles_map.vert", "shaders/titles_map.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {
