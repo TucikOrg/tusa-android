@@ -16,6 +16,7 @@
 #include "MapNumbers.h"
 #include "MarkerMapTitle.h"
 #include "MapSymbols.h"
+#include "MapTile.h"
 
 class Markers {
 public:
@@ -27,18 +28,21 @@ public:
     void drawMarkers(ShadersBucket& shadersBucket,
                      Eigen::Matrix4f pv,
                      MapNumbers& mapNumbers,
-                     std::vector<MarkerMapTitle*> markerMapTitles,
+                     std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
                      MapCamera& mapCamera
     );
     bool hasMarker(std::string key);
 private:
     std::map<std::string, UserMarker> userMarkers = {};
+    std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkers = {};
 
     GLuint titlesVBO;
     GLuint titlesIBO;
     size_t iboSize = 0;
     size_t refreshTitlesKey = 0;
+
+    void markersHandleThread();
 };
 
 

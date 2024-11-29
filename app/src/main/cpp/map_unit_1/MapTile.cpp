@@ -275,24 +275,57 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 auto fontSize = style.getFontSize(styleIndex);
                 auto visibleZoom = style.getVisibleZoom(styleIndex);
                 if (pointHandler.points.size() == 1 && !name.empty()) {
+//                    if (name.find("Штаты") != std::string::npos) {
+//                        auto fid = featureId;
+//                        std::string className = "";
+//                        std::string type = "";
+//                        std::string worldview = "";
+//                        uint64_t symbolRank;
+//                        uint64_t filterRank;
+//                        for (auto prop : props) {
+//                            if (prop.first == "class") {
+//                                className = boost::get<std::string>(prop.second);
+//                            }
+//                            if (prop.first == "type") {
+//                                type = boost::get<std::string>(prop.second);
+//                            }
+//                            if (prop.first == "symbolrank") {
+//                                symbolRank = boost::get<uint64_t>(prop.second);
+//                            }
+//                            if (prop.first == "filterRank") {
+//                                filterRank = boost::get<uint64_t>(prop.second);
+//                            }
+//                            if (prop.first == "worldview") {
+//                                worldview = boost::get<std::string>(prop.second);
+//                            }
+//                        }
+//                        int x = getX();
+//                        int y = getY();
+//                        int z = getZ();
+//                        auto point = pointHandler.points[0];
+//                        float longitude;
+//                        float latitude;
+//                        latAndLonFromTilePoint(point, latitude, longitude);
+//                        latAndLonFromTilePoint(point, latitude, longitude);
+//                    }
                     auto point = pointHandler.points[0];
-                    float inTilePortion = FLOAT(point.x) / FLOAT(extent);
-                    float mapXTilePosition = inTilePortion + getX();
-                    int n = pow(2, z);
-                    double mapXTilePotion = static_cast<double>(mapXTilePosition) / n;
-                    float longitude = mapXTilePotion * (2 * M_PI) - M_PI;
+                    float longitude;
+                    float latitude;
+                    latAndLonFromTilePoint(point, latitude, longitude);
 
-                    float inTilePortionY = FLOAT(point.y) / FLOAT(extent);
-                    float mapYTilePosition = inTilePortionY + getY();
-                    double mapYTilePortion = 1.0 - static_cast<double>(mapYTilePosition) / n;
-                    float latitude = Utils::EPSG3857_to_EPSG4326_latitude(mapYTilePortion * (2 * M_PI) - M_PI);
-                    resultMarkerTitles.push_back(MarkerMapTitle(
+                    // временно символ заменяем Надо потом как-то ё научится рендрить
+                    wchar_t old_char = L'ё';
+                    wchar_t new_char = L'е';
+                    std::replace(wName.begin(), wName.end(), old_char, new_char);
+
+                    resultMarkerTitles[featureId] = MarkerMapTitle(
                             wName,
                             latitude,
                             longitude,
                             fontSize,
-                            visibleZoom
-                    ));
+                            visibleZoom,
+                            featureId
+                    );
                 }
             }
         }
@@ -483,9 +516,26 @@ bool MapTile::coverOneOther(int x1, int y1, int z1, int x2, int y2, int z2) {
 }
 
 void MapTile::latAndLonFromTilePoint(vtzero::point point, float& latitude, float& longitude) {
-    float inTilePortion = FLOAT(point.x) / FLOAT(extent);
-    float mapXTilePosition = inTilePortion + getX();
-    int n = pow(2, z);
+    int useTileX = getX();
+    int n = pow(2, getZ());
+    int32_t x = point.x;
+    int tilesShift = point.x / 4096;
+    if (point.x < 0) {
+        tilesShift += 1;
+        x = 4096 - fmod(abs(point.x), 4096);
+        useTileX -= tilesShift;
+    } else if (point.x > 4096) {
+        x = fmod(point.x, 4096);
+        useTileX += tilesShift;
+    }
+    useTileX = fmod(useTileX, n);
+    if (useTileX < 0) {
+        useTileX += n;
+    }
+
+
+    float inTilePortion = FLOAT(x) / FLOAT(extent);
+    float mapXTilePosition = inTilePortion + useTileX;
     double mapXTilePotion = static_cast<double>(mapXTilePosition) / n;
     longitude = mapXTilePotion * (2 * M_PI) - M_PI;
 

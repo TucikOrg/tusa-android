@@ -127,21 +127,10 @@ void MapRenderer::renderFrame() {
     }
 
 
-    std::unordered_map<std::wstring, void*> titles = {};
-    std::vector<MarkerMapTitle*> markerMapTitles = {};
-    for (auto& tile: tiles) {
-        auto tileData = tile.second;
-        for (auto& markerTile : tileData->resultMarkerTitles) {
-            markerMapTitles.push_back(&markerTile);
-            titles[markerTile.wname] = nullptr;
-        }
-    }
-    if (markerMapTitles.empty() == false) {
-        savedMarkerMapTitles = markerMapTitles;
-    }
+
 
     markers.drawMarkers(shadersBucket, mn.pvFloat,
-                        mn, savedMarkerMapTitles, mapSymbols, mapCamera
+                        mn, tiles, mapSymbols, mapCamera
     );
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);

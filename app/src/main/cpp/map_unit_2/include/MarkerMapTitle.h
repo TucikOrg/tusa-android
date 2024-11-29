@@ -14,19 +14,23 @@
 
 class MarkerMapTitle {
 public:
+    MarkerMapTitle() {
+
+    }
     MarkerMapTitle(
         std::wstring wname,
         float latitude,
         float longitude,
         float fontSize,
-        std::unordered_map<short, void*> visibleZoom
+        std::unordered_map<short, void*> visibleZoom,
+        uint64_t featureId
     ):
         wname(wname),
         latitude(latitude),
         longitude(longitude),
         fontSize(fontSize),
-        visibleZoom(visibleZoom) {
-
+        visibleZoom(visibleZoom),
+        featureId(featureId) {
     }
 
     void draw(
@@ -44,6 +48,7 @@ public:
     float longitude;
     float fontSize;
     std::unordered_map<short, void*> visibleZoom;
+    uint64_t featureId;
 };
 
 

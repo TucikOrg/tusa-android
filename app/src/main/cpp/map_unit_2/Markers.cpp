@@ -28,17 +28,43 @@ void Markers::addMarker(
 void Markers::drawMarkers(ShadersBucket& shadersBucket,
                           Eigen::Matrix4f pv,
                           MapNumbers& mapNumbers,
-                          std::vector<MarkerMapTitle*> markerMapTitles,
+                          std::unordered_map<uint64_t, MapTile*> tiles,
                           MapSymbols& mapSymbols,
                           MapCamera& mapCamera
 ) {
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
 
+    std::unordered_map<uint64_t, MarkerMapTitle*> markerMapTitles = {};
+    for (auto& tile: tiles) {
+        auto tileData = tile.second;
+        for (auto& markerTile : tileData->resultMarkerTitles) {
+            if (markerMapTitles.find(markerTile.first) != markerMapTitles.end()) {
+                continue;
+            }
+            markerMapTitles[markerTile.first] = &markerTile.second;
+        }
+    }
+
+    for (auto markerPair: markerMapTitles) {
+        auto marker = markerPair.second;
+        if (marker->wname == L"Соединённые Штаты") {
+            int i = 1;
+        }
+        titleMarkers[marker->featureId] = marker;
+    }
+
     unsigned int symbolsAmount = 0;
     unsigned int symbolsDataSize = 0;
     std::vector<MarkerMapTitle*> render = {};
-    for (auto marker : markerMapTitles) {
+    for (auto markerPair : titleMarkers) {
+        auto marker = markerPair.second;
+        if (marker->wname == L"Соединённые Штаты") {
+            int i = 1;
+            auto fid = marker->featureId;
+            auto& longitude = marker->longitude;
+            int n = 0;
+        }
         auto& visibleZoom = marker->visibleZoom;
         auto& latitude = marker->latitude;
         auto& longitude = marker->longitude;
@@ -58,8 +84,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 
         render.push_back(marker);
     }
-    float scale = mapNumbers.scale * 0.016;
 
+    float scale = mapNumbers.scale * 0.016;
     // Если количество маркеров другое то пересоздаем буффера
     if (refreshTitlesKey != symbolsAmount) {
         refreshTitlesKey = symbolsAmount;
@@ -74,6 +100,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             auto& fontSize = marker->fontSize;
             auto& latitude = marker->latitude;
             auto& longitude = marker->longitude;
+
 
             float symbolScale = 1.0;
             std::vector<std::tuple<Symbol, float, float, float>> forRender {};
@@ -94,6 +121,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 if (textureHeight < h + top) textureHeight = h + top;
                 forRender.push_back({symbol, w, h, xPixelsShift});
             }
+
+
 
             float halfWidth = textureWidth / 2.0;
             float halfHeight = textureHeight / 2.0;
@@ -122,6 +151,14 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 
                 x += pixelsShift;
             }
+
+            Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude).cast<float>();
+            float markerX = markerPoint.x();
+            float markerY = markerPoint.y();
+            float markerZ = markerPoint.z();
+            Eigen::Vector3f leftBottomTextPoint = Eigen::Vector3f { markerX - halfWidth, markerY - halfHeight, markerZ };
+            Eigen::Vector3f rightTopTextPoint = Eigen::Vector3f { markerX + halfWidth, markerY + halfHeight, markerZ };
+
         }
 
         std::vector<unsigned int> indices(symbolsAmount * 6);
@@ -179,7 +216,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     glUniform3f(titlesMapShader->getColorLocation(), 0, 0, 0);
     glUniform1f(titlesMapShader->getBorderLocation(), -2.0);
     glDrawElements(GL_TRIANGLES, iboSize, GL_UNSIGNED_INT, 0);
-
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
@@ -227,4 +263,14 @@ void Markers::updateMarkerAvatar(std::string key, unsigned char *imageData, off_
 void Markers::initGL() {
     glGenBuffers(1, &titlesVBO);
     glGenBuffers(1, &titlesIBO);
+
+    std::thread markersHandleThread([this] { this->markersHandleThread(); });
+    markersHandleThread.detach();
+}
+
+void Markers::markersHandleThread() {
+    while(true) {
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    }
 }

@@ -59,12 +59,12 @@ public:
     int getZ() {return z; };
 
     bool uploadedToGPU = false;
-    std::map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
-    std::map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
-    std::map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
-    std::map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
-    std::map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
-    std::vector<MarkerMapTitle> resultMarkerTitles;
+    std::unordered_map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
+    std::unordered_map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
+    std::unordered_map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
+    std::unordered_map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
+    std::unordered_map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
+    std::unordered_map<uint64_t, MarkerMapTitle> resultMarkerTitles;
     std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
 
     std::vector<float> lastPointsTest = {};
