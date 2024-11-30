@@ -17,6 +17,17 @@
 #include "MarkerMapTitle.h"
 #include "MapSymbols.h"
 #include "MapTile.h"
+#include "DrawTitlesThreadInput.h"
+
+struct WStringHash {
+    std::size_t operator()(const std::wstring& str) const {
+        std::size_t hash = 0;
+        for (wchar_t c : str) {
+            hash = hash * 31 + c;
+        }
+        return hash;
+    }
+};
 
 class Markers {
 public:
@@ -30,12 +41,17 @@ public:
                      MapNumbers& mapNumbers,
                      std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
-                     MapCamera& mapCamera
+                     MapCamera& mapCamera,
+                     MapFpsCounter& mapFpsCounter,
+                     bool canRefreshMarkers
     );
     bool hasMarker(std::string key);
+    void doubleTap();
 private:
     std::map<std::string, UserMarker> userMarkers = {};
-    std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkers = {};
+    std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkersForRenderStorage = {};
+
+    DrawTitlesThreadInput drawTitlesThreadInput;
 
     GLuint titlesVBO;
     GLuint titlesIBO;

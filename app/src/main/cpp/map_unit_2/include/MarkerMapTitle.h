@@ -23,14 +23,16 @@ public:
         float longitude,
         float fontSize,
         std::unordered_map<short, void*> visibleZoom,
-        uint64_t featureId
+        uint64_t featureId,
+        uint64_t placeLabelId
     ):
         wname(wname),
         latitude(latitude),
         longitude(longitude),
         fontSize(fontSize),
         visibleZoom(visibleZoom),
-        featureId(featureId) {
+        featureId(featureId),
+        placeLabelId(placeLabelId) {
     }
 
     void draw(
@@ -49,6 +51,9 @@ public:
     float fontSize;
     std::unordered_map<short, void*> visibleZoom;
     uint64_t featureId;
+    float invertAnimationUnit = 0;
+    float startAnimationElapsedTime = 0;
+    uint64_t placeLabelId;
 };
 
 

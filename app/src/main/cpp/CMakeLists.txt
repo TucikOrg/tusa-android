@@ -96,6 +96,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/ByLayersDraw.cpp
         map_unit_2/IntersectionBox.cpp
         map_unit_2/DrawSymbol.cpp
+        map_unit_2/DrawTitlesThreadInput.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

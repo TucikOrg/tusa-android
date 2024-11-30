@@ -5,6 +5,8 @@ attribute vec2 a_textureCord;
 attribute vec2 a_latLon;
 attribute vec2 a_shift;
 attribute vec2 a_border_direction;
+attribute float a_startAnimationElapsedTime;
+attribute float a_invertAnimationUnit;
 
 uniform float u_border;
 uniform float u_scale;
@@ -15,6 +17,8 @@ uniform vec3 u_pointOnSphere;
 uniform float u_radius;
 
 varying vec2 textureCord;
+varying float startAnimationElapsedTime;
+varying float invertAnimationUnit;
 
 void main() {
     mat3 rotationLatitude = mat3(
@@ -56,4 +60,6 @@ void main() {
     gl_PointSize = 20.0;
     gl_Position = u_matrix * vec4(markerPointLocation.xy + (a_shift + a_border_direction * u_border) * u_scale, markerPointLocation.z - u_radius, 1.0);
     textureCord = a_textureCord;
+    startAnimationElapsedTime = a_startAnimationElapsedTime;
+    invertAnimationUnit = a_invertAnimationUnit;
 }

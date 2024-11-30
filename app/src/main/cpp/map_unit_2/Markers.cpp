@@ -25,164 +25,200 @@ void Markers::addMarker(
     userMarkers[key] = { textureId, latitude, longitude };
 }
 
+bool doIt = true;
+
+void Markers::doubleTap() {
+    doIt = !doIt;
+}
+
 void Markers::drawMarkers(ShadersBucket& shadersBucket,
                           Eigen::Matrix4f pv,
                           MapNumbers& mapNumbers,
                           std::unordered_map<uint64_t, MapTile*> tiles,
                           MapSymbols& mapSymbols,
-                          MapCamera& mapCamera
+                          MapCamera& mapCamera,
+                          MapFpsCounter& mapFpsCounter,
+                          bool canRefreshMarkers
 ) {
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
+    float animationTime = 0.5;
+    float scale = mapNumbers.scale * 0.016;
 
-    std::unordered_map<uint64_t, MarkerMapTitle*> markerMapTitles = {};
-    for (auto& tile: tiles) {
-        auto tileData = tile.second;
-        for (auto& markerTile : tileData->resultMarkerTitles) {
-            if (markerMapTitles.find(markerTile.first) != markerMapTitles.end()) {
-                continue;
-            }
-            markerMapTitles[markerTile.first] = &markerTile.second;
-        }
-    }
-
-    for (auto markerPair: markerMapTitles) {
-        auto marker = markerPair.second;
-        if (marker->wname == L"Соединённые Штаты") {
-            int i = 1;
-        }
-        titleMarkers[marker->featureId] = marker;
-    }
-
-    unsigned int symbolsAmount = 0;
-    unsigned int symbolsDataSize = 0;
-    std::vector<MarkerMapTitle*> render = {};
-    for (auto markerPair : titleMarkers) {
-        auto marker = markerPair.second;
-        if (marker->wname == L"Соединённые Штаты") {
-            int i = 1;
-            auto fid = marker->featureId;
-            auto& longitude = marker->longitude;
-            int n = 0;
-        }
-        auto& visibleZoom = marker->visibleZoom;
-        auto& latitude = marker->latitude;
-        auto& longitude = marker->longitude;
+    if (canRefreshMarkers) {
         auto& currentZoom = mapNumbers.zoom;
         auto camLatitude = mapNumbers.camLatitude;
         auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
-        double tooFarDelta = M_PI / pow(2, currentZoom);
-        tooFarDelta = M_PI / 2;
-
-        bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
-        bool tooFarSkip = abs(camLatitude - latitude) > tooFarDelta || abs(camLongitudeNormalized - longitude) > tooFarDelta;
-        if (visibleZoomSkip || tooFarSkip) {
-            continue;
+        double tooFarDeltaLatitude = M_PI / pow(2, currentZoom);
+        double tooFarDeltaLongitude = tooFarDeltaLatitude;
+        if (currentZoom < 2.5 && abs(camLatitude) > M_PI / 3) {
+            tooFarDeltaLongitude = 2 * M_PI;
+            tooFarDeltaLatitude = M_PI / 4;
         }
-        symbolsAmount += marker->wname.size();
-        symbolsDataSize += marker->wname.size() * 32;
 
-        render.push_back(marker);
-    }
-
-    float scale = mapNumbers.scale * 0.016;
-    // Если количество маркеров другое то пересоздаем буффера
-    if (refreshTitlesKey != symbolsAmount) {
-        refreshTitlesKey = symbolsAmount;
-
-        auto atlasW = mapSymbols.atlasWidth;
-        auto atlasH = mapSymbols.atlasHeight;
-        std::vector<float> symbolsData(symbolsDataSize);
-        unsigned int symbolsVerticesIndex = 0;
-
-        for (auto marker : render) {
-            auto& text = marker->wname;
-            auto& fontSize = marker->fontSize;
-            auto& latitude = marker->latitude;
-            auto& longitude = marker->longitude;
-
-
-            float symbolScale = 1.0;
-            std::vector<std::tuple<Symbol, float, float, float>> forRender {};
-
-            float textureWidth = 0;
-            float textureHeight = 0;
-            float maxTop = 0;
-            std::string::const_iterator iterator;
-            for (auto charSymbol : text) {
-                Symbol symbol = mapSymbols.getSymbol(charSymbol);
-                float w = symbol.width * symbolScale;
-                float h = symbol.rows * symbolScale;
-                float top = h - symbol.bitmapTop * symbolScale;
-                if (top > maxTop) maxTop = top;
-
-                float xPixelsShift = (symbol.advance >> 6) * symbolScale;
-                textureWidth += xPixelsShift;
-                if (textureHeight < h + top) textureHeight = h + top;
-                forRender.push_back({symbol, w, h, xPixelsShift});
-            }
-
-
-
-            float halfWidth = textureWidth / 2.0;
-            float halfHeight = textureHeight / 2.0;
-            float x = 0;
-            float y = maxTop;
-            for(auto& charRender : forRender) {
-                Symbol symbol = std::get<0>(charRender);
-                float w = std::get<1>(charRender);
-                float h = std::get<2>(charRender);
-                float pixelsShift = std::get<3>(charRender);
-                float xPos = x + symbol.bitmapLeft * symbolScale - halfWidth;
-                float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) - halfHeight;
-                auto startU = symbol.startU(atlasW);
-                auto endU = symbol.endU(atlasW);
-                auto startV = symbol.startV(atlasH);
-                auto endV = symbol.endV(atlasH);
-                float data[] = {
-                        startU, startV, -latitude, -longitude,  xPos, yPos, -1, -1,
-                        endU, startV, -latitude, -longitude,  xPos + w, yPos, 1, -1,
-                        endU, endV, -latitude, -longitude,  xPos + w, yPos + h, 1, 1,
-                        startU, endV, -latitude, -longitude,  xPos, yPos + h, -1, 1,
-                };
-                for (float cord : data) {
-                    symbolsData[symbolsVerticesIndex++] = cord;
+        // отфильтрованные тайтлы которые нужно показать
+        std::unordered_map<uint64_t , MarkerMapTitle*> titlesToRender = {};
+        for (auto& tile: tiles) {
+            auto tileData = tile.second;
+            for (auto& markerTile : tileData->resultMarkerTitles) {
+                auto& marker = markerTile.second;
+                if (titlesToRender.count(marker.placeLabelId)) {
+                    continue;
                 }
 
-                x += pixelsShift;
+                auto& visibleZoom = marker.visibleZoom;
+                auto& latitude = marker.latitude;
+                auto& longitude = marker.longitude;
+
+                bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
+                bool tooFarSkip = abs(camLatitude - latitude) > tooFarDeltaLatitude || abs(camLongitudeNormalized - longitude) > tooFarDeltaLongitude;
+                if (visibleZoomSkip || tooFarSkip) {
+                    continue;
+                }
+
+                titlesToRender[marker.placeLabelId] = &markerTile.second;
+            }
+        }
+
+        float elapsedTime = mapFpsCounter.getTimeElapsed();
+        bool refresh = false;
+        // убираем то что уже не видно
+        for (auto it = titleMarkersForRenderStorage.begin(); it != titleMarkersForRenderStorage.end(); ) {
+            auto& marker = it->second;
+
+            if (elapsedTime - marker->startAnimationElapsedTime > animationTime && marker->invertAnimationUnit >= 0.5) {
+                it = titleMarkersForRenderStorage.erase(it);
+                continue;
             }
 
-            Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude).cast<float>();
-            float markerX = markerPoint.x();
-            float markerY = markerPoint.y();
-            float markerZ = markerPoint.z();
-            Eigen::Vector3f leftBottomTextPoint = Eigen::Vector3f { markerX - halfWidth, markerY - halfHeight, markerZ };
-            Eigen::Vector3f rightTopTextPoint = Eigen::Vector3f { markerX + halfWidth, markerY + halfHeight, markerZ };
-
+            auto notRender = titlesToRender.count(it->first) == 0;
+            if (notRender && marker->invertAnimationUnit <= 0.5) {
+                marker->invertAnimationUnit = 1.0;
+                marker->startAnimationElapsedTime = elapsedTime;
+                refresh = true;
+            }
+            ++it;
         }
 
-        std::vector<unsigned int> indices(symbolsAmount * 6);
-        iboSize = indices.size();
-        unsigned int currentPoint = 0;
-        for (int i = 0; i < symbolsAmount; i++) {
-            unsigned int skip = i * 6;
-            indices[skip + 0] = currentPoint + 0;
-            indices[skip + 1] = currentPoint + 1;
-            indices[skip + 2] = currentPoint + 2;
-            indices[skip + 3] = currentPoint + 0;
-            indices[skip + 4] = currentPoint + 2;
-            indices[skip + 5] = currentPoint + 3;
-            currentPoint += 4;
+        // добавляем новое
+        for (const auto& [key, marker] : titlesToRender) {
+            auto result = titleMarkersForRenderStorage.try_emplace(key, marker);
+            if (result.second) {
+                marker->invertAnimationUnit = 0.0;
+                marker->startAnimationElapsedTime = elapsedTime;
+                titleMarkersForRenderStorage[key] = marker;
+                refresh = true;
+            }
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, titlesVBO);
-        auto data = symbolsData.data();
-        auto size = symbolsData.size() * sizeof(float);
-        glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+        auto& resultTitles = titleMarkersForRenderStorage;
+        // пересоздаем буффер
+        if (refresh) {
+            unsigned int symbolsAmount = 0;
+            unsigned int symbolsDataSize = 0;
+            unsigned int symbolsInvertAnimationUnitSize = 0;
+            for (auto title : resultTitles) {
+                auto& marker = title.second;
+                symbolsAmount += marker->wname.size();
+                symbolsDataSize += marker->wname.size() * 40;
+                symbolsInvertAnimationUnitSize += marker->wname.size() * 8;
+            }
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, titlesIBO);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+            auto atlasW = mapSymbols.atlasWidth;
+            auto atlasH = mapSymbols.atlasHeight;
+            std::vector<float> symbolsData(symbolsDataSize);
+            std::vector<uint8_t> symbolsInvertAnimationUnit(symbolsInvertAnimationUnitSize);
+            unsigned int symbolsVerticesIndex = 0;
+
+            for (auto markerPair : resultTitles) {
+                auto& marker = markerPair.second;
+                auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
+                auto& text = marker->wname;
+                auto& fontSize = marker->fontSize;
+                auto& latitude = marker->latitude;
+                auto& longitude = marker->longitude;
+
+                float symbolScale = 1.0;
+                std::vector<std::tuple<Symbol, float, float, float>> forRender {};
+
+                float textureWidth = 0;
+                float textureHeight = 0;
+                float maxTop = 0;
+                std::string::const_iterator iterator;
+                for (auto charSymbol : text) {
+                    Symbol symbol = mapSymbols.getSymbol(charSymbol);
+                    float w = symbol.width * symbolScale;
+                    float h = symbol.rows * symbolScale;
+                    float top = h - symbol.bitmapTop * symbolScale;
+                    if (top > maxTop) maxTop = top;
+
+                    float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+                    textureWidth += xPixelsShift;
+                    if (textureHeight < h + top) textureHeight = h + top;
+                    forRender.push_back({symbol, w, h, xPixelsShift});
+                }
+
+                float halfWidth = textureWidth / 2.0;
+                float halfHeight = textureHeight / 2.0;
+                float x = 0;
+                float y = maxTop;
+                for(auto& charRender : forRender) {
+                    Symbol symbol = std::get<0>(charRender);
+                    float w = std::get<1>(charRender);
+                    float h = std::get<2>(charRender);
+                    float pixelsShift = std::get<3>(charRender);
+                    float xPos = x + symbol.bitmapLeft * symbolScale - halfWidth;
+                    float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) - halfHeight;
+                    auto startU = symbol.startU(atlasW);
+                    auto endU = symbol.endU(atlasW);
+                    auto startV = symbol.startV(atlasH);
+                    auto endV = symbol.endV(atlasH);
+                    float data[] = {
+                            startU, startV, -latitude, -longitude,  xPos, yPos, -1, -1, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            endU, startV, -latitude, -longitude,  xPos + w, yPos, 1, -1, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            endU, endV, -latitude, -longitude,  xPos + w, yPos + h, 1, 1, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            startU, endV, -latitude, -longitude,  xPos, yPos + h, -1, 1, startAnimationElapsedTime, marker->invertAnimationUnit,
+                    };
+                    for (float cord : data) {
+                        symbolsData[symbolsVerticesIndex++] = cord;
+                    }
+
+                    x += pixelsShift;
+                }
+
+                Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude).cast<float>();
+                float markerX = markerPoint.x();
+                float markerY = markerPoint.y();
+                float markerZ = markerPoint.z();
+                Eigen::Vector3f leftBottomTextPoint = Eigen::Vector3f { markerX - halfWidth, markerY - halfHeight, markerZ };
+                Eigen::Vector3f rightTopTextPoint = Eigen::Vector3f { markerX + halfWidth, markerY + halfHeight, markerZ };
+
+            }
+
+            std::vector<unsigned int> indices(symbolsAmount * 6);
+            iboSize = indices.size();
+            unsigned int currentPoint = 0;
+            for (int i = 0; i < symbolsAmount; i++) {
+                unsigned int skip = i * 6;
+                indices[skip + 0] = currentPoint + 0;
+                indices[skip + 1] = currentPoint + 1;
+                indices[skip + 2] = currentPoint + 2;
+                indices[skip + 3] = currentPoint + 0;
+                indices[skip + 4] = currentPoint + 2;
+                indices[skip + 5] = currentPoint + 3;
+                currentPoint += 4;
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, titlesVBO);
+            auto data = symbolsData.data();
+            auto size = symbolsData.size() * sizeof(float);
+            glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, titlesIBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+        }
     }
+
 
     CSSColorParser::Color color = CSSColorParser::parse("rgb(0, 0, 0)");
     GLfloat red   = static_cast<GLfloat>(color.r) / 255;
@@ -201,23 +237,31 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     glUniformMatrix4fv(titlesMapShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
     glUniform1i(titlesMapShader->getTextureLocation(), 0);
     glBindBuffer(GL_ARRAY_BUFFER, titlesVBO);
-    glVertexAttribPointer(titlesMapShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), 0);
+    size_t stride = 10 * sizeof(float);
+    glVertexAttribPointer(titlesMapShader->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
     glEnableVertexAttribArray(titlesMapShader->getTextureCord());
-    glVertexAttribPointer(titlesMapShader->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(2 * sizeof(float)));
+    glVertexAttribPointer(titlesMapShader->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
     glEnableVertexAttribArray(titlesMapShader->getLatLonLocation());
-    glVertexAttribPointer(titlesMapShader->getShiftLocation(), 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(4 * sizeof(float)));
+    glVertexAttribPointer(titlesMapShader->getShiftLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
     glEnableVertexAttribArray(titlesMapShader->getShiftLocation());
-    glVertexAttribPointer(titlesMapShader->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(titlesMapShader->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(titlesMapShader->getBorderDirection());
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, titlesIBO);
+    glVertexAttribPointer(titlesMapShader->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
+    glEnableVertexAttribArray(titlesMapShader->getStartAnimationElapsedTimeLocation());
+    glVertexAttribPointer(titlesMapShader->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(9 * sizeof(float)));
+    glEnableVertexAttribArray(titlesMapShader->getInvertAnimationUnitLocation());
+    glUniform1f(titlesMapShader->getCurrentElapsedTimeLocation(), mapFpsCounter.getTimeElapsed());
+    glUniform1f(titlesMapShader->getAnimationTimeLocation(), animationTime);
     glUniform1f(titlesMapShader->getBorderLocation(), 0.0);
     glUniform3f(titlesMapShader->getColorLocation(), 1, 1, 1);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, titlesIBO);
     glDrawElements(GL_TRIANGLES, iboSize, GL_UNSIGNED_INT, 0);
     glUniform3f(titlesMapShader->getColorLocation(), 0, 0, 0);
     glUniform1f(titlesMapShader->getBorderLocation(), -2.0);
     glDrawElements(GL_TRIANGLES, iboSize, GL_UNSIGNED_INT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 
     for (auto marker : userMarkers) {
         marker.second.draw(

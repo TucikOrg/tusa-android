@@ -275,39 +275,39 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 auto fontSize = style.getFontSize(styleIndex);
                 auto visibleZoom = style.getVisibleZoom(styleIndex);
                 if (pointHandler.points.size() == 1 && !name.empty()) {
-//                    if (name.find("Штаты") != std::string::npos) {
-//                        auto fid = featureId;
-//                        std::string className = "";
-//                        std::string type = "";
-//                        std::string worldview = "";
-//                        uint64_t symbolRank;
-//                        uint64_t filterRank;
-//                        for (auto prop : props) {
-//                            if (prop.first == "class") {
-//                                className = boost::get<std::string>(prop.second);
-//                            }
-//                            if (prop.first == "type") {
-//                                type = boost::get<std::string>(prop.second);
-//                            }
-//                            if (prop.first == "symbolrank") {
-//                                symbolRank = boost::get<uint64_t>(prop.second);
-//                            }
-//                            if (prop.first == "filterRank") {
-//                                filterRank = boost::get<uint64_t>(prop.second);
-//                            }
-//                            if (prop.first == "worldview") {
-//                                worldview = boost::get<std::string>(prop.second);
-//                            }
-//                        }
-//                        int x = getX();
-//                        int y = getY();
-//                        int z = getZ();
-//                        auto point = pointHandler.points[0];
-//                        float longitude;
-//                        float latitude;
-//                        latAndLonFromTilePoint(point, latitude, longitude);
-//                        latAndLonFromTilePoint(point, latitude, longitude);
-//                    }
+                    if (name.find("Россия") != std::string::npos) {
+                        auto fid = featureId;
+                        std::string className = "";
+                        std::string type = "";
+                        std::string worldview = "";
+                        uint64_t symbolRank;
+                        uint64_t filterRank;
+                        for (auto prop : props) {
+                            if (prop.first == "class") {
+                                className = boost::get<std::string>(prop.second);
+                            }
+                            if (prop.first == "type") {
+                                type = boost::get<std::string>(prop.second);
+                            }
+                            if (prop.first == "symbolrank") {
+                                symbolRank = boost::get<uint64_t>(prop.second);
+                            }
+                            if (prop.first == "filterrank") {
+                                filterRank = boost::get<uint64_t>(prop.second);
+                            }
+                            if (prop.first == "worldview") {
+                                worldview = boost::get<std::string>(prop.second);
+                            }
+                        }
+                        int x = getX();
+                        int y = getY();
+                        int z = getZ();
+                        auto point = pointHandler.points[0];
+                        float longitude;
+                        float latitude;
+                        latAndLonFromTilePoint(point, latitude, longitude);
+                        latAndLonFromTilePoint(point, latitude, longitude);
+                    }
                     auto point = pointHandler.points[0];
                     float longitude;
                     float latitude;
@@ -318,13 +318,18 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     wchar_t new_char = L'е';
                     std::replace(wName.begin(), wName.end(), old_char, new_char);
 
+                    uint32_t latBits, lonBits;
+                    memcpy(&latBits, &latitude, sizeof(float));
+                    memcpy(&lonBits, &longitude, sizeof(float));
+                    uint64_t placeLabelKey = (static_cast<uint64_t>(latBits) << 32) | lonBits;
                     resultMarkerTitles[featureId] = MarkerMapTitle(
                             wName,
                             latitude,
                             longitude,
                             fontSize,
                             visibleZoom,
-                            featureId
+                            featureId,
+                            placeLabelKey
                     );
                 }
             }

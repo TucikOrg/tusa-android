@@ -127,10 +127,10 @@ void MapRenderer::renderFrame() {
     }
 
 
-
-
+    bool canRefreshTitles = backgroundTiles.size() == 0;
     markers.drawMarkers(shadersBucket, mn.pvFloat,
-                        mn, tiles, mapSymbols, mapCamera
+                        mn, tiles, mapSymbols, mapCamera,
+                        mapFpsCounter, canRefreshTitles
     );
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
@@ -184,6 +184,7 @@ void MapRenderer::scale(float scaleFactor) {
 
 void MapRenderer::doubleTap() {
     mapControls.doubleTap();
+    markers.doubleTap();
 }
 
 MapRenderer::MapRenderer() {
