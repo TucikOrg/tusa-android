@@ -33,7 +33,7 @@ bool Grid::insert(Box box) {
             int next = node->elementIndex;
             while(next != -1) {
                 auto element = elements[next];
-                auto& otherBox = boxes[element.boxId];
+                auto& otherBox = boxes[toBoxId[element.forToBoxId]];
                 bool intersects = otherBox.intersects(box);
                 if (intersects) return false;
                 next = element.next;
@@ -48,7 +48,8 @@ bool Grid::insert(Box box) {
             int index = cellX + cellY * widthCellsCount;
             auto node = nodes[index];
 
-            elements.push_back(GridElement { -1, box.titleId });
+            toBoxId[increment] = box.titleId;
+            elements.push_back(GridElement { -1, increment++ });
             if (node == nullptr) {
                 nodes[index] = new GridNode {static_cast<int>(elements.size() - 1)};
                 continue;
