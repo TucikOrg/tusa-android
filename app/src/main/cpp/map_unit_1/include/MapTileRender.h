@@ -17,7 +17,6 @@
 #include "MapTest.h"
 #include "RenderTextureData.h"
 #include "SmoothMapTextureRender.h"
-#include "IntersectionBox.h"
 #include "DrawSymbol.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>

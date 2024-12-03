@@ -45,6 +45,10 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     float animationTime = 0.5;
     float scale = mapNumbers.scale * 0.016;
 
+    float screenWidth = mapCamera.getScreenW();
+    float screenHeight = mapCamera.getScreenH();
+    //std::vector<float> testVertices = {};
+
     if (canRefreshMarkers) {
         auto& currentZoom = mapNumbers.zoom;
         auto camLatitude = mapNumbers.camLatitude;
@@ -56,6 +60,11 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             tooFarDeltaLatitude = M_PI / 4;
         }
 
+        Grid grid = {};
+        int widthCount = 3;
+        int heightCount = screenHeight / screenWidth * widthCount;
+        grid.init(screenWidth, screenHeight, widthCount, heightCount);
+
         // отфильтрованные тайтлы которые нужно показать
         std::unordered_map<uint64_t , MarkerMapTitle*> titlesToRender = {};
         for (auto& tile: tiles) {
@@ -65,6 +74,11 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 if (titlesToRender.count(marker.placeLabelId)) {
                     continue;
                 }
+                // test
+//                if (marker.wname != L"Беларусь" && marker.wname != L"Казахстан"
+//                    ) {
+//                    continue;
+//                }
 
                 auto& visibleZoom = marker.visibleZoom;
                 auto& latitude = marker.latitude;
@@ -76,9 +90,66 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     continue;
                 }
 
-                titlesToRender[marker.placeLabelId] = &markerTile.second;
+                float symbolScale = 1.0;
+                float textureWidth = 0;
+                float textureHeight = 0;
+                std::string::const_iterator iterator;
+                for (auto charSymbol : marker.wname) {
+                    Symbol symbol = mapSymbols.getSymbol(charSymbol);
+                    float w = symbol.width * symbolScale;
+                    float h = symbol.rows * symbolScale;
+                    float top = h - symbol.bitmapTop * symbolScale;
+                    float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+                    textureWidth += xPixelsShift;
+                    if (textureHeight < h + top) textureHeight = h + top;
+                }
+
+                float halfWidth = textureWidth / 2.0 * scale;
+                float halfHeight = textureHeight / 2.0 * scale;
+                Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude).cast<float>();
+                float markerX = markerPoint.x();
+                float markerY = markerPoint.y();
+                float markerZ = markerPoint.z();
+                Eigen::Vector4f leftBottomTextPoint = Eigen::Vector4f { markerX - halfWidth, markerY - halfHeight, markerZ, 1.0 };
+                Eigen::Vector4f rightTopTextPoint = Eigen::Vector4f { markerX + halfWidth, markerY + halfHeight, markerZ, 1.0 };
+                Eigen::Vector4f PClipLeftBottom = pv * leftBottomTextPoint;
+                Eigen::Vector4f PClipRightTop = pv * rightTopTextPoint;
+                Eigen::Vector3f PNdcLeftBottom;
+                PNdcLeftBottom.x() = PClipLeftBottom.x() / PClipLeftBottom.w();
+                PNdcLeftBottom.y() = PClipLeftBottom.y() / PClipLeftBottom.w();
+                PNdcLeftBottom.z() = PClipLeftBottom.z() / PClipLeftBottom.w();
+                Eigen::Vector3f PNdcRightTop;
+                PNdcRightTop.x() = PClipRightTop.x() / PClipRightTop.w();
+                PNdcRightTop.y() = PClipRightTop.y() / PClipRightTop.w();
+                PNdcRightTop.z() = PClipRightTop.z() / PClipRightTop.w();
+                float leftBottomScreenX = (PNdcLeftBottom.x() + 1.0f) * 0.5f * screenWidth;
+                float leftBottomScreenY = (1.0f - PNdcLeftBottom.y()) * 0.5f * screenHeight;
+                float rightTopScreenX = (PNdcRightTop.x() + 1.0f) * 0.5f * screenWidth;
+                float rightTopScreenY = (1.0f - PNdcRightTop.y()) * 0.5f * screenHeight;
+
+                if (abs(leftBottomScreenX) > screenWidth * 2 || abs(leftBottomScreenY) > screenHeight * 2) {
+                    continue;
+                }
+
+//                testVertices.push_back(leftBottomScreenX);
+//                testVertices.push_back(leftBottomScreenY);
+//                testVertices.push_back(rightTopScreenX);
+//                testVertices.push_back(rightTopScreenY);
+
+                auto box = Box {
+                        static_cast<int>(leftBottomScreenX), static_cast<int>(leftBottomScreenY),
+                        static_cast<int>(rightTopScreenX), static_cast<int>(rightTopScreenY),
+                        marker.placeLabelId
+                };
+                bool inserted = grid.insert(box);
+
+                if (inserted) {
+                    titlesToRender[marker.placeLabelId] = &markerTile.second;
+                }
             }
         }
+        grid.clean();
+
 
         float elapsedTime = mapFpsCounter.getTimeElapsed();
         bool refresh = false;
@@ -138,21 +209,19 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 auto& latitude = marker->latitude;
                 auto& longitude = marker->longitude;
 
-                float symbolScale = 1.0;
                 std::vector<std::tuple<Symbol, float, float, float>> forRender {};
-
                 float textureWidth = 0;
                 float textureHeight = 0;
                 float maxTop = 0;
                 std::string::const_iterator iterator;
                 for (auto charSymbol : text) {
                     Symbol symbol = mapSymbols.getSymbol(charSymbol);
-                    float w = symbol.width * symbolScale;
-                    float h = symbol.rows * symbolScale;
-                    float top = h - symbol.bitmapTop * symbolScale;
+                    float w = symbol.width;
+                    float h = symbol.rows;
+                    float top = h - symbol.bitmapTop;
                     if (top > maxTop) maxTop = top;
 
-                    float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+                    float xPixelsShift = (symbol.advance >> 6);
                     textureWidth += xPixelsShift;
                     if (textureHeight < h + top) textureHeight = h + top;
                     forRender.push_back({symbol, w, h, xPixelsShift});
@@ -167,8 +236,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     float w = std::get<1>(charRender);
                     float h = std::get<2>(charRender);
                     float pixelsShift = std::get<3>(charRender);
-                    float xPos = x + symbol.bitmapLeft * symbolScale - halfWidth;
-                    float yPos = (y - (symbol.rows - symbol.bitmapTop ) * symbolScale) - halfHeight;
+                    float xPos = x + symbol.bitmapLeft - halfWidth;
+                    float yPos = (y - (symbol.rows - symbol.bitmapTop )) - halfHeight;
                     auto startU = symbol.startU(atlasW);
                     auto endU = symbol.endU(atlasW);
                     auto startV = symbol.startV(atlasH);
@@ -185,14 +254,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 
                     x += pixelsShift;
                 }
-
-                Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude).cast<float>();
-                float markerX = markerPoint.x();
-                float markerY = markerPoint.y();
-                float markerZ = markerPoint.z();
-                Eigen::Vector3f leftBottomTextPoint = Eigen::Vector3f { markerX - halfWidth, markerY - halfHeight, markerZ };
-                Eigen::Vector3f rightTopTextPoint = Eigen::Vector3f { markerX + halfWidth, markerY + halfHeight, markerZ };
-
             }
 
             std::vector<unsigned int> indices(symbolsAmount * 6);
@@ -261,6 +322,19 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     glDrawElements(GL_TRIANGLES, iboSize, GL_UNSIGNED_INT, 0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
+//    Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
+//    Eigen::Matrix4f viewTest = mapCamera.createView();
+//    Eigen::Matrix4f pvTest = projectionTest * viewTest;
+//    auto plainShader = shadersBucket.plainShader;
+//    glUseProgram(plainShader->program);
+//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvTest.data());
+//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, testVertices.data());
+//    glEnableVertexAttribArray(plainShader->getPosLocation());
+//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+//    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+//    glDrawArrays(GL_POINTS, 0, testVertices.size() / 2);
 
 
     for (auto marker : userMarkers) {

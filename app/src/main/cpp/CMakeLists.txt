@@ -94,9 +94,12 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/SymbolInAtlas.cpp
         map_unit_2/PrepareCharAtlas.cpp
         map_unit_2/ByLayersDraw.cpp
-        map_unit_2/IntersectionBox.cpp
         map_unit_2/DrawSymbol.cpp
         map_unit_2/DrawTitlesThreadInput.cpp
+
+        grid/Grid.cpp
+        grid/GridNode.cpp
+        grid/GridElement.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
@@ -104,6 +107,7 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_1/include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_2/include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE grid/include)
 
 include(${PROJECT_SOURCE_DIR}/vendor/protozero.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/earcut.hpp.cmake)

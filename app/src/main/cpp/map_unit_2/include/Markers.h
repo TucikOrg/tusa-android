@@ -18,6 +18,8 @@
 #include "MapSymbols.h"
 #include "MapTile.h"
 #include "DrawTitlesThreadInput.h"
+#include "Box.h"
+#include "Grid.h"
 
 struct WStringHash {
     std::size_t operator()(const std::wstring& str) const {
