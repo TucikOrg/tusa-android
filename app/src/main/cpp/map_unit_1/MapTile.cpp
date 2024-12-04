@@ -318,6 +318,25 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     wchar_t new_char = L'е';
                     std::replace(wName.begin(), wName.end(), old_char, new_char);
 
+                    std::vector<std::tuple<Symbol, float, float, float>> forRender {};
+                    float symbolScale = 1.0;
+                    float textureWidth = 0;
+                    float textureHeight = 0;
+                    float maxTop = 0;
+                    std::string::const_iterator iterator;
+                    for (auto charSymbol : wName) {
+                        Symbol symbol = mapSymbols.getSymbol(charSymbol);
+                        float w = symbol.width * symbolScale;
+                        float h = symbol.rows * symbolScale;
+                        float top = h - symbol.bitmapTop * symbolScale;
+                        if (top > maxTop) maxTop = top;
+
+                        float xPixelsShift = (symbol.advance >> 6) * symbolScale;
+                        textureWidth += xPixelsShift;
+                        if (textureHeight < h + top) textureHeight = h + top;
+                        forRender.push_back({symbol, w, h, xPixelsShift});
+                    }
+
                     uint32_t latBits, lonBits;
                     memcpy(&latBits, &latitude, sizeof(float));
                     memcpy(&lonBits, &longitude, sizeof(float));
@@ -329,7 +348,11 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                             fontSize,
                             visibleZoom,
                             featureId,
-                            placeLabelKey
+                            placeLabelKey,
+                            textureWidth,
+                            textureHeight,
+                            forRender,
+                            maxTop
                     );
                 }
             }

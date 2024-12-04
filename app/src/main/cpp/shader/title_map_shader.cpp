@@ -21,6 +21,7 @@ TitleMapShader::TitleMapShader(AAssetManager *assetManager,
     a_border_direction = glGetAttribLocation(program, "a_border_direction");
     a_startAnimationElapsedTime = glGetAttribLocation(program, "a_startAnimationElapsedTime");
     a_invertAnimationUnit = glGetAttribLocation(program, "a_invertAnimationUnit");
+    a_fontSize = glGetAttribLocation(program, "a_fontSize");
 
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");

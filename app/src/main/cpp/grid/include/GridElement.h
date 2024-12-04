@@ -9,7 +9,7 @@
 
 struct GridElement {
 public:
-    int next = -1;
+    uint16_t next = 0;
     uint16_t forToBoxId;
 };
 

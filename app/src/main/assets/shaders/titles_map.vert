@@ -7,6 +7,7 @@ attribute vec2 a_shift;
 attribute vec2 a_border_direction;
 attribute float a_startAnimationElapsedTime;
 attribute float a_invertAnimationUnit;
+attribute float a_fontSize;
 
 uniform float u_border;
 uniform float u_scale;
@@ -58,7 +59,7 @@ void main() {
     vec3 markerPointLocation = markerDirectionSphere * u_radius;
 
     gl_PointSize = 20.0;
-    gl_Position = u_matrix * vec4(markerPointLocation.xy + (a_shift + a_border_direction * u_border) * u_scale, markerPointLocation.z - u_radius, 1.0);
+    gl_Position = u_matrix * vec4(markerPointLocation.xy + (a_shift + a_border_direction * u_border) * u_scale * a_fontSize, markerPointLocation.z - u_radius, 1.0);
     textureCord = a_textureCord;
     startAnimationElapsedTime = a_startAnimationElapsedTime;
     invertAnimationUnit = a_invertAnimationUnit;

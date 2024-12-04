@@ -126,7 +126,7 @@ void MapRenderer::renderFrame() {
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     }
 
-
+    //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
     markers.drawMarkers(shadersBucket, mn.pvFloat,
                         mn, tiles, mapSymbols, mapCamera,

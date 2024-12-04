@@ -29,6 +29,7 @@ public:
     GLint getStartAnimationElapsedTimeLocation() const { return a_startAnimationElapsedTime; }
     GLint getAnimationTimeLocation() const { return u_animationTime; }
     GLint getInvertAnimationUnitLocation() const { return a_invertAnimationUnit; }
+    GLint getFontSizeLocation() const { return a_fontSize; }
 
 private:
     GLint a_textureCord;
@@ -49,6 +50,7 @@ private:
     GLint a_shift;
     GLint a_border_direction;
     GLint a_invertAnimationUnit;
+    GLint a_fontSize;
 };
 
 

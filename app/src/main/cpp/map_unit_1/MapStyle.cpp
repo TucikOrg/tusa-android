@@ -347,24 +347,16 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         }
     }
 
-//    if (layerName == "place_label" && (type == "country") && symbolRank <= 2) {
+//    if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
 //        fontSize[currentIndex] = 0.016f;
 //        names[currentIndex] = name;
 //        visibleZoom[currentIndex] = fromToZoomsVisible(1, 6);
 //        addStyle(currentIndex);
 //        return true;
 //    } else currentIndex++;
-//
-//    if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
-//        fontSize[currentIndex] = 0.016f;
-//        names[currentIndex] = name;
-//        visibleZoom[currentIndex] = fromToZoomsVisible(3, 6);
-//        addStyle(currentIndex);
-//        return true;
-//    } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "country") && symbolRank <= 20) {
-        fontSize[currentIndex] = 0.016f;
+    if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
+        fontSize[currentIndex] = 0.015f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(1, 6);
         addStyle(currentIndex);

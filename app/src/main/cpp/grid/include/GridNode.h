@@ -5,10 +5,12 @@
 #ifndef TUSA_ANDROID_GRIDNODE_H
 #define TUSA_ANDROID_GRIDNODE_H
 
+#include <stdlib.h>
 
 struct GridNode {
 public:
-    int elementIndex = -1;
+    uint16_t elementIndex = 0;
+    uint16_t count = 0;
 };
 
 

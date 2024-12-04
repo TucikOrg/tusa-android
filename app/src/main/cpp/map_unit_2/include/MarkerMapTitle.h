@@ -8,7 +8,6 @@
 #include <string>
 #include "shader/shaders_bucket.h"
 #include "MapNumbers.h"
-#include "FromLatLonToSpherePos.h"
 #include "MapSymbols.h"
 #include <Eigen/Dense>
 
@@ -24,7 +23,11 @@ public:
         float fontSize,
         std::unordered_map<short, void*> visibleZoom,
         uint64_t featureId,
-        uint64_t placeLabelId
+        uint64_t placeLabelId,
+        float textWidth,
+        float textHeight,
+        std::vector<std::tuple<Symbol, float, float, float>> forRender,
+        float maxTop
     ):
         wname(wname),
         latitude(latitude),
@@ -32,20 +35,25 @@ public:
         fontSize(fontSize),
         visibleZoom(visibleZoom),
         featureId(featureId),
-        placeLabelId(placeLabelId) {
-    }
+        placeLabelId(placeLabelId),
+        textWidth(textWidth),
+        textHeight(textHeight),
+        forRender(forRender),
+        maxTop(maxTop) {
 
-    void draw(
-            ShadersBucket &shadersBucket,
-            Eigen::Matrix4f &pv,
-            MapNumbers& mapNumbers,
-            FromLatLonToSpherePos& fromLatLonToSpherePos,
-            MapSymbols& mapSymbols,
-            MapCamera& mapCamera
-    );
+        cos_minus_lat = cos(-latitude);
+        sin_minus_lat = sin(-latitude);
+        sin_lon = sin(longitude);
+        cos_lon = cos(longitude);
+    }
 
     std::wstring wname;
 public:
+    float cos_minus_lat;
+    float sin_minus_lat;
+    float sin_lon;
+    float cos_lon;
+
     float latitude;
     float longitude;
     float fontSize;
@@ -54,6 +62,10 @@ public:
     float invertAnimationUnit = 0;
     float startAnimationElapsedTime = 0;
     uint64_t placeLabelId;
+    float textWidth;
+    float textHeight;
+    std::vector<std::tuple<Symbol, float, float, float>> forRender;
+    float maxTop;
 };
 
 

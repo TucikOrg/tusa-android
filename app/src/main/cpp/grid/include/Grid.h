@@ -14,10 +14,9 @@ struct Grid {
 public:
     void init(int width, int height, int widthCellsCount, int heightCellsCount);
 
-    bool insert(Box box);
+    bool insert(Box& box, int& checks);
     void clean();
 private:
-    std::unordered_map<uint64_t, Box> boxes;
     int widthCellsCount;
     int heightCellsCount;
     int widthCellSize;
@@ -25,6 +24,7 @@ private:
     std::vector<GridNode*> nodes;
     std::vector<GridElement> elements;
 
+    std::unordered_map<uint64_t, Box> boxes;
     std::unordered_map<uint16_t, uint64_t> toBoxId;
     uint16_t increment;
 };

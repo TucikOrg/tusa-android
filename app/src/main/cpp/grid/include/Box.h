@@ -16,7 +16,7 @@ public:
     int rt_y;
     uint64_t titleId;
 
-    bool intersects(Box box) {
+    bool intersects(Box& box) {
         int box1_xMax = box.rt_x;
         int box2_xMin = this->lb_x;
         int box2_xMax = this->rt_x;
