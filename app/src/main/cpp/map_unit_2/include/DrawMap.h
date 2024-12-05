@@ -7,6 +7,8 @@
 
 #include "DrawMapData.h"
 #include "ByLayersDraw.h"
+#include "ReservedList.h"
+#include "TileCacheM.h"
 #include <GLES2/gl2.h>
 #include <Eigen/Dense>
 

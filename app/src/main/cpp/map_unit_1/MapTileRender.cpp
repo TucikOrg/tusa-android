@@ -155,7 +155,6 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
     auto atlasH = mapSymbols.atlasHeight;
     auto color = CSSColorParser::parse("rgb(0, 0, 0)");
     auto drawTextAlongPath = tile->resultDrawTextAlongPath;
-    glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     // тестирование
     // рисуем точки по которым идет текст
 //        auto plainShader = shadersBucket.plainShader;

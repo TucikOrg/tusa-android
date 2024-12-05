@@ -315,14 +315,14 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 //    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
 //    glDrawArrays(GL_POINTS, 0, testVertices.size() / 2);
 
-    auto plainShader = shadersBucket.plainShader;
-    glUseProgram(plainShader->program);
-    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, testVertices.data());
-    glEnableVertexAttribArray(plainShader->getPosLocation());
-    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
-    glDrawArrays(GL_POINTS, 0, testVertices.size() / 3);
+//    auto plainShader = shadersBucket.plainShader;
+//    glUseProgram(plainShader->program);
+//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+//    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, testVertices.data());
+//    glEnableVertexAttribArray(plainShader->getPosLocation());
+//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+//    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+//    glDrawArrays(GL_POINTS, 0, testVertices.size() / 3);
 
 
     for (auto marker : userMarkers) {

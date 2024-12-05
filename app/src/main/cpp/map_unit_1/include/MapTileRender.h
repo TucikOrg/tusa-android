@@ -61,6 +61,8 @@ public:
             Eigen::Matrix4f pvm
     );
 
+    void renderPathTextBatch();
+
     void renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                         Eigen::Matrix4f vm, Eigen::Matrix4f p,
                         ShadersBucket& shadersBucket, MapNumbers& mapNumbers,
@@ -80,6 +82,7 @@ private:
     int prTex2dWidth;
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
+
 };
 
 

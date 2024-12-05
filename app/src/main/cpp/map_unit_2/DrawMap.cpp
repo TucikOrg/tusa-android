@@ -109,10 +109,12 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // рисуем актуальные тайлы
     // рисуем по тайлам. Тайл рисуем целиком и потом следующий тайл
+    std::vector<ByLayersDraw> drawByLayers = {};
     for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
         for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
             int tileX = Utils::normalizeXTile(tileXInf, n);
-            auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
+            auto tileKey = MapTile::makeKey(tileX, tileY, tileZ);
+            MapTile* tile = tiles[tileKey];
             if (tile->isEmpty()) {
                 continue;
             }
@@ -140,36 +142,20 @@ void DrawMap::drawMapForward(DrawMapData &data) {
                     mapNumbers,
                     mapFpsCounter.getTimeElapsed()
             );
+
+            // для последующего рендринга текста
+            drawByLayers.push_back(ByLayersDraw {
+                tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>()
+            });
         }
     }
     glDisable(GL_SCISSOR_TEST);
 
     // Рисуем текст поверх всех тайлов
     if (zoom > 14) {
-        std::vector<ByLayersDraw> drawByLayers = {};
-        for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
-            for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
-                int tileX = Utils::normalizeXTile(tileXInf, n);
-                auto tile = tiles[MapTile::makeKey(tileX, tileY, tileZ)];
-                if (tile->isEmpty()) {
-                    continue;
-                }
-                double translateXIndex = xPos;
-                double translateYIndex = tileY - visTileYStart;
-                double translateX = (translateXIndex - shiftXTileP) * worldTileSizeX + topLeftWorld.x();
-                double translateY = translateYIndex * -worldTileSizeY + topLeftWorld.y();
-                auto translateMatrix = EigenGL::createTranslationMatrix(translateX, translateY, 0);
-                Eigen::Matrix4d scaleMatrix = EigenGL::createScaleMatrix(scaleTileX, scaleTileY, 1.0);
-                Eigen::Matrix4d vTileMatrix = view * translateMatrix * scaleMatrix;
-                Eigen::Matrix4d pvTileMatrix = projection * vTileMatrix;
-                auto stylesSet = tile->style.getStyles();
-                drawByLayers.push_back(ByLayersDraw { tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>(), stylesSet });
-            }
-        }
-
-        for (auto& drawTile : drawByLayers) {
+        for (ByLayersDraw &drawTile: drawByLayers) {
             auto tile = drawTile.mapTile;
-            auto& vTileMatrix = drawTile.vTileMatrix;
+            auto &vTileMatrix = drawTile.vTileMatrix;
             mapTileRender.renderPathText(
                     tile,
                     mapSymbols,
@@ -182,6 +168,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
         }
     }
 }
+
 
 void DrawMap::drawMapViaTexture(DrawMapData &data) {
     auto& planeModelMatrix = data.planeModelMatrix;

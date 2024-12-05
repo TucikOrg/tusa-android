@@ -96,6 +96,8 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/ByLayersDraw.cpp
         map_unit_2/DrawSymbol.cpp
         map_unit_2/DrawTitlesThreadInput.cpp
+        map_unit_2/ReservedList.cpp
+        map_unit_2/TileCacheM.cpp
 
         grid/Grid.cpp
         grid/GridNode.cpp

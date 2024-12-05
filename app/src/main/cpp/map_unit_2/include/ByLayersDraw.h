@@ -16,7 +16,6 @@ public:
     Eigen::Matrix4f scaleMatrix ;
     Eigen::Matrix4f vTileMatrix ;
     Eigen::Matrix4f pvTileMatrix;
-    std::set<unsigned short> styles;
 };
 
 
