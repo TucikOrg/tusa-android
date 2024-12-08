@@ -140,7 +140,7 @@ void MapRenderer::renderFrame() {
     std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
             L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
             L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
-    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
+    //mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
 
     //drawTestTexture(mapSymbols.getAtlasTexture(), 0.9, 0.9, 0.05);
 }
@@ -170,9 +170,10 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    mapControls.setCamPos(DEG2RAD(55.7496), DEG2RAD(37.6294));
+    //mapControls.setCamPos(DEG2RAD(55.7474), DEG2RAD(37.8469));
     //mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(15.0);
+    //mapControls.setZoom(16.5);
+    mapControls.setZoom(0.5);
 }
 
 void MapRenderer::drag(float dx, float dy) {

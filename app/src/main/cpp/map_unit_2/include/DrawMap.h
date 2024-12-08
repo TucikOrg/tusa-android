@@ -6,7 +6,7 @@
 #define TUSA_ANDROID_DRAWMAP_H
 
 #include "DrawMapData.h"
-#include "ByLayersDraw.h"
+#include "OnTilePathText.h"
 #include "ReservedList.h"
 #include "TileCacheM.h"
 #include <GLES2/gl2.h>

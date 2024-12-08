@@ -325,12 +325,14 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 //    glDrawArrays(GL_POINTS, 0, testVertices.size() / 3);
 
 
+    FromLatLonToSphereDoublePos fromLatLonToSphereDoublePos = FromLatLonToSphereDoublePos();
+    fromLatLonToSphereDoublePos.init(mapNumbers);
     for (auto marker : userMarkers) {
         marker.second.draw(
                 shadersBucket,
                 pv,
                 mapNumbers,
-                fromLatLonToSpherePos
+                fromLatLonToSphereDoublePos
         );
     }
 }

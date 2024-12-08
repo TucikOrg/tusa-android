@@ -109,7 +109,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // рисуем актуальные тайлы
     // рисуем по тайлам. Тайл рисуем целиком и потом следующий тайл
-    std::vector<ByLayersDraw> drawByLayers = {};
+    std::vector<OnTilePathText> onTilePathText = {};
     for (int tileY = visTileYStart; tileY < visTileYEnd; tileY++) {
         for (int tileXInf = visTileXStartInf, xPos = 0; tileXInf < visTileXEndInf; tileXInf++, xPos++) {
             int tileX = Utils::normalizeXTile(tileXInf, n);
@@ -144,7 +144,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
             );
 
             // для последующего рендринга текста
-            drawByLayers.push_back(ByLayersDraw {
+            onTilePathText.push_back(OnTilePathText {
                 tile, scaleMatrix.cast<float>(), vTileMatrix.cast<float>(), pvTileMatrix.cast<float>()
             });
         }
@@ -153,9 +153,10 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // Рисуем текст поверх всех тайлов
     if (zoom > 14) {
-        for (ByLayersDraw &drawTile: drawByLayers) {
+        for (OnTilePathText &drawTile: onTilePathText) {
             auto tile = drawTile.mapTile;
             auto &vTileMatrix = drawTile.vTileMatrix;
+            auto &pvTileMatrix = drawTile.pvTileMatrix;
             mapTileRender.renderPathText(
                     tile,
                     mapSymbols,
@@ -163,7 +164,8 @@ void DrawMap::drawMapForward(DrawMapData &data) {
                     projection.cast<float>(),
                     shadersBucket,
                     mapNumbers,
-                    mapFpsCounter.getTimeElapsed()
+                    mapFpsCounter.getTimeElapsed(),
+                    pvTileMatrix
             );
         }
     }

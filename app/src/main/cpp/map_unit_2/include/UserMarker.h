@@ -23,7 +23,7 @@ public:
             ShadersBucket &shadersBucket,
             Eigen::Matrix4f &pv,
             MapNumbers& mapNumbers,
-            FromLatLonToSpherePos& fromLatLonToSpherePos
+            FromLatLonToSphereDoublePos& fromLatLonToSpherePos
     );
     void drawDebugData(
             ShadersBucket &shadersBucket,

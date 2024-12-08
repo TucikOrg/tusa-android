@@ -7,23 +7,30 @@
 
 #include <string>
 #include <vector_tile.hpp>
+#include <GLES2/gl2.h>
 #include "Symbol.h"
 
 class DrawTextAlongPath {
 public:
     std::wstring wname;
-    std::vector<vtzero::point> points;
+    std::vector<float> path;
     std::vector<float> color;
-    unsigned short type;
     std::vector<std::tuple<Symbol, float, float, float>> forRender;
     float textWidth = 0;
     float textHeight = 0;
     float maxTop = 0;
     float legthOfPath;
-    float latitude;
-    float longitude;
     uint64_t featureId;
     uint64_t tileId;
+    std::vector<vtzero::point> points;
+    short type;
+
+    bool transferedToGPU = false;
+    GLuint vboData;
+    GLuint ibo;
+    unsigned int iboSize;
+
+    float startAnimationTime = 0;
 };
 
 

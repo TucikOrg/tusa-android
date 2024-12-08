@@ -17,6 +17,9 @@
 #include "MapPolygonAggregated.h"
 #include "MarkerMapTitle.h"
 #include "DrawTextAlongPath.h"
+#include "Region.h"
+#include "PathTextCache.h"
+#include "PointForTextPathCache.h"
 
 class MapTile {
 public:
@@ -79,11 +82,14 @@ private:
     bool empty;
     unsigned int maxStyleIndex = 0;
 
+    uint64_t pathIndex = 0;
+    std::vector<Region> regionsShowed;
+
     void parseRoadTitleText(
-        std::wstring& useStreetName,
+        std::wstring useStreetName,
+        std::string streetName,
         std::vector<vtzero::point>& point_array,
         MapSymbols& mapSymbols,
-        float symbolScale,
         uint64_t featureId
     );
 

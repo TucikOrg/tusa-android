@@ -23,6 +23,7 @@
 #include "SimplePointShader.h"
 #include "SquarePointShader.h"
 #include "title_map_shader.h"
+#include "path_text_shader.h"
 #include <boost/shared_ptr.hpp>
 
 class ShadersBucket {
@@ -46,6 +47,7 @@ public:
     std::shared_ptr<SimplePointShader> simplePointShader;
     std::shared_ptr<SquarePointShader> squarePointShader;
     std::shared_ptr<TitleMapShader> titlesMapShader;
+    std::shared_ptr<PathTextShader> pathTextShader;
 };
 
 

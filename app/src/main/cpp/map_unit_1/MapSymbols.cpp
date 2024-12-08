@@ -172,7 +172,7 @@ void MapSymbols::renderText2D(
         float h = std::get<2>(charRender);
         float pixelsShift = std::get<3>(charRender);
         float xPos = x + symbol.bitmapLeft * symbolScale;
-        float yPos = y - (symbol.rows - symbol.bitmapTop ) * symbolScale;
+        float yPos = y - (symbol.rows - symbol.bitmapTop) * symbolScale;
 
         float points[] = {
                 xPos, (yPos + h),

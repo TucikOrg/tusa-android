@@ -43,6 +43,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/road_shader.cpp
         shader/space_dark_shader.cpp
         shader/title_map_shader.cpp
+        shader/path_text_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp
@@ -64,6 +65,9 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_1/MapFpsCounter.cpp
         map_unit_1/MapSymbols.cpp
         map_unit_1/PointHandler.cpp
+        map_unit_1/Region.cpp
+        map_unit_1/PathTextCache.cpp
+        map_unit_1/PointForTextPathCache.cpp
 
         map_unit_2/MapRenderer.cpp
         map_unit_2/MapControls.cpp

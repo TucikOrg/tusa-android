@@ -15,7 +15,7 @@ fun TestInfoLine(modifier: Modifier) {
         Column(
             horizontalAlignment = Alignment.End
         ) {
-            Text("Тестирование 30 окт. 2024 год. road to the gravity.",
+            Text("Тестирование 8 дек. 2024 год. New Year’s Realization.",
                 color = Color.White,
                 fontSize = 9.sp
             )

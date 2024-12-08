@@ -89,13 +89,16 @@ class MapView(
             distanceX: Float,
             distanceY: Float
         ): Boolean {
+
             val x = e2.x
             val y = e2.y
             val wb = width - width / 4.0f
             val hb = height / 3.0f
             val scaleDragging = x >= wb && y >= hb && !isDragging && abs(distanceX) < abs(distanceY)
             if (scaleDragging) {
-                NativeLibrary.scale(1.0f + distanceY / 300.0f)
+                // это приближение и отдаление если правую нижниюю часть экарана трогать пальцем
+                // нормально работает но нужно доработать еще некоторые случаи Пока что эта штука иногда раздражает
+                //NativeLibrary.scale(1.0f + distanceY / 300.0f)
                 return true
             }
 

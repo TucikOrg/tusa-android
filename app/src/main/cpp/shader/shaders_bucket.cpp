@@ -55,6 +55,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     titlesMapShader = std::shared_ptr<TitleMapShader>(new TitleMapShader(
             assetManager, "shaders/titles_map.vert", "shaders/titles_map.frag"
     ));
+    pathTextShader = std::shared_ptr<PathTextShader>(new PathTextShader(
+            assetManager, "shaders/path_text.vert", "shaders/path_text.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {
