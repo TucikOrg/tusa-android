@@ -16,9 +16,6 @@
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="PreviewConnectionStatus">
-        <option name="selectionMode" value="DROPDOWN" />
-      </SelectionState>
       <SelectionState runConfigName="InputUniqueNamePreview">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
