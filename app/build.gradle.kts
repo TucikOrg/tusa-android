@@ -36,10 +36,17 @@ android {
             )
             buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
             buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             buildConfigField("String", "SERVICE_URL", "\"http://192.168.0.103:8080\"")
             buildConfigField("String", "SOCKET_URL", "\"ws://192.168.0.103:8080/stream\"")
+        }
+        create("debugReleaseURLS") {
+            isDebuggable = true
+            buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
+            buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

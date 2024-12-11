@@ -6,13 +6,15 @@ import android.location.LocationManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.notification.NotificationsService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
 @HiltViewModel
 open class LocationSetupCardViewModel @Inject constructor(
     private val lastLocationState: LastLocationState?,
-    private val meAvatarState: MeAvatarState?
+    private val meAvatarState: MeAvatarState?,
+    private val notificationsService: NotificationsService?
 ): ViewModel() {
     var locationServiceStarted = mutableStateOf(false)
     val gpsDisabledAlert = mutableStateOf(false)
@@ -31,6 +33,10 @@ open class LocationSetupCardViewModel @Inject constructor(
                 gpsDisabledAlert.value = true
                 return
             }
+            if (notificationsService?.check(context) == true) {
+                return
+            }
+
             val startIntent = Intent(context, LocationForegroundService::class.java).apply {
                 action = LocationForegroundService.ACTION_START
             }

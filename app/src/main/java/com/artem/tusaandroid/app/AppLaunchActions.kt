@@ -7,12 +7,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
+import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.isPreview
 import com.artem.tusaandroid.location.LocationForegroundService
+import com.artem.tusaandroid.notification.NotificationsEnabledCheck
+import com.artem.tusaandroid.notification.NotificationsEnabledCheckViewModelPreview
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun AppLaunchActions(model: AppLaunchActionsViewModel) {
     // Заранее производим загрузки из интернета, чтобы не ждать их во время работы
     val context = LocalContext.current
+    NotificationsEnabledCheck(
+        model = TucikViewModel(model.isPreview(),
+        previewModel = NotificationsEnabledCheckViewModelPreview())
+    )
+
     LaunchedEffect(Unit) {
         if (ActivityCompat.checkSelfPermission(
                 context,
@@ -20,11 +31,13 @@ fun AppLaunchActions(model: AppLaunchActionsViewModel) {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             // Если сервис был запущен и разрешение на геолокацию есть и он был запущен, то запускаем сервис
+            // это еще так же значит что пользователь желает отображать себя на карте
             if (model.getLocationForegroundServiceStarted() == true) {
                 val startIntent = Intent(context, LocationForegroundService::class.java).apply {
                     action = LocationForegroundService.ACTION_START
                 }
                 context.startService(startIntent)
+                model.createMeMarker() // маркер юзера создаем
             }
         } else {
             // Если сервис был запущен, но разрешение на геолокацию отозвали, то останавливаем сервис

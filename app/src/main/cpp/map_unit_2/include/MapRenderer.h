@@ -33,6 +33,7 @@ public:
     void doubleTap();
 
     Markers& getMarkers() {  return markers; }
+    MapControls& getMapControls() { return mapControls; }
 private:
     MapControls mapControls = MapControls();
     MapCamera mapCamera = MapCamera();

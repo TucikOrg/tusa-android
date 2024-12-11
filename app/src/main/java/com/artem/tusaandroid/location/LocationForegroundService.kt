@@ -9,7 +9,6 @@ import android.app.Service
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.artem.tusaandroid.MainActivity
@@ -50,40 +49,43 @@ class LocationForegroundService: Service() {
     lateinit var customTucikEndpoints: CustomTucikEndpoints
 
     override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+        // нужно грохнуть сервис сбора локации
         if (intent.action == ACTION_STOP) {
             stopSelf()
             lastLocationState.saveLocationForegroundServiceStarted(false)
             return START_NOT_STICKY
         }
+
         lastLocationState.saveLocationForegroundServiceStarted(true)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(applicationContext)
-        createNotificationChannel()
-        val notificationIntent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
 
-        // Intent to stop the service
-        val stopIntent = Intent(this, LocationForegroundService::class.java).apply {
-            action = ACTION_STOP
-        }
-        val stopPendingIntent = PendingIntent.getService(
-            this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE
-        )
+        // Показывать уведомление о том что запущено обновление местоположения
+        val notification = buildNotification()
+        startForeground(1, notification)
 
-//        val notification: Notification = NotificationCompat.Builder(this, CHANNEL_ID)
-//            .setContentTitle("Тусик")
-//            .setContentText("Отображаем тебя на карте")
-//            .setSmallIcon(R.drawable.ic_launcher_foreground)
-//            .addAction(R.drawable.close, "Перестать", stopPendingIntent)
-//            .setContentIntent(pendingIntent)
-//            .build()
-//
-//        startForeground(1, notification)
         serviceScope.launch {
             doBackgroundWork()
         }
 
         return START_NOT_STICKY
     }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        createNotificationChannel()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        serviceScope.cancel()
+    }
+
+    override fun onBind(intent: Intent?): IBinder? {
+        return null
+    }
+
 
     @OptIn(ExperimentalStdlibApi::class)
     private suspend fun doBackgroundWork() {
@@ -128,24 +130,40 @@ class LocationForegroundService: Service() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-
-        serviceScope.cancel()
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
     private fun createNotificationChannel() {
         val serviceChannel = NotificationChannel(
             CHANNEL_ID,
             "Foreground Service Channel",
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_HIGH
         )
         val manager = getSystemService(NotificationManager::class.java)
         manager?.createNotificationChannel(serviceChannel)
+    }
+
+    private fun buildNotification(): Notification {
+        val notificationIntent = Intent(this, MainActivity::class.java)
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE // Use FLAG_IMMUTABLE for API 31+
+        )
+
+        val stopIntent = Intent(this, LocationForegroundService::class.java).apply {
+            action = ACTION_STOP
+        }
+        val stopPendingIntent = PendingIntent.getService(
+            this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("Локация в Тусике")
+            .setContentText("Обновляем твое местоположение")
+            .setSmallIcon(R.drawable.favorite)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .addAction(R.drawable.close, "Остановить", stopPendingIntent)
+            .build()
     }
 
     companion object {

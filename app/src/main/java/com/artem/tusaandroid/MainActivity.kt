@@ -6,6 +6,8 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -31,6 +33,8 @@ import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.location.MoveToMyLocationFab
+import com.artem.tusaandroid.location.PreviewMoveToMyLocationViewModel
 import com.artem.tusaandroid.socket.ConnectionStatus
 import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
 import com.artem.tusaandroid.theme.TusaAndroidTheme
@@ -103,14 +107,24 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                     hiltViewModel()
                 )
 
-                FriendsActionFab(
+                Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
-                        .width(80.dp)
-                        .height(80.dp)
-                        .padding(16.dp),
-                    model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
-                )
+                        .padding(16.dp)
+                ) {
+                    MoveToMyLocationFab(
+                        modifier = Modifier,
+                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMoveToMyLocationViewModel())
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    FriendsActionFab(
+                        modifier = Modifier,
+                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
+                    )
+                }
+
+
+
             } else {
                 // not authenticated
                 CredentialsManagerAuth(

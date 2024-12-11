@@ -16,6 +16,7 @@ object NativeLibrary {
     external fun doubleTap()
     external fun onStop()
     external fun onDown()
+    external fun setCameraPos(latitude: Float, longitude: Float, zoom: Float)
 
     // Markers
     external fun removeMarker(key: String)

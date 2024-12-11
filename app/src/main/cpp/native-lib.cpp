@@ -132,3 +132,11 @@ Java_com_artem_tusaandroid_NativeLibrary_existMarker(JNIEnv *env, jobject thiz, 
     auto result = markers.hasMarker(key_str);
     return result;
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_setCameraPos(JNIEnv *env, jobject thiz, jfloat latitude,
+                                                      jfloat longitude, jfloat zoom) {
+    auto& mapControls = renderer.getMapControls();
+    mapControls.setCamPos(DEG2RAD(latitude), DEG2RAD(longitude));
+    mapControls.setZoom(zoom);
+}

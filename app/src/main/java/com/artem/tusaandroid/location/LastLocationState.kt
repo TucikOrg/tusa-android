@@ -3,6 +3,7 @@ package com.artem.tusaandroid.location
 import com.artem.tusaandroid.StateHasSharedPreferences
 import java.time.LocalDateTime
 
+// это класс где храниться местоположение пользователя
 class LastLocationState: StateHasSharedPreferences() {
 
     private var latitude: Float? = null
@@ -59,7 +60,4 @@ class LastLocationState: StateHasSharedPreferences() {
     fun rendererUpdatedLastLocation() {
         needUpdateLastLocationInRenderer = false
     }
-
-
-
 }

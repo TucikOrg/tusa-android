@@ -7,6 +7,7 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.notification.NotificationsService
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
 import com.artem.tusaandroid.socket.SocketConnectionState
@@ -23,6 +24,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun provideNotificationsService(): NotificationsService {
+        return NotificationsService()
+    }
 
     @Provides
     @Singleton
