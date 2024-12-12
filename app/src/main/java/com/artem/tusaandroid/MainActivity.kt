@@ -23,6 +23,7 @@ import com.artem.tusaandroid.app.AppLaunchActions
 import com.artem.tusaandroid.app.action.MainActionFab
 import com.artem.tusaandroid.app.MainActivityViewModel
 import com.artem.tusaandroid.app.TestInfoLine
+import com.artem.tusaandroid.app.action.AdminFab
 import com.artem.tusaandroid.app.action.auth.CredentialsManagerAuth
 import com.artem.tusaandroid.app.action.friends.FriendsActionFab
 import com.artem.tusaandroid.app.action.friends.PreviewFriendViewModel
@@ -85,8 +86,9 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
 
             TestInfoLine(
                 modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .padding(4.dp)
+                    .align(Alignment.TopCenter)
+                    .padding(4.dp),
+                line = "v12.2024"
             )
 
             ConnectionStatus(
@@ -107,6 +109,12 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                     hiltViewModel()
                 )
 
+                AdminFab(modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp),
+                    hiltViewModel()
+                )
+
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -122,8 +130,6 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                         model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
                     )
                 }
-
-
 
             } else {
                 // not authenticated

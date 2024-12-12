@@ -20,19 +20,13 @@ class Renderer(
     private val avatarState: AvatarState?
 ) : GLSurfaceView.Renderer {
     private var defaultAvatar: ByteArray? = null
-    private var artemAvatar: ByteArray? = null
-    private var grishaAvatar: ByteArray? = null
+
+
     private val meAvatarKey = "me"
     private var locations: List<LocationDto> = listOf()
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        _assetManager.open("images/artem.png").use { asset ->
-            artemAvatar = asset.readBytes()
-        }
-        _assetManager.open("images/grisha.jpeg").use { asset ->
-            grishaAvatar = asset.readBytes()
-        }
         _assetManager.open("images/user.png").use { asset ->
             defaultAvatar = asset.readBytes()
         }

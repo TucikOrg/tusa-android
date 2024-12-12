@@ -28,7 +28,6 @@ class MapView(
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
 
-
     init {
         // Настраиваем карту первоначально перед запуском
         NativeLibrary.noOpenGlContextInit(resources.assets, requestTile)
@@ -69,7 +68,6 @@ class MapView(
         private var width: Float,
         private var height: Float
     ) : SimpleOnScaleGestureListener() {
-
         override fun onScale(detector: ScaleGestureDetector): Boolean {
             NativeLibrary.scale(detector.scaleFactor)
             return true
@@ -82,7 +80,6 @@ class MapView(
 
     private inner class GestureListener : SimpleOnGestureListener() {
         private var isDragging = false
-
         override fun onScroll(
             e1: MotionEvent?,
             e2: MotionEvent,

@@ -1,5 +1,7 @@
 package com.artem.tusaandroid.socket
 
+import com.artem.tusaandroid.dto.AddUserDto
+import com.artem.tusaandroid.dto.AllUsersRequest
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
@@ -10,6 +12,18 @@ import okio.ByteString.Companion.toByteString
 class SendMessage(
     private val socket: WebSocket?
 ) {
+    // admin
+    @OptIn(ExperimentalSerializationApi::class)
+    fun createUser(create: AddUserDto) {
+        SocketBinaryMessage("create-user", Cbor.encodeToByteArray(create)).send(socket)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun allUsers(request: AllUsersRequest) {
+        SocketBinaryMessage("all-users", Cbor.encodeToByteArray(request)).send(socket)
+    }
+
+
     @OptIn(ExperimentalSerializationApi::class)
     fun sendMessage(message: SocketBinaryMessage) {
         socket?.send(Cbor.encodeToByteArray(message).toByteString())

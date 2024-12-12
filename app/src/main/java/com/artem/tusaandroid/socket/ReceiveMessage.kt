@@ -3,6 +3,9 @@ package com.artem.tusaandroid.socket
 import com.artem.tusaandroid.app.action.friends.FriendDto
 import com.artem.tusaandroid.app.action.friends.FriendRequestDto
 import com.artem.tusaandroid.app.avatar.AvatarDTO
+import com.artem.tusaandroid.dto.CreatedUser
+import com.artem.tusaandroid.dto.User
+import com.artem.tusaandroid.dto.UsersPage
 import com.artem.tusaandroid.location.LocationDto
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -21,11 +24,23 @@ class ReceiveMessage() {
     val deleteFriendBus: EventBus<Long> = EventBus()
     val iWasDeletedFromFriendsBus: EventBus<Long> = EventBus()
     val deleteRequestBus: EventBus<Long> = EventBus()
+    val createdUser: EventBus<CreatedUser> = EventBus()
+    val allUsers: EventBus<UsersPage> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
         val socketBinaryMessage = Cbor.decodeFromByteArray<SocketBinaryMessage>(message.toByteArray())
         when (socketBinaryMessage.type) {
+            // admins
+            "created-user" -> {
+                val data = Cbor.decodeFromByteArray<CreatedUser>(socketBinaryMessage.data)
+                createdUser.pushEvent(data)
+            }
+            "all-users" -> {
+                val usersPage = Cbor.decodeFromByteArray<UsersPage>(socketBinaryMessage.data)
+                allUsers.pushEvent(usersPage)
+            }
+
             "locations" -> {
                 val locations = Cbor.decodeFromByteArray<List<LocationDto>>(socketBinaryMessage.data)
                 locationsBus.pushEvent(locations)

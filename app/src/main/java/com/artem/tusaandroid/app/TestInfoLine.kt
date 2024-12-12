@@ -10,12 +10,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun TestInfoLine(modifier: Modifier) {
+fun TestInfoLine(modifier: Modifier, line: String) {
     Box(modifier = modifier) {
         Column(
             horizontalAlignment = Alignment.End
         ) {
-            Text("Тестирование 8 дек. 2024 год. New Year’s Realization.",
+            Text(line,
                 color = Color.White,
                 fontSize = 9.sp
             )

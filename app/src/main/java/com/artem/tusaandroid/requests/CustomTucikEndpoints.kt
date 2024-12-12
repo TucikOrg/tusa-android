@@ -53,6 +53,11 @@ class CustomTucikEndpoints(
         return uri.toString()
     }
 
+    fun makeAvatarUploadToOtherUser(userId: Long): String? {
+        val uri = Uri.parse(makeEndpoint("$uploadAvatar/$userId")).buildUpon().build()
+        return uri.toString()
+    }
+
     fun makeGoogleSignIn(): String {
         val uri = Uri.parse(makeEndpoint(googleSignIN)).buildUpon().build()
         return uri.toString()
