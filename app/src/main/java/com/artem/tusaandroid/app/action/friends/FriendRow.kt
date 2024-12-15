@@ -14,11 +14,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
+import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.isPreview
 
@@ -40,12 +43,15 @@ fun FriendRow(
     model: FriendRowViewModel,
     friend: FriendDto
 ) {
+    val scope = rememberCoroutineScope()
+    val leftSwipeFriendRow = LeftSwipeFriendRow(scope, R.drawable.person_remove)
+
     LaunchedEffect(Unit) {
-        model.leftSwipeFriendRow.onLeftSwiped = {
+        leftSwipeFriendRow.onLeftSwiped = {
             model.removeFriend(friend.id!!)
         }
     }
-    model.leftSwipeFriendRow.SwipeWrapper {
+    leftSwipeFriendRow.SwipeWrapper {
         FriendRowCard(
             model = model,
             friend = friend

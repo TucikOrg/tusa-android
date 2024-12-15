@@ -21,13 +21,14 @@ class CropperState {
     fun crop(scale: Float, transform: Offset, cropSize: Float) {
         val scaleInv = (1 / scale)
         val size = (cropSize * scaleInv).toInt()
-        croppedBitmap = Bitmap.createBitmap(
+        croppedBitmap = Bitmap.createScaledBitmap(Bitmap.createBitmap(
             bitmap!!,
             -(transform.x * scaleInv).toInt(),
             -(transform.y * scaleInv).toInt(),
             size,
             size
-        )
+        ), 256, 256, true)
+
         onCropped?.invoke(croppedBitmap)
         cropperOpened.value = false
     }

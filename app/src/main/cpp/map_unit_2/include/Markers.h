@@ -20,6 +20,7 @@
 #include "DrawTitlesThreadInput.h"
 #include "Box.h"
 #include "Grid.h"
+#include "AvatarAtlasPointer.h"
 
 struct WStringHash {
     std::size_t operator()(const std::wstring& str) const {
@@ -34,10 +35,10 @@ struct WStringHash {
 class Markers {
 public:
     void initGL();
-    void addMarker(std::string key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
-    void removeMarker(std::string key);
-    void updateMarkerGeo(std::string key, float latitude, float longitude);
-    void updateMarkerAvatar(std::string key, unsigned char *imageData, off_t fileSize);
+    void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
+    void removeMarker(int64_t key);
+    void updateMarkerGeo(int64_t key, float latitude, float longitude);
+    void updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize);
     void drawMarkers(ShadersBucket& shadersBucket,
                      Eigen::Matrix4f pv,
                      MapNumbers& mapNumbers,
@@ -47,18 +48,25 @@ public:
                      MapFpsCounter& mapFpsCounter,
                      bool canRefreshMarkers
     );
-    bool hasMarker(std::string key);
+    bool hasMarker(int64_t key);
     void doubleTap();
+
+    AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();
 private:
-    std::map<std::string, UserMarker> userMarkers = {};
+    std::map<int64_t, UserMarker> userMarkers = {};
     std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkersForRenderStorage = {};
 
     DrawTitlesThreadInput drawTitlesThreadInput;
+    GLuint frameBuffer;
 
     GLuint titlesVBO;
     GLuint titlesIBO;
     size_t iboSize = 0;
     size_t refreshTitlesKey = 0;
+
+    GLuint avatarsVBO;
+    GLuint avatarsIBO;
+    size_t avatarsIboSize = 0;
 
     void markersHandleThread();
 };

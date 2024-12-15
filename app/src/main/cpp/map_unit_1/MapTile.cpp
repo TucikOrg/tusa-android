@@ -92,7 +92,10 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 if (isWideLine) {
                     // широкая линия
                     std::vector<MapWideLine> wideLines(geomSize);
-                    auto name = boost::get<std::string>(props["name"]);
+                    auto name = boost::get<std::string>(props["name_ru"]);
+                    if (name == "") {
+                        name = boost::get<std::string>(props["name_en"]);
+                    }
                     auto oneway = boost::get<std::string>(props["oneway"]);
                     auto wName = Utils::stringToWstring(name);
 

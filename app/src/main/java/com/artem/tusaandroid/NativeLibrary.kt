@@ -1,6 +1,7 @@
 package com.artem.tusaandroid
 
 import android.content.res.AssetManager
+import com.artem.tusaandroid.location.CameraPos
 
 object NativeLibrary {
     init {
@@ -17,11 +18,12 @@ object NativeLibrary {
     external fun onStop()
     external fun onDown()
     external fun setCameraPos(latitude: Float, longitude: Float, zoom: Float)
+    external fun getCameraPos(): CameraPos
 
     // Markers
-    external fun removeMarker(key: String)
-    external fun updateMarkerAvatar(key: String, avatarBuffer: ByteArray)
-    external fun updateMarkerGeo(key: String, latitude: Float, longitude: Float)
-    external fun addMarker(key: String, latitude: Float, longitude: Float, avatarBuffer: ByteArray)
-    external fun existMarker(key: String): Boolean
+    external fun removeMarker(key: Long)
+    external fun updateMarkerAvatar(key: Long, avatarBuffer: ByteArray)
+    external fun updateMarkerGeo(key: Long, latitude: Float, longitude: Float)
+    external fun addMarker(key: Long, latitude: Float, longitude: Float, avatarBuffer: ByteArray)
+    external fun existMarker(key: Long): Boolean
 }

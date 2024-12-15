@@ -21,7 +21,7 @@
 #define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 #define FLOAT(x) static_cast<float>(x)
 #define DEG2RAD(a)   ((a) / (180 / M_PI))
-#define RAD2DEG(a)   ((a) * (180 / M_PI))
+#define RAD2DEG(a)   ((a) * (180.0f / M_PI))
 
 class Utils {
 public:

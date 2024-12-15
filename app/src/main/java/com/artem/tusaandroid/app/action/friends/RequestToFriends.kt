@@ -16,12 +16,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.isPreview
@@ -31,13 +33,13 @@ fun RequestToFriends(
     model: RequestToFriendViewModel,
     friend: FriendDto
 ) {
-    LaunchedEffect(Unit) {
-        model.leftSwipeFriendRow.onLeftSwiped = {
-            model.removeRequestToFriend(friend.id!!)
-        }
+    val scope = rememberCoroutineScope()
+    val leftSwipeFriendRow = LeftSwipeFriendRow(scope, R.drawable.close)
+    leftSwipeFriendRow.onLeftSwiped = {
+        model.removeRequestToFriend(friend.id!!)
     }
 
-    model.leftSwipeFriendRow.SwipeWrapper {
+    leftSwipeFriendRow.SwipeWrapper {
         ElevatedButton(
             modifier = Modifier.fillMaxSize(),
             shape = RoundedCornerShape(0.dp),

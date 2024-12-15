@@ -6,6 +6,16 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
+unsigned char* TextureUtils::loadPixels(unsigned char* imageData, long fileSize) {
+    int width, height, channels;
+    unsigned char* image = stbi_load_from_memory(imageData, fileSize, &width, &height, &channels, STBI_rgb);
+    return  image;
+}
+
+void TextureUtils::freeImage(unsigned char* image) {
+    stbi_image_free(image);
+}
+
 GLuint TextureUtils::loadTextureFromBytes(unsigned char* imageData, long fileSize) {
     int width, height, channels;
     unsigned char* image = stbi_load_from_memory(imageData, fileSize, &width, &height, &channels, STBI_rgb);

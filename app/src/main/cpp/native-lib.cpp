@@ -81,25 +81,25 @@ Java_com_artem_tusaandroid_NativeLibrary_onDown(JNIEnv *env, jclass clazz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_updateMarkerGeo(JNIEnv *env, jobject thiz, jstring key,
+Java_com_artem_tusaandroid_NativeLibrary_updateMarkerGeo(JNIEnv *env, jobject thiz, jlong key,
                                                          jfloat latitude, jfloat longitude) {
-    auto key_str = env->GetStringUTFChars(key, 0);
-    renderer.getMarkers().updateMarkerGeo(key_str, DEG2RAD(latitude), DEG2RAD(longitude));
+    int64_t keyLong = static_cast<int64_t>(key);
+    renderer.getMarkers().updateMarkerGeo(keyLong, DEG2RAD(latitude), DEG2RAD(longitude));
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_removeMarker(JNIEnv *env, jobject thiz, jstring key) {
-    auto key_str = env->GetStringUTFChars(key, 0);
-    renderer.getMarkers().removeMarker(key_str);
+Java_com_artem_tusaandroid_NativeLibrary_removeMarker(JNIEnv *env, jobject thiz, jlong key) {
+    int64_t keyLong = static_cast<int64_t>(key);
+    renderer.getMarkers().removeMarker(keyLong);
 }
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_updateMarkerAvatar(JNIEnv *env, jobject thiz, jstring key,
+Java_com_artem_tusaandroid_NativeLibrary_updateMarkerAvatar(JNIEnv *env, jobject thiz, jlong key,
                                                             jbyteArray avatar_buffer) {
-    auto key_str = env->GetStringUTFChars(key, 0);
     jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
     auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
-    renderer.getMarkers().updateMarkerAvatar(key_str , unsignedBuffer, env->GetArrayLength(avatar_buffer));
+    int64_t keyLong = static_cast<int64_t>(key);
+    renderer.getMarkers().updateMarkerAvatar(keyLong, unsignedBuffer, env->GetArrayLength(avatar_buffer));
 
     env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
 }
@@ -107,14 +107,14 @@ Java_com_artem_tusaandroid_NativeLibrary_updateMarkerAvatar(JNIEnv *env, jobject
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_addMarker(JNIEnv *env, jobject thiz, jstring key,
+Java_com_artem_tusaandroid_NativeLibrary_addMarker(JNIEnv *env, jobject thiz, jlong key,
                                                       jfloat latitude, jfloat longitude,
                                                       jbyteArray avatar_buffer) {
-    auto key_str = env->GetStringUTFChars(key, 0);
+    int64_t keyLong = static_cast<int64_t>(key);
     jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
     auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
     auto& markers = renderer.getMarkers();
-    markers.addMarker(key_str, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
+    markers.addMarker(keyLong, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
 
     env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
 }
@@ -126,10 +126,10 @@ Java_com_artem_tusaandroid_NativeLibrary_test(JNIEnv *env, jobject thiz, jobject
 }
 extern "C"
 JNIEXPORT jboolean JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_existMarker(JNIEnv *env, jobject thiz, jstring key) {
-    auto key_str = env->GetStringUTFChars(key, 0);
+Java_com_artem_tusaandroid_NativeLibrary_existMarker(JNIEnv *env, jobject thiz, jlong key) {
+    int64_t keyLong = static_cast<int64_t>(key);
     auto& markers = renderer.getMarkers();
-    auto result = markers.hasMarker(key_str);
+    auto result = markers.hasMarker(keyLong);
     return result;
 }
 extern "C"
@@ -139,4 +139,14 @@ Java_com_artem_tusaandroid_NativeLibrary_setCameraPos(JNIEnv *env, jobject thiz,
     auto& mapControls = renderer.getMapControls();
     mapControls.setCamPos(DEG2RAD(latitude), DEG2RAD(longitude));
     mapControls.setZoom(zoom);
+}
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_getCameraPos(JNIEnv *env, jobject thiz) {
+    auto& mapControls = renderer.getMapControls();
+    auto camPos = mapControls.getCamPos();
+    jclass cls = env->FindClass("com/artem/tusaandroid/location/CameraPos");
+    jmethodID constructor = env->GetMethodID(cls, "<init>", "(FFF)V");
+    jobject obj = env->NewObject(cls, constructor, (float) RAD2DEG(camPos.latitude), (float) RAD2DEG(camPos.longitude), camPos.zoom);
+    return obj;
 }

@@ -13,7 +13,7 @@ import javax.inject.Inject
 open class RequestToFriendViewModel @Inject constructor(
     private val friendsState: FriendsState?
 ): ViewModel() {
-    val leftSwipeFriendRow = LeftSwipeFriendRow(viewModelScope, R.drawable.close)
+
 
     fun acceptRequest(id: Long) {
         viewModelScope.launch {

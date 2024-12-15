@@ -15,15 +15,6 @@ open class FriendRowViewModel @Inject constructor(
     private val friendsState: FriendsState?
 ): ViewModel() {
     val requestSent = mutableStateOf(false)
-    val leftSwipeFriendRow = LeftSwipeFriendRow(viewModelScope, R.drawable.person_remove)
-
-    fun acceptFriendRequest(id: Long) {
-        viewModelScope.launch {
-            withContext(Dispatchers.IO) {
-                friendsState?.acceptRequest(id)
-            }
-        }
-    }
 
     fun removeFriend(id: Long) {
         viewModelScope.launch {

@@ -11,6 +11,8 @@
 class TextureUtils {
 public:
     static GLuint loadTextureFromBytes(unsigned char* imageData, long fileSize);
+    static unsigned char* loadPixels(unsigned char* imageData, long fileSize);
+    static void freeImage(unsigned char* image);
 };
 
 

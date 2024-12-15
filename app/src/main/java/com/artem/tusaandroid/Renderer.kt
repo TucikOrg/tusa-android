@@ -22,7 +22,7 @@ class Renderer(
     private var defaultAvatar: ByteArray? = null
 
 
-    private val meAvatarKey = "me"
+    private val meAvatarKey = -1L
     private var locations: List<LocationDto> = listOf()
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -96,7 +96,7 @@ class Renderer(
         // добавляем маркера друзей
         // обновляем геопозицию маркеров друзей
         for (location in locations) {
-            val key = location.ownerId.toString()
+            val key = location.ownerId
             val existMarker = NativeLibrary.existMarker(key)
             if (!existMarker) {
                 val useImage = avatarState?.getAvatarBytes(location.ownerId)

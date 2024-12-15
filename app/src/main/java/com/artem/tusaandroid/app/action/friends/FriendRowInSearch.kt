@@ -17,7 +17,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,12 +27,14 @@ import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.isPreview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
-    LaunchedEffect(Unit) {
-        model.checkAlreadyFriend(friend.id!!)
-    }
+//    LaunchedEffect(Unit) {
+//        model.checkAlreadyFriend(friend.id!!)
+//    }
 
     val height = 90.dp
     Box(
@@ -74,15 +77,18 @@ fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
                     }
                 }
 
-                if (model.alreadyFriend.value) {
+
+                var requestSent by remember { mutableStateOf(false) }
+                if (model.checkAlreadyFriend(friend.id)) {
                     Text(
                         text = "Уже в друзьях",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
-                } else if (model.showAddFriend.value) {
+                } else if (requestSent == false) {
                     IconButton(
                         onClick = {
+                            requestSent = true
                             model.addFriend(friend)
                         }
                     ) {

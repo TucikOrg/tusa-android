@@ -10,7 +10,6 @@ import androidx.lifecycle.ViewModel
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.avatar.AvatarUploadWorker
 import com.artem.tusaandroid.app.profile.JwtGlobal

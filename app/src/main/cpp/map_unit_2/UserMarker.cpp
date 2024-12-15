@@ -10,53 +10,53 @@ void UserMarker::draw(
         MapNumbers& mapNumbers,
         FromLatLonToSphereDoublePos& fromLatLonToSpherePos
 ) {
-    auto camLatitude = mapNumbers.camLatitude;
-    auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
-
-    double noZTestDelta = M_PI / 4;
-    bool enableDepthTest = abs(camLatitude - latitude) > noZTestDelta || abs(camLongitudeNormalized - longitude) > noZTestDelta;
-    if (enableDepthTest) {
-        glEnable(GL_DEPTH_TEST);
-    }
-
-    Eigen::Vector3d position = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude);
-    std::vector<float> uv = {
-            0, 1,
-            1, 1,
-            1, 0,
-            0, 0,
-    };
-    float markerX = position[0];
-    float markerY = position[1];
-    float markerZ = position[2];
-
-    float z = 0.0f;
-    float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
-    float scaledSize = size * scale;
-    float halfSize = scaledSize / 2;
-    std::vector<float> vertices = {
-            markerX - halfSize, markerY + 0, markerZ + z,
-            markerX + halfSize, markerY + 0, markerZ + z,
-            markerX + halfSize, markerY + scaledSize, markerZ + z,
-            markerX - halfSize, markerY + scaledSize, markerZ + z,
-    };
-    auto shader = shadersBucket.userMarkerShader.get();
-    glUseProgram(shader->program);
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glUniform1i(shader->getTextureLocation(), 0);
-    glUniformMatrix4fv(shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-    glVertexAttribPointer(shader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
-    glEnableVertexAttribArray(shader->getPosLocation());
-    glVertexAttribPointer(shader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
-    glEnableVertexAttribArray(shader->getUVLocation());
-    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-    glDisable(GL_DEPTH_TEST);
+//    auto camLatitude = mapNumbers.camLatitude;
+//    auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
+//
+//    double noZTestDelta = M_PI / 4;
+//    bool enableDepthTest = abs(camLatitude - latitude) > noZTestDelta || abs(camLongitudeNormalized - longitude) > noZTestDelta;
+//    if (enableDepthTest) {
+//        glEnable(GL_DEPTH_TEST);
+//    }
+//
+//    Eigen::Vector3d position = fromLatLonToSpherePos.getPoint(mapNumbers, latitude, longitude);
+//    std::vector<float> uv = {
+//            0, 1,
+//            1, 1,
+//            1, 0,
+//            0, 0,
+//    };
+//    float markerX = position[0];
+//    float markerY = position[1];
+//    float markerZ = position[2];
+//
+//    float z = 0.0f;
+//    float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
+//    float scaledSize = size * scale;
+//    float halfSize = scaledSize / 2;
+//    std::vector<float> vertices = {
+//            markerX - halfSize, markerY + 0, markerZ + z,
+//            markerX + halfSize, markerY + 0, markerZ + z,
+//            markerX + halfSize, markerY + scaledSize, markerZ + z,
+//            markerX - halfSize, markerY + scaledSize, markerZ + z,
+//    };
+//    auto shader = shadersBucket.userMarkerShader.get();
+//    glUseProgram(shader->program);
+//    glBindTexture(GL_TEXTURE_2D, textureId);
+//    glUniform1i(shader->getTextureLocation(), 0);
+//    glUniformMatrix4fv(shader->getMatrixLocation(), 1, GL_FALSE, pv.data());
+//    glVertexAttribPointer(shader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, vertices.data());
+//    glEnableVertexAttribArray(shader->getPosLocation());
+//    glVertexAttribPointer(shader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
+//    glEnableVertexAttribArray(shader->getUVLocation());
+//    glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
+//    glDisable(GL_DEPTH_TEST);
 
     //drawDebugData(shadersBucket, pv, mapNumbers, markerX, markerY, markerZ, radius, axisLatitude, axisLongitude);
 }
 
-UserMarker::UserMarker(GLuint textureId, float latitude, float longitude)
-    : textureId(textureId), latitude(latitude), longitude(longitude) {
+UserMarker::UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId)
+    : pixels(pixels), latitude(latitude), longitude(longitude), markerId(markerId) {
 }
 
 void UserMarker::drawDebugData(
@@ -121,9 +121,7 @@ void UserMarker::setPosition(float lat, float lon) {
 }
 
 void UserMarker::clearTexture() {
-    glDeleteTextures(1, &textureId);
 }
 
 void UserMarker::setTexture(GLuint texture) {
-    this->textureId = texture;
 }

@@ -38,6 +38,14 @@ fun ScrollableUsersLazyList(model: AdminFabViewModel) {
         if (isAtTheEndOfList && model.users.isNotEmpty()) model.loadMoreUsers()
     }
 
+    var showProfileModel: ForAdminUserProfileViewModel = TucikViewModel(
+        preview = model.isPreview(),
+        previewModel = ForAdminUserProfileViewModelPreview()
+    )
+    ForAdminUserProfile(
+        model = showProfileModel,
+    )
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -46,7 +54,9 @@ fun ScrollableUsersLazyList(model: AdminFabViewModel) {
         ) {
             items(model.users.size, key = { index -> model.users[index].id }) { index ->
                 ForAdminUserRow(
-                    model = TucikViewModel(model.isPreview(), ForAdminUserRowViewModelPreview()), user = model.users[index]
+                    model = TucikViewModel(model.isPreview(), ForAdminUserRowViewModelPreview()),
+                    user = model.users[index],
+                    showProfileModel = showProfileModel
                 )
             }
         }

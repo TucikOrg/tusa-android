@@ -12,12 +12,13 @@
 #include "util/eigen_gl.h"
 #include "MapNumbers.h"
 #include "FromLatLonToSpherePos.h"
+#include "AvatarAtlasPointer.h"
 #include <cmath>
 
 class UserMarker {
 public:
     UserMarker() {}
-    UserMarker(GLuint textureId, float latitude, float longitude);
+    UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId);
 
     void draw(
             ShadersBucket &shadersBucket,
@@ -38,12 +39,22 @@ public:
     );
 
     void setTexture(GLuint textureId);
+    unsigned char* getPixels() { return pixels; }
+
     void clearTexture();
     void setPosition(float latitude, float longitude);
-private:
-    GLuint textureId;
+
+    bool uploadedToAtlas = false;
+    int64_t markerId;
+    unsigned char* pixels;
+    AvatarAtlasPointer atlasPointer;
     float latitude;
     float longitude;
+    float startAnimationElapsedTime = 0;
+    float fontSize = 0.09;
+    float invertAnimationUnit = 0.0;
+private:
+
     float size = 2.5f;
 };
 

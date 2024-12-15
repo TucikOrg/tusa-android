@@ -9,6 +9,7 @@
 #include <thread>
 #include "util/android_log.h"
 #include "MapFpsCounter.h"
+#include "CameraPos.h"
 
 class MapControls {
 public:
@@ -60,6 +61,14 @@ public:
     void setCamPos(float latitudeEPSG4326, float longitudeEPSG4326) {
         epsg3857LatNorm = Utils::EPSG4326_to_EPSG3857_latitude(latitudeEPSG4326) / M_PI;
         epsg3857LonNormInf = longitudeEPSG4326 / M_PI;
+    }
+
+    CameraPos getCamPos() {
+        return CameraPos {
+                getCamLatitude(),
+                getCamLongitude(),
+                getZoom()
+        };
     }
 
     float getDistanceToMap(float portion) {

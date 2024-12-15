@@ -3,7 +3,8 @@ package com.artem.tusaandroid.app.profile
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.artem.tusaandroid.StateHasSharedPreferences
-import com.artem.tusaandroid.socket.SendMessage
+import com.artem.tusaandroid.dto.Profile
+import com.artem.tusaandroid.dto.User
 import com.artem.tusaandroid.socket.SocketBinaryMessage
 import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -21,11 +22,35 @@ open class ProfileState(
     private var jwt: String? = null
     private var userId: Long? = null
 
+    private var profiles: MutableMap<Long, Profile> = mutableMapOf()
+
+    fun getProfile(userId: Long): Profile {
+        if (profiles[userId] == null) {
+            profiles[userId] = Profile(
+                name = mutableStateOf(""),
+                uniqueName = mutableStateOf(""),
+                gmail = mutableStateOf("")
+            )
+        }
+        return profiles[userId]!!
+    }
+
+    fun changeName(name: String, userId: Long) {
+        socketListener?.getSendMessage()?.changeName(name, userId)
+        getProfile(userId).name.value = name
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     fun changeName(name: String) {
         socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("change-name", Cbor.encodeToByteArray(name)))
         this.name.value = name
         saveName(name)
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun changeUniqueName(uniqueName: String, userId: Long) {
+        socketListener?.getSendMessage()?.changeUniqueName(uniqueName, userId)
+        getProfile(userId).uniqueName.value = uniqueName
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -93,8 +118,16 @@ open class ProfileState(
         return name
     }
 
+    fun getName(userId: Long): MutableState<String> {
+        return getProfile(userId).name
+    }
+
     fun getUniqueName(): MutableState<String> {
         return uniqueName
+    }
+
+    fun getUniqueName(userId: Long): MutableState<String> {
+        return getProfile(userId).uniqueName
     }
 
     override fun onLoad(userId: Long) {
@@ -106,5 +139,12 @@ open class ProfileState(
         uniqueName.value = sharedPreferences.getString(key + "uniqueName", "")!!
         phone.value = sharedPreferences.getString(key + "phone", "")!!
         name.value = sharedPreferences.getString(key + "name", "")!!
+    }
+
+    fun checkProfileState(user: User) {
+        val profile = getProfile(user.id)
+        if (user.uniqueName != null) profile.uniqueName.value = user.uniqueName
+        if (user.name != null) profile.name.value = user.name
+        if (user.gmail != null) profile.gmail.value = user.gmail
     }
 }

@@ -126,6 +126,8 @@ void MapRenderer::renderFrame() {
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     }
 
+
+
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
     markers.drawMarkers(shadersBucket, mn.pvFloat,
@@ -133,16 +135,15 @@ void MapRenderer::renderFrame() {
                         mapFpsCounter, canRefreshTitles
     );
 
+//    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
+//    auto zoomText = Utils::floatToWString(mn.zoom, 1);
+//    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
+//                            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
+//                            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
+//    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTileRender.getMapTexture(), 2, 2);
-    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
-    auto zoomText = Utils::floatToWString(mn.zoom, 1);
-    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
-            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
-            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
-    //mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
-
-    //drawTestTexture(mapSymbols.getAtlasTexture(), 0.9, 0.9, 0.05);
+    //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {

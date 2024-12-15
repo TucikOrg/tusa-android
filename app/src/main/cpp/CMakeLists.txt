@@ -44,6 +44,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/space_dark_shader.cpp
         shader/title_map_shader.cpp
         shader/path_text_shader.cpp
+        shader/avatar_on_map_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp
@@ -68,6 +69,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_1/Region.cpp
         map_unit_1/PathTextCache.cpp
         map_unit_1/PointForTextPathCache.cpp
+        map_unit_1/CameraPos.cpp
 
         map_unit_2/MapRenderer.cpp
         map_unit_2/MapControls.cpp
@@ -102,6 +104,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/DrawTitlesThreadInput.cpp
         map_unit_2/ReservedList.cpp
         map_unit_2/TileCacheM.cpp
+        map_unit_2/AvatarAtlasPointer.cpp
 
         grid/Grid.cpp
         grid/GridNode.cpp

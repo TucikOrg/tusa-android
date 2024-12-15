@@ -332,28 +332,18 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         filterrank = boost::get<uint64_t>(props["filterrank"]);
         type = boost::get<std::string>(props["type"]);
 
+        // Пытаемся получить имя на русском
         if (props.find("name_ru") != props.end()) {
             auto nameProperty = props["name_ru"];
             name = boost::get<std::string>(nameProperty);
-
-            if (name == "Москва") {
-                int i = 1;
-            }
         }
 
+        // Если не получилось, то получаем имя на английском
         if (name == "") {
-            auto nameProperty = props["name"];
+            auto nameProperty = props["name_en"];
             name = boost::get<std::string>(nameProperty);
         }
     }
-
-//    if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
-//        fontSize[currentIndex] = 0.016f;
-//        names[currentIndex] = name;
-//        visibleZoom[currentIndex] = fromToZoomsVisible(1, 6);
-//        addStyle(currentIndex);
-//        return true;
-//    } else currentIndex++;
 
     if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
         fontSize[currentIndex] = 0.015f;
