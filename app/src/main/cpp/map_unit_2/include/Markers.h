@@ -21,6 +21,7 @@
 #include "Box.h"
 #include "Grid.h"
 #include "AvatarAtlasPointer.h"
+#include "AvatarsGroup.h"
 
 struct WStringHash {
     std::size_t operator()(const std::wstring& str) const {
@@ -53,7 +54,12 @@ public:
 
     AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();
 private:
-    std::map<int64_t, UserMarker> userMarkers = {};
+    int atlasAvatarSize = 2048;
+    int avatarSize = 256;
+
+
+    std::unordered_map<int64_t, UserMarker> storageMarkers = {};
+    std::unordered_map<int64_t, void*> renderMarkers = {};
     std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkersForRenderStorage = {};
 
     DrawTitlesThreadInput drawTitlesThreadInput;
@@ -64,11 +70,11 @@ private:
     size_t iboSize = 0;
     size_t refreshTitlesKey = 0;
 
-    GLuint avatarsVBO;
-    GLuint avatarsIBO;
-    size_t avatarsIboSize = 0;
+    std::unordered_map<GLuint, void*> refreshGroup = {};
+    std::unordered_map<GLuint, AvatarsGroup> avatarsGroups = {};
+    size_t refreshAvatarsKey = 0;
 
-    void markersHandleThread();
+    void updateMarkerAvatarInternal(int64_t& key, unsigned char *imageData, off_t& fileSize);
 };
 
 

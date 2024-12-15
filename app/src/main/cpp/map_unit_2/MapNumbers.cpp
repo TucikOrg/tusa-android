@@ -37,7 +37,7 @@ MapNumbers::MapNumbers(
 
     scale = mapControls.getScale();
     float impact = mapControls.getCamDistDistortionImpact();
-    distortionDistanceToMapPortion = invDistortion * impact + (1.0 - impact);
+    distortionDistanceToMapPortion = invDistortion * impact + (1.0 - impact); // вдияние дисторции на дистанцию до карты
     distanceToMap = mapControls.getDistanceToMap(distortionDistanceToMapPortion);
     maxDistanceToMap = mapControls.getMaxDistanceToMap();
     zoomingDelta = mapControls.getZoomingDelta();

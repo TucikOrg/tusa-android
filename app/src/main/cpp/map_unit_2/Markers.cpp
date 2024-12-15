@@ -6,30 +6,9 @@
 #include "FromLatLonToSpherePos.h"
 #include "MapSymbols.h"
 
-bool Markers::hasMarker(int64_t key) {
-    return userMarkers.find(key) != userMarkers.end();
-}
-
-void Markers::addMarker(
-        int64_t key,
-        float latitude,
-        float longitude,
-        unsigned char *imageData,
-        off_t fileSize
-) {
-    auto find = userMarkers.find(key);
-    if (find != userMarkers.end()) {
-        return;
-    }
-    auto pixels = TextureUtils::loadPixels(imageData, fileSize);
-    userMarkers[key] = { pixels, latitude, longitude, key };
-    delete imageData;
-}
-
-bool doIt = true;
 
 void Markers::doubleTap() {
-    doIt = !doIt;
+
 }
 
 void Markers::drawMarkers(ShadersBucket& shadersBucket,
@@ -44,12 +23,14 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
     fromLatLonToSpherePos.init(mapNumbers);
     float animationTime = 0.5;
-    float scale = mapNumbers.scale;
+
 
     float screenWidth = mapCamera.getScreenW();
     float screenHeight = mapCamera.getScreenH();
 
+    // рендрим текст городов стран и тп
     {
+        float scale = mapNumbers.scale;
         std::vector<float> testVertices = {};
         int checks = 0;
 
@@ -304,122 +285,127 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     }
 
 
-//    Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
-//    Eigen::Matrix4f viewTest = mapCamera.createView();
-//    Eigen::Matrix4f pvTest = projectionTest * viewTest;
-//    auto plainShader = shadersBucket.plainShader;
-//    glUseProgram(plainShader->program);
-//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvTest.data());
-//    glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, testVertices.data());
-//    glEnableVertexAttribArray(plainShader->getPosLocation());
-//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-//    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
-//    glDrawArrays(GL_POINTS, 0, testVertices.size() / 2);
 
-//    auto plainShader = shadersBucket.plainShader;
-//    glUseProgram(plainShader->program);
-//    glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pv.data());
-//    glVertexAttribPointer(plainShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, testVertices.data());
-//    glEnableVertexAttribArray(plainShader->getPosLocation());
-//    glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-//    glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
-//    glDrawArrays(GL_POINTS, 0, testVertices.size() / 3);
-    int atlasAvatarSize = 2048;
-    int avatarSize = 256;
-
-    // создаем свободный атлас для аватаров
-    if (nextPlaceForAvatar.active == false) {
-        GLuint atlasId;
-        glGenTextures(1, &atlasId);
-        glBindTexture(GL_TEXTURE_2D, atlasId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, atlasAvatarSize, atlasAvatarSize, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-
-        nextPlaceForAvatar.active = true;
-        nextPlaceForAvatar.atlasId = atlasId;
-        nextPlaceForAvatar.x = 0;
-        nextPlaceForAvatar.y = 0;
-    }
-
-    // ищем аватары вне атласов
-    std::vector<UserMarker> addMeToAtlas = {};
-    for (auto pair : userMarkers) {
-        auto marker = pair.second;
-        if (marker.uploadedToAtlas) continue;
-        addMeToAtlas.push_back(marker);
-    }
-
-    // пушим в атлас то чего нету в атласе
-    auto& nextPlace = nextPlaceForAvatar;
-    if (addMeToAtlas.empty() == false) {
-        glBindTexture(GL_TEXTURE_2D, nextPlace.atlasId);
-    }
-    for (auto& marker : addMeToAtlas) {
-        auto pixels = marker.getPixels();
-        glTexSubImage2D(GL_TEXTURE_2D, 0, nextPlace.x, nextPlace.y, avatarSize, avatarSize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-        auto& markerPtr = userMarkers[marker.markerId];
-        markerPtr.uploadedToAtlas = true;
-        markerPtr.atlasPointer = nextPlaceForAvatar;
-        TextureUtils::freeImage(markerPtr.pixels);
-        nextPlace.x += avatarSize;
-        if (nextPlace.x + avatarSize > atlasAvatarSize) {
-            nextPlace.x = 0;
-            nextPlace.y += avatarSize;
-        }
-        if (nextPlace.y == atlasAvatarSize) {
-            nextPlace.active = false;
-            break;
-        }
-    }
-
-
+    // рендрим аватары юзеров, маркера
     {
-        glBindTexture(GL_TEXTURE_2D, nextPlace.atlasId);
-        if (true) {
-            float elapsedTime = mapFpsCounter.getTimeElapsed();
-            bool refresh = true;
-            if (refresh) {
-                auto atlasW = mapSymbols.atlasWidth;
-                auto atlasH = mapSymbols.atlasHeight;
-                std::vector<float> symbolsData = {};
+        // создаем свободный атлас для аватаров
+        if (nextPlaceForAvatar.active == false) {
+            GLuint atlasId;
+            glGenTextures(1, &atlasId);
+            glBindTexture(GL_TEXTURE_2D, atlasId);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, atlasAvatarSize, atlasAvatarSize, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 
-                for (auto markerPair : userMarkers) {
-                    auto& marker = markerPair.second;
-                    auto& atlasPointer = marker.atlasPointer;
-                    auto& startAnimationElapsedTime = marker.startAnimationElapsedTime;
-                    auto& fontSize = marker.fontSize;
-                    auto& latitude = marker.latitude;
-                    auto& longitude = marker.longitude;
+            nextPlaceForAvatar.active = true;
+            nextPlaceForAvatar.atlasId = atlasId;
+            nextPlaceForAvatar.x = 0;
+            nextPlaceForAvatar.y = 0;
+        }
+
+        // ищем аватары вне атласов
+        std::vector<UserMarker> addMeToAtlas = {};
+        for (auto pair : storageMarkers) {
+            auto marker = pair.second;
+            if (marker.uploadedToAtlas) continue;
+            addMeToAtlas.push_back(marker);
+        }
+
+        // пушим в атлас то чего нету в атласе
+        auto& nextPlace = nextPlaceForAvatar;
+        if (addMeToAtlas.empty() == false) {
+            glBindTexture(GL_TEXTURE_2D, nextPlace.atlasId);
+        }
+        for (auto& marker : addMeToAtlas) {
+            auto pixels = marker.getPixels();
+            glTexSubImage2D(GL_TEXTURE_2D, 0, nextPlace.x, nextPlace.y, avatarSize, avatarSize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+            auto& markerPtr = storageMarkers[marker.markerId];
+            markerPtr.uploadedToAtlas = true;
+            markerPtr.atlasPointer = nextPlaceForAvatar;
+            TextureUtils::freeImage(markerPtr.pixels);
+            if (avatarsGroups.find(nextPlace.atlasId) == avatarsGroups.end()) {
+                GLuint avatarsVBO;
+                GLuint avatarsIBO;
+                glGenBuffers(1, &avatarsVBO);
+                glGenBuffers(1, &avatarsIBO);
+                avatarsGroups[nextPlace.atlasId] = { nextPlace.atlasId, {}, avatarsVBO, avatarsIBO };
+            }
+            avatarsGroups[nextPlace.atlasId].userMarkers.push_back(&markerPtr);
+
+            // сдвигаем место в текстуре дальше
+            nextPlace.x += avatarSize;
+            if (nextPlace.x + avatarSize > atlasAvatarSize) {
+                nextPlace.x = 0;
+                nextPlace.y += avatarSize;
+            }
+            if (nextPlace.y == atlasAvatarSize) {
+                // если атлас уже забит под край то на следующем кадре создаем еще один атлас
+                // а пока что дальше рендрим только часть аватаров
+                nextPlace.active = false;
+                break;
+            }
+        }
+
+        float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
+        float elapsedTime = mapFpsCounter.getTimeElapsed();
+        bool refreshAll = refreshAvatarsKey != renderMarkers.size();
+        bool refreshSelectedGroups = refreshGroup.size() > 0;
+        if (refreshSelectedGroups) {
+            int i = 0;
+        }
+        if (refreshAll || refreshSelectedGroups) {
+            refreshAvatarsKey = renderMarkers.size();
+            // cобираем маркера в зависимости от атласов в которых они находятся
+            for (auto& pair : avatarsGroups) {
+                // если нужно пересобрать только определенные группы
+                if (refreshSelectedGroups && refreshGroup.count(pair.first) == 0) {
+                    continue;
+                }
+                refreshGroup.erase(pair.first);
+
+                auto& currentGroup = avatarsGroups[pair.first];
+                auto markersOfGroup = pair.second.userMarkers;
+                std::vector<float> avatarsData = {};
+
+                size_t avatarsToDrawCount = 0;
+                for (auto& markerInGroup : markersOfGroup) {
+                    auto& marker = markerInGroup;
+
+                    // если маркер не должен быть на экране, но встретился в атласе то игнорируем его
+                    if (renderMarkers.count(marker->markerId) == 0) {
+                        continue;
+                    }
+                    avatarsToDrawCount++;
+
+                    auto& atlasPointer = marker->atlasPointer;
+                    auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
+                    auto& markerSize = marker->markerSize;
+                    auto& latitude = marker->latitude;
+                    auto& longitude = marker->longitude;
 
                     float startU = FLOAT(atlasPointer.x) / atlasAvatarSize;
                     float endU = FLOAT(atlasPointer.x + avatarSize) / atlasAvatarSize;
                     float startV = FLOAT(atlasPointer.y + avatarSize) / atlasAvatarSize;
                     float endV =  FLOAT(atlasPointer.y) / atlasAvatarSize;
 
-                    float xPos = 0;
-                    float yPos = 0;
-                    float w = 25;
-                    float h = 25;
-
                     float data[] = {
-                            startU, startV, -latitude, -longitude,  xPos, yPos, -1, -1, startAnimationElapsedTime, marker.invertAnimationUnit, fontSize,
-                            endU, startV, -latitude, -longitude,  xPos + w, yPos, 1, -1, startAnimationElapsedTime, marker.invertAnimationUnit, fontSize,
-                            endU, endV, -latitude, -longitude,  xPos + w, yPos + h, 1, 1, startAnimationElapsedTime, marker.invertAnimationUnit, fontSize,
-                            startU, endV, -latitude, -longitude,  xPos, yPos + h, -1, 1, startAnimationElapsedTime, marker.invertAnimationUnit, fontSize,
+                            startU, startV, -latitude, -longitude, -markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            endU, startV, -latitude, -longitude,    markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            endU, endV, -latitude, -longitude,      markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            startU, endV, -latitude, -longitude,   -markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
                     };
 
                     for (auto item : data) {
-                        symbolsData.push_back(item);
+                        avatarsData.push_back(item);
                     }
                 }
 
-                std::vector<unsigned int> indices(1 * 6);
-                avatarsIboSize = indices.size();
+                std::vector<unsigned int> indices(avatarsToDrawCount * 6);
+                currentGroup.avatarsIboSize = indices.size();
                 unsigned int currentPoint = 0;
-                for (int i = 0; i < 1; i++) {
+                for (int i = 0; i < avatarsToDrawCount; i++) {
                     unsigned int skip = i * 6;
                     indices[skip + 0] = currentPoint + 0;
                     indices[skip + 1] = currentPoint + 1;
@@ -430,17 +416,23 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     currentPoint += 4;
                 }
 
-                glBindBuffer(GL_ARRAY_BUFFER, avatarsVBO);
-                auto data = symbolsData.data();
-                auto size = symbolsData.size() * sizeof(float);
+                glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsVBO);
+                auto data = avatarsData.data();
+                auto size = avatarsData.size() * sizeof(float);
                 glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
 
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsIBO);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
             }
         }
 
-        if (userMarkers.size() > 0) {
+        // сколько компонентов в data для рендринга аватара
+        size_t stride = 8 * sizeof(float);
+
+        // рисуем маркера по группам
+        for (auto& pair : avatarsGroups) {
+            auto& group = pair.second;
+            glBindTexture(GL_TEXTURE_2D, pair.first);
             auto avatarsOnMap = shadersBucket.avatarOnMapShader;
             glUseProgram(avatarsOnMap->program);
             Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
@@ -453,77 +445,104 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             glUniform1f(avatarsOnMap->getScaleLocation(), scale);
             glUniformMatrix4fv(avatarsOnMap->getMatrixLocation(), 1, GL_FALSE, pv.data());
             glUniform1i(avatarsOnMap->getTextureLocation(), 0);
-            glBindBuffer(GL_ARRAY_BUFFER, avatarsVBO);
-            size_t stride = 11 * sizeof(float);
+
+            glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
             glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
             glEnableVertexAttribArray(avatarsOnMap->getTextureCord());
             glVertexAttribPointer(avatarsOnMap->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getLatLonLocation());
-            glVertexAttribPointer(avatarsOnMap->getShiftLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getShiftLocation());
-            glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
+            glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getBorderDirection());
-            glVertexAttribPointer(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
+            glVertexAttribPointer(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getStartAnimationElapsedTimeLocation());
-            glVertexAttribPointer(avatarsOnMap->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(9 * sizeof(float)));
+            glVertexAttribPointer(avatarsOnMap->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(7 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getInvertAnimationUnitLocation());
-            glVertexAttribPointer(avatarsOnMap->getFontSizeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(10 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getFontSizeLocation());
             glUniform1f(avatarsOnMap->getCurrentElapsedTimeLocation(), mapFpsCounter.getTimeElapsed());
             glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
-            glUniform1f(avatarsOnMap->getBorderLocation(), 0.0);
             glUniform3f(avatarsOnMap->getColorLocation(), 1, 1, 1);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsIBO);
-            glDrawElements(GL_TRIANGLES, avatarsIboSize, GL_UNSIGNED_INT, 0);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, group.avatarsIBO);
+//            glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 1.0);
+//            glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
+            glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 0.0);
+            glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
         }
-    }
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+    } // конец рендринга аватаров
 
 }
 
 void Markers::updateMarkerGeo(int64_t key, float latitude, float longitude) {
-    auto find = userMarkers.find(key);
-    if (find == userMarkers.end()) {
+    auto find = storageMarkers.find(key);
+    if (find == storageMarkers.end()) {
         return;
     }
     auto& marker = find->second;
+
+    float epsilon = 1e-7;
+    bool changed = CommonUtils::compareFloats(marker.longitude, longitude, epsilon) == false || CommonUtils::compareFloats(marker.latitude, latitude, epsilon) == false;
+    if (changed == false) return;
+
     marker.setPosition(latitude, longitude);
+
+    // локация изменилась для этого маркера
+    // если этот маркер видимый то пересобираем буффер для рендринга
+    if (renderMarkers.count(key) == 0) return;
+
+    auto markerGroup = storageMarkers[key].atlasPointer.atlasId;
+    refreshGroup[markerGroup] = nullptr;
 }
 
 void Markers::removeMarker(int64_t key) {
-    auto find = userMarkers.find(key);
-    if (find == userMarkers.end()) {
-        return;
-    }
-    auto& marker = find->second;
-    marker.clearTexture();
-    userMarkers.erase(find);
+    // больше его не рендрим но он все равно в памяти
+    renderMarkers.erase(key);
 }
 
 void Markers::updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize) {
-    auto find = userMarkers.find(key);
-    if (find == userMarkers.end()) {
+    auto find = storageMarkers.find(key);
+    if (find == storageMarkers.end()) {
         return;
     }
-    auto& marker = find->second;
-    marker.clearTexture();
 
-    GLuint textureId = TextureUtils::loadTextureFromBytes(imageData, fileSize);
-    marker.setTexture(textureId);
+    updateMarkerAvatarInternal(key, imageData, fileSize);
+    //delete imageData;
+}
+void Markers::updateMarkerAvatarInternal(int64_t& key, unsigned char *imageData, off_t& fileSize) {
+    auto& marker = storageMarkers[key];
+    auto& atlasPtr = marker.atlasPointer;
+    auto pixels = TextureUtils::loadPixels(imageData, fileSize);
+    glBindTexture(GL_TEXTURE_2D, atlasPtr.atlasId);
+    glTexSubImage2D(GL_TEXTURE_2D, 0, atlasPtr.x, atlasPtr.y, avatarSize, avatarSize, GL_RGB, GL_UNSIGNED_BYTE, pixels);
+    TextureUtils::freeImage(pixels);
+}
+
+bool Markers::hasMarker(int64_t key) {
+    return storageMarkers.find(key) != storageMarkers.end();
+}
+
+void Markers::addMarker(
+        int64_t key,
+        float latitude,
+        float longitude,
+        unsigned char *imageData,
+        off_t fileSize
+) {
+    auto find = storageMarkers.find(key);
+    if (find != storageMarkers.end()) {
+        updateMarkerAvatarInternal(key, imageData, fileSize);
+        renderMarkers[key] = nullptr;
+        return;
+    }
+
+    auto pixels = TextureUtils::loadPixels(imageData, fileSize);
+    storageMarkers[key] = { pixels, latitude, longitude, key };
+    renderMarkers[key] = nullptr;
+
+    // тут нужно потестировать с удалением imageData
 }
 
 void Markers::initGL() {
     glGenBuffers(1, &titlesVBO);
     glGenBuffers(1, &titlesIBO);
     glGenFramebuffers(1, &frameBuffer);
-
-    glGenBuffers(1, &avatarsVBO);
-    glGenBuffers(1, &avatarsIBO);
-
-    std::thread markersHandleThread([this] { this->markersHandleThread(); });
-    markersHandleThread.detach();
-}
-
-void Markers::markersHandleThread() {
 }

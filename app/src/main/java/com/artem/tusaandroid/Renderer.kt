@@ -57,8 +57,7 @@ class Renderer(
     }
 
     override fun onDrawFrame(gl: GL10) {
-        // Update me avatar marker
-        // if avatar changed and location exists
+        // обновляет и работает только с моим аватоаром
         // Добавить маркер или сменить аватарку маркера пользователя
         if (meAvatarState?.getNeedUpdateInRenderFlag() == true && lastLocationState?.lastLocationExists() == true) {
             var useMeAvatar = meAvatarState.getAvatarBytes()
@@ -68,16 +67,13 @@ class Renderer(
 
             val latitude = lastLocationState.getLastLatitude()
             val longitude = lastLocationState.getLastLongitude()
-            val existMarker = NativeLibrary.existMarker(meAvatarKey)
-            if (!existMarker) {
-                NativeLibrary.addMarker(meAvatarKey, latitude, longitude, useMeAvatar!!)
-            } else {
-                NativeLibrary.updateMarkerAvatar(meAvatarKey, useMeAvatar!!)
-            }
+            // если маркер есть уже то просто обновит аватар и сделает его видимым
+            // если нету то создаст его
+            NativeLibrary.addMarker(meAvatarKey, latitude, longitude, useMeAvatar!!)
             meAvatarState.rendererUpdated()
         }
 
-        // Update me avatar location if location changed
+        // Обновить мою локацию если она изменилась
         // Изменить местоположение маркера пользователя
         if (lastLocationState?.lastLocationExists() == true && lastLocationState.getNeedUpdateLastLocationInRenderer()) {
             val latitude = lastLocationState.getLastLatitude()

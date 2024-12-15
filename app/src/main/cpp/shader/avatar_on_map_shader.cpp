@@ -17,11 +17,9 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     a_pos = glGetAttribLocation(program, "vertexPosition");
     a_textureCord = glGetAttribLocation(program, "a_textureCord");
     a_latLon = glGetAttribLocation(program, "a_latLon");
-    a_shift = glGetAttribLocation(program, "a_shift");
     a_border_direction = glGetAttribLocation(program, "a_border_direction");
     a_startAnimationElapsedTime = glGetAttribLocation(program, "a_startAnimationElapsedTime");
     a_invertAnimationUnit = glGetAttribLocation(program, "a_invertAnimationUnit");
-    a_fontSize = glGetAttribLocation(program, "a_fontSize");
 
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
@@ -32,6 +30,6 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     u_current_elapsed_time = glGetUniformLocation(program, "u_current_elapsed_time");
     u_radius = glGetUniformLocation(program, "u_radius");
     u_scale = glGetUniformLocation(program, "u_scale");
-    u_border = glGetUniformLocation(program, "u_border");
     u_animationTime = glGetUniformLocation(program, "u_animationTime");
+    u_drawColorMix = glGetUniformLocation(program, "u_drawColorMix");
 }

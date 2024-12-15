@@ -105,6 +105,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/ReservedList.cpp
         map_unit_2/TileCacheM.cpp
         map_unit_2/AvatarAtlasPointer.cpp
+        map_unit_2/AvatarsGroup.cpp
 
         grid/Grid.cpp
         grid/GridNode.cpp
