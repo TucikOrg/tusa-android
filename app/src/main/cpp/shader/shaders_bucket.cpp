@@ -61,6 +61,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     avatarOnMapShader = std::shared_ptr<AvatarOnMapShader>(new AvatarOnMapShader(
             assetManager, "shaders/avatar_on_map.vert", "shaders/avatar_on_map.frag"
     ));
+    avatarRayShader = std::shared_ptr<AvatarRayShader>(new AvatarRayShader(
+            assetManager, "shaders/avatar_ray.vert", "shaders/avatar_ray.frag"
+    ));
 }
 
 ShadersBucket::~ShadersBucket() {

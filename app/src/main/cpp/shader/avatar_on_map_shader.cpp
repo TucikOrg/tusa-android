@@ -32,4 +32,6 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     u_scale = glGetUniformLocation(program, "u_scale");
     u_animationTime = glGetUniformLocation(program, "u_animationTime");
     u_drawColorMix = glGetUniformLocation(program, "u_drawColorMix");
+    u_borderWidth = glGetUniformLocation(program, "u_borderWidth");
+    u_arrowHeight = glGetUniformLocation(program, "u_arrowHeight");
 }

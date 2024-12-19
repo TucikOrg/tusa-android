@@ -22,6 +22,7 @@
 #include "Grid.h"
 #include "AvatarAtlasPointer.h"
 #include "AvatarsGroup.h"
+#include "avatars/Grid.h"
 
 struct WStringHash {
     std::size_t operator()(const std::wstring& str) const {
@@ -35,6 +36,8 @@ struct WStringHash {
 
 class Markers {
 public:
+    Markers(MapFpsCounter* mapFpsCounter) : mapFpsCounter(mapFpsCounter) { }
+
     void initGL();
     void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
     void removeMarker(int64_t key);
@@ -46,7 +49,6 @@ public:
                      std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
                      MapCamera& mapCamera,
-                     MapFpsCounter& mapFpsCounter,
                      bool canRefreshMarkers
     );
     bool hasMarker(int64_t key);
@@ -54,9 +56,22 @@ public:
 
     AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();
 private:
+    MapFpsCounter* mapFpsCounter = nullptr;
     int atlasAvatarSize = 2048;
     int avatarSize = 256;
 
+    // сохраненное состояние для параллельного потока
+    FromLatLonToSpherePos fromLatLonToSpherePosThread;
+    bool lockThread;
+    float screenWidthT;
+    float screenHeightT;
+    float radiusT = 0.0;
+    Eigen::Matrix4f pvT;
+    std::vector<float> testAvatarsVertices = {};
+    float scaleT;
+
+    float borderWidth = 0.17f;
+    float arrowBasicHeight = 0.3f;
 
     std::unordered_map<int64_t, UserMarker> storageMarkers = {};
     std::unordered_map<int64_t, void*> renderMarkers = {};

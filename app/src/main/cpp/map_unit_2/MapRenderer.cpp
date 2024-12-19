@@ -132,7 +132,7 @@ void MapRenderer::renderFrame() {
     bool canRefreshTitles = backgroundTiles.size() == 0;
     markers.drawMarkers(shadersBucket, mn.pvFloat,
                         mn, tiles, mapSymbols, mapCamera,
-                        mapFpsCounter, canRefreshTitles
+                        canRefreshTitles
     );
 
 //    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);

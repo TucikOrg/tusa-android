@@ -27,6 +27,8 @@ public:
     GLint getStartAnimationElapsedTimeLocation() const { return a_startAnimationElapsedTime; }
     GLint getAnimationTimeLocation() const { return u_animationTime; }
     GLint getDrawColorMixLocation() const { return u_drawColorMix; }
+    GLint getBorderWidthLocation() const { return u_borderWidth; }
+    GLint getArrowHeightLocation() const { return u_arrowHeight; }
     GLint getInvertAnimationUnitLocation() const { return a_invertAnimationUnit; }
 
 private:
@@ -42,6 +44,8 @@ private:
     GLint u_current_elapsed_time;
     GLint u_animationTime;
     GLint u_drawColorMix;
+    GLint u_borderWidth;
+    GLint u_arrowHeight;
 
     GLint a_startAnimationElapsedTime;
     GLint a_latLon;

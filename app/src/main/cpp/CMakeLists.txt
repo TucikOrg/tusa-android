@@ -106,10 +106,21 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/TileCacheM.cpp
         map_unit_2/AvatarAtlasPointer.cpp
         map_unit_2/AvatarsGroup.cpp
+        map_unit_2/IGetPointData.cpp
 
         grid/Grid.cpp
         grid/GridNode.cpp
         grid/GridElement.cpp
+        grid/Box.cpp
+        grid/Circle.cpp
+        grid/IGridForm.cpp
+
+        grid_avatars/Grid.cpp
+        grid_avatars/GridNode.cpp
+        grid_avatars/GridElement.cpp
+        grid_avatars/Box.cpp
+        grid_avatars/Circle.cpp
+        grid_avatars/IGridForm.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
@@ -118,6 +129,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_1/include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE map_unit_2/include)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE grid/include)
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE grid_avatars/include)
 
 include(${PROJECT_SOURCE_DIR}/vendor/protozero.cmake)
 include(${PROJECT_SOURCE_DIR}/vendor/earcut.hpp.cmake)

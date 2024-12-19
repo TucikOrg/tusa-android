@@ -7,16 +7,22 @@
 
 #include <stdlib.h>
 #include <string>
+#include "IGridForm.h"
 
-struct Box {
+struct Box: public IGridForm {
 public:
+    Box() {}
+    Box(int lb_x, int lb_y, int rt_x, int rt_y, uint64_t titleId)
+        : lb_x(lb_x), lb_y(lb_y), rt_x(rt_x), rt_y(rt_y), titleId(titleId) {}
+
     int lb_x;
     int lb_y;
     int rt_x;
     int rt_y;
     uint64_t titleId;
 
-    bool intersects(Box& box) {
+    bool intersects(IGridForm& form) const override {
+        Box& box = static_cast<Box&>(form);
         int box1_xMax = box.rt_x;
         int box2_xMin = this->lb_x;
         int box2_xMax = this->rt_x;

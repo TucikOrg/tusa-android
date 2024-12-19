@@ -15,36 +15,40 @@ varying float arrowMarkerHeightSize;
 
 void main() {
     float animationTime = u_animationTime;
-    //float alpha = abs(invertAnimationUnit - clamp((u_current_elapsed_time - startAnimationElapsedTime) / animationTime, 0.0, 1.0));
-    //gl_FragColor = vec4(u_color, alpha); //texture2D(u_text, textureCord)
+    float alphaAnimation = abs(invertAnimationUnit - clamp((u_current_elapsed_time - startAnimationElapsedTime) / animationTime, 0.0, 1.0));
 
+    // параметры рисования
+    float uRadius = 0.45;
+    float arrowUpPow = 4.0;
 
     // это чтобы сделать закругленные края у автарки
     // Центральные координаты
     vec2 center = vec2(0.5, 0.5);
     vec2 size = vec2(0.5, 0.5);
     vec2 uv = abs(corners_coords - center);
-    float uRadius = 0.3;
-    vec2 positionOfCornerCircle = size - vec2(uRadius, uRadius);
 
-    float isArrowZoneAlpha = corners_coords.y < 0.0 ? 1.0 : 0.0;
+    vec2 positionOfCornerCircle = size - vec2(uRadius, uRadius);
 
     // Расстояние до угла
     vec2 cornerPos = uv - positionOfCornerCircle;
     float cornerDistance = length(cornerPos);
-    bool alphaB = cornerDistance > uRadius && cornerPos.x > 0.0 && cornerPos.y > 0.0;
-    float alphaRounded = mix(alphaB ? 0.0 : 1.0, 1.0, isArrowZoneAlpha); // альфа закрегленных углов
+    bool alphaCornersRoundedB = (cornerDistance <= uRadius && cornerPos.x >= 0.0 && cornerPos.y >= 0.0);
+    bool alphaInnerSpaceB = (uv.x < positionOfCornerCircle.x || uv.y < positionOfCornerCircle.y) && (uv.y < size.x && uv.x < size.y);
+    bool alphaRoundedB = alphaCornersRoundedB || alphaInnerSpaceB; // закругление углов
 
-    vec3 resultColor = mix(texture2D(u_text, textureCord).rgb, u_color, u_drawColorMix);
 
     float x = corners_coords.x;
     float y = 1.0 - (corners_coords.y / -arrowMarkerHeightSize);
-    float curveValue = pow(4.0 * x - 2.0, 2.0);
-    float innerSpaceAlpha = y < curveValue ? 0.0 : 1.0;
-    vec3 arrow = vec3(innerSpaceAlpha);
+    float curveValue = pow(2.0 * arrowUpPow * x - arrowUpPow, 2.0);
+    bool isArrowB = y > curveValue && corners_coords.y < 0.2;
 
-    float alpha = alphaRounded - (1.0 - innerSpaceAlpha) * isArrowZoneAlpha;
-    vec4 colorFirst = vec4(mix(texture2D(u_text, textureCord).rgb, arrow, isArrowZoneAlpha), alpha);
-    gl_FragColor = colorFirst;
-    //gl_FragColor = mix(colorFirst, vec4(resultColor, mix(alphaB ? 0.0 : 1.0, 0.0, isArrowZoneAlpha)), u_drawColorMix);
+    // это аватар и стрелочка
+    float alphaRounded = alphaRoundedB ? 1.0 : 0.0;
+    vec4 colorFirst = vec4(texture2D(u_text, textureCord).rgb, alphaRounded * alphaAnimation);
+
+    // это фон, обертка для автаара
+    float bgAlpha = isArrowB || alphaRoundedB ? 1.0 : 0.0;
+    vec4 colorBg = vec4(u_color, bgAlpha * alphaAnimation);
+
+    gl_FragColor = mix(colorFirst, colorBg, u_drawColorMix);
 }

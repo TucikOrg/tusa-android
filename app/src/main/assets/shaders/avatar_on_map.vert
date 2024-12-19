@@ -14,6 +14,9 @@ uniform vec3 u_axisLongitude;
 uniform vec3 u_pointOnSphere;
 uniform float u_radius;
 uniform float u_drawColorMix;
+uniform float u_current_elapsed_time;
+uniform float u_borderWidth;
+uniform float u_arrowHeight;
 
 varying vec2 textureCord;
 varying float startAnimationElapsedTime;
@@ -21,6 +24,9 @@ varying float invertAnimationUnit;
 varying vec2 corners_coords;
 
 varying float arrowMarkerHeightSize;
+
+const float M_PI = 3.1415926535897932384626433832795;
+
 
 void main() {
     mat3 rotationLatitude = mat3(
@@ -59,19 +65,24 @@ void main() {
     // Compute the final location on the sphere
     vec3 markerPointLocation = markerDirectionSphere * u_radius;
 
+    // параметры рисования
+    float markerFloatSpeed = 3.0;
+    float arrowHeight = u_arrowHeight + sin(u_current_elapsed_time * markerFloatSpeed) * 0.1; arrowHeight = u_arrowHeight;
+    float borderWidth = u_borderWidth;
+    float squeezeMarkerStrength = 0.05;
 
-    float size = abs(a_border_direction.x) * 2.0;
-    float arrowHeight = 0.5;
+    vec2 useBorderDirection = a_border_direction;
+
+    float size = abs(useBorderDirection.x) * 2.0;
     float heightK = (size + arrowHeight) / size; // насколько высота стала больше
-    vec2 arrowShift = vec2(0.0, a_border_direction.y < 0.0 ? 0.0 : arrowHeight);
-    vec2 markerUp = vec2(0.0, abs(a_border_direction.x));
+    vec2 arrowShift = vec2(0.0, a_border_direction.y < 0.0 ? 0.0 : arrowHeight); // увеличить прямоугольник чтобы еще вставить туда стрелку
+    vec2 markerUp = vec2(0.0, abs(useBorderDirection.x));
 
-    float borderWidth = 0.17;
     // чтобы сделать границу вокруг аватара, нужно сдвинуть точку на границе на borderWidth
     // u_drawColorMix отвечает за то аватар это или нет
     vec2 shiftBorder = vec2(a_border_direction.x < 0.0 ? -1.0 : 1.0, a_border_direction.y < 0.0 ? -1.0 : 1.0) * borderWidth * u_drawColorMix;
 
-    vec2 shift = (a_border_direction + shiftBorder + markerUp + arrowShift) * u_scale; // куда двигать точку относительно места где аватар расположен
+    vec2 shift = (useBorderDirection + shiftBorder + markerUp + arrowShift) * u_scale; // куда двигать точку относительно места где аватар расположен
     gl_PointSize = 20.0;
     gl_Position = u_matrix * vec4(markerPointLocation.xy + shift, markerPointLocation.z - u_radius, 1.0);
 

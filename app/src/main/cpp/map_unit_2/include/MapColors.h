@@ -10,6 +10,9 @@
 
 class MapColors {
 public:
+    static CSSColorParser::Color getAvatarsBorderColor() {
+        return CSSColorParser::parse("rgb(224, 235, 235)");
+    }
     static CSSColorParser::Color getStarsColor() {
         return CSSColorParser::parse("rgb(255, 255, 255)");
     }

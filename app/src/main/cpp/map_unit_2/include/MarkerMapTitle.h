@@ -10,8 +10,10 @@
 #include "MapNumbers.h"
 #include "MapSymbols.h"
 #include <Eigen/Dense>
+#include "IGetPointData.h"
 
-class MarkerMapTitle {
+
+class MarkerMapTitle: public IGetPointData {
 public:
     MarkerMapTitle() {
 
@@ -49,11 +51,6 @@ public:
 
     std::wstring wname;
 public:
-    float cos_minus_lat;
-    float sin_minus_lat;
-    float sin_lon;
-    float cos_lon;
-
     float latitude;
     float longitude;
     float fontSize;

@@ -1,11 +1,12 @@
 //
-// Created by Artem on 03.12.2024.
+// Created by Artem on 19.12.2024.
 //
 
-#include "Grid.h"
+#include "avatars/Grid.h"
 #include "util/android_log.h"
 
-void Grid::init(int width, int height, int widthCellsCount, int heightCellsCount) {
+
+void Avatars::Grid::init(int width, int height, int widthCellsCount, int heightCellsCount) {
     this->widthCellsCount = widthCellsCount;
     this->heightCellsCount = heightCellsCount;
     widthCellSize = width / widthCellsCount;
@@ -13,11 +14,11 @@ void Grid::init(int width, int height, int widthCellsCount, int heightCellsCount
     nodes = std::vector<GridNode*>(widthCellsCount * heightCellsCount);
 }
 
-bool Grid::insert(Box& box, int& checks) {
-    int startCellX = box.lb_x / widthCellSize;
-    int endCellX = box.rt_x / widthCellSize;
-    int startCellY = box.rt_y / heightCellSize;
-    int endCellY = box.lb_y / heightCellSize;
+bool Avatars::Grid::insert(Circle& circle) {
+    int startCellX = (circle.x - circle.radius) / widthCellSize;
+    int endCellX = (circle.x + circle.radius) / widthCellSize;
+    int startCellY = (circle.y + circle.radius) / heightCellSize;
+    int endCellY = (circle.y - circle.radius) / heightCellSize;
 
     startCellX = std::clamp(startCellX, 0, widthCellsCount - 1);
     endCellX = std::clamp(endCellX, 0, widthCellsCount - 1);
@@ -31,35 +32,30 @@ bool Grid::insert(Box& box, int& checks) {
             int index = cellX + cellY * widthCellsCount;
             auto node = nodes[index];
             if (node == nullptr) continue;
-            if (node->count >= 1) {
-
-            }
 
             int next = node->elementIndex;
             while(next != 0) {
                 auto element = elements[next - 1];
-                auto& otherBox = boxes[toBoxId[element.forToBoxId]];
-                bool intersects = otherBox.intersects(box);
+                auto& otherCircle = circles[toBoxId[element.forToBoxId]];
+                int dx = 0;
+                int dy = 0;
+                int intersectLength = 0;
+                bool intersects = otherCircle.intersects(circle, dx, dy, intersectLength);
                 checksCurrent++;
-                if (checks < checksCurrent) {
-                    checks = checksCurrent;
-                }
-                if (intersects) return false;
                 next = element.next;
             }
         }
     }
 
 
-
     // вставка
-    boxes[box.titleId] = box;
+    circles[circle.id] = circle;
     for (int cellX = startCellX; cellX <= endCellX; cellX++) {
         for (int cellY = startCellY; cellY <= endCellY; cellY++) {
             int index = cellX + cellY * widthCellsCount;
             auto node = nodes[index];
 
-            toBoxId[increment] = box.titleId;
+            toBoxId[increment] = circle.id;
             elements.push_back(GridElement { 0, increment++ });
             if (node == nullptr) {
                 nodes[index] = new GridNode {static_cast<uint16_t>(elements.size()), 1};
@@ -79,10 +75,8 @@ bool Grid::insert(Box& box, int& checks) {
     return true;
 }
 
-void Grid::clean() {
+void  Avatars::Grid::clean() {
     for (auto node : nodes) {
         if (node != nullptr) delete node;
     }
 }
-
-

@@ -346,7 +346,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     }
 
     if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
-        fontSize[currentIndex] = 0.015f;
+        fontSize[currentIndex] = 0.020f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(1, 6);
         addStyle(currentIndex);
@@ -354,7 +354,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "country") && symbolRank <= 10) {
-        fontSize[currentIndex] = 0.015f;
+        fontSize[currentIndex] = 0.020f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(2, 6);
         addStyle(currentIndex);
@@ -362,7 +362,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "country") && symbolRank <= 20) {
-        fontSize[currentIndex] = 0.015f;
+        fontSize[currentIndex] = 0.020;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(3, 6);
         addStyle(currentIndex);
@@ -370,7 +370,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city") && symbolRank <= 6) {
-        fontSize[currentIndex] = 0.012f;
+        fontSize[currentIndex] = 0.017;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
         addStyle(currentIndex);
@@ -378,7 +378,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city") && symbolRank <= 9) {
-        fontSize[currentIndex] = 0.010f;
+        fontSize[currentIndex] = 0.015;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(6, 10);
         addStyle(currentIndex);
@@ -386,7 +386,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city") && symbolRank <= 20) {
-        fontSize[currentIndex] = 0.009f;
+        fontSize[currentIndex] = 0.014;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(8, 11);
         addStyle(currentIndex);
@@ -394,7 +394,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "town") && symbolRank <= 100) {
-        fontSize[currentIndex] = 0.008f;
+        fontSize[currentIndex] = 0.013;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(9, 11);
         addStyle(currentIndex);
@@ -402,7 +402,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "village") {
-        fontSize[currentIndex] = 0.007f;
+        fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(11, 15);
         addStyle(currentIndex);
@@ -410,7 +410,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "hamlet") {
-        fontSize[currentIndex] = 0.007f;
+        fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
         addStyle(currentIndex);
@@ -418,7 +418,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "neighbourhood") {
-        fontSize[currentIndex] = 0.007f;
+        fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(12, 14);
         addStyle(currentIndex);
@@ -426,7 +426,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "quarter") {
-        fontSize[currentIndex] = 0.007f;
+        fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(13, 14);
         addStyle(currentIndex);
@@ -434,7 +434,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "suburb") {
-        fontSize[currentIndex] = 0.007f;
+        fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(10, 14);
         addStyle(currentIndex);
@@ -442,7 +442,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && type == "state") {
-        fontSize[currentIndex] = 0.010f;
+        fontSize[currentIndex] = 0.015;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = fromToZoomsVisible(4, 7);
         addStyle(currentIndex);

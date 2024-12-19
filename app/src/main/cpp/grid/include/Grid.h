@@ -10,6 +10,7 @@
 #include "GridNode.h"
 #include "GridElement.h"
 
+
 struct Grid {
 public:
     void init(int width, int height, int widthCellsCount, int heightCellsCount);

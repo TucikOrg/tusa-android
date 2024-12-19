@@ -13,15 +13,27 @@
 #include "MapNumbers.h"
 #include "FromLatLonToSpherePos.h"
 #include "AvatarAtlasPointer.h"
+#include "IGetPointData.h"
 #include <cmath>
 
-class UserMarker {
+class UserMarker: public IGetPointData {
 public:
     UserMarker() {}
-    UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId);
+    UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId, float startAnimationElapsedTime)
+        : pixels(pixels), latitude(latitude),
+          longitude(longitude), markerId(markerId),
+          startAnimationElapsedTime(startAnimationElapsedTime) {
+        cos_minus_lat = cos(-latitude);
+        sin_minus_lat = sin(-latitude);
+        sin_lon = sin(longitude);
+        cos_lon = cos(longitude);
+    }
 
     unsigned char* getPixels() { return pixels; }
-    void setPosition(float latitude, float longitude);
+    void setPosition(float latitude, float longitude) {
+        this->latitude = latitude;
+        this->longitude = longitude;
+    }
 
     bool uploadedToAtlas = false;
     int64_t markerId;
@@ -32,8 +44,6 @@ public:
     float startAnimationElapsedTime = 0;
     float markerSize = 1.40f;
     float invertAnimationUnit = 0.0;
-private:
-
 };
 
 

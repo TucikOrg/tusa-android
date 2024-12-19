@@ -7,7 +7,7 @@
 
 #include <Eigen/Dense>
 #include "MapNumbers.h"
-#include "MarkerMapTitle.h"
+#include "IGetPointData.h"
 
 class FromLatLonToSphereDoublePos {
 public:
@@ -57,9 +57,9 @@ private:
     float axisLongitude_YY;
 
 public:
-    void init(MapNumbers& mapNumbers) {
-        float angleLongitude = -1.0 * mapNumbers.EPSG3857LonNormInf * M_PI;
-        float angleLatitude = mapNumbers.EPSG4326CamLat;
+    void init(float EPSG3857LonNormInf, float EPSG4326CamLat) {
+        float angleLongitude = -1.0 * EPSG3857LonNormInf * M_PI;
+        float angleLatitude = EPSG4326CamLat;
 
         Eigen::AngleAxis rotationPlanetLatitude = Eigen::AngleAxis(angleLatitude, Eigen::Vector3f(1, 0, 0));
         Eigen::AngleAxis rotationPlanetLongitude = Eigen::AngleAxis(angleLongitude, rotationPlanetLatitude * Eigen::Vector3f(0, 1, 0));
@@ -82,8 +82,7 @@ public:
         axisLongitude_YY = axisLongitude.y() * axisLongitude.y();
     }
 
-    Eigen::Vector3f getPoint(MapNumbers& mapNumbers, MarkerMapTitle& markerMapTitle) {
-        auto radius = mapNumbers.radius;
+    Eigen::Vector3f getPoint(float radius, IGetPointData& markerMapTitle) {
         Eigen::Matrix3f rotationLatitude;
         rotationLatitude << markerMapTitle.cos_minus_lat + axisLatitude_XX * (1.0 - markerMapTitle.cos_minus_lat),
                 axisLatitude_XY * (1.0 - markerMapTitle.cos_minus_lat) - axisLatitude.z() * markerMapTitle.sin_minus_lat,

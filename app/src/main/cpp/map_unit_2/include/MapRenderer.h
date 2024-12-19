@@ -44,7 +44,7 @@ private:
     AnimateCameraTo animateCameraTo = AnimateCameraTo();
     TransferTilesToGPU transferTilesToGpu = TransferTilesToGPU();
     DrawMap drawMap = DrawMap();
-    Markers markers = Markers();
+    Markers markers = Markers(&mapFpsCounter);
     MapTileGetter* mapTileGetter;
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
