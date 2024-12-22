@@ -18,12 +18,15 @@
 
 class UserMarker: public IGetPointData {
 public:
+    constexpr static const float defaultMarkerSize = 1.4;
+
     UserMarker() {}
     UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId, float startAnimationElapsedTime)
         : pixels(pixels), latitude(latitude),
           longitude(longitude), markerId(markerId),
           startAnimationElapsedTime(startAnimationElapsedTime),
-          startMovementAnimation(startAnimationElapsedTime) {
+          startMovementAnimation(startAnimationElapsedTime),
+          startMarkerSizeAnimationTime(startAnimationElapsedTime){
         cos_minus_lat = cos(-latitude);
         sin_minus_lat = sin(-latitude);
         sin_lon = sin(longitude);
@@ -43,6 +46,11 @@ public:
             float newTargetY,
             float movementAnimationTimeCONSTANT
     ) {
+        if (newTargetX == movementTargetX && newTargetY == movementTargetY) {
+            // если целевоt местоположение не изменилось то ничего не делаем
+            return;
+        }
+
         refreshGroup[atlasPointer.atlasId] = nullptr; // пересобрать буффера рендринга
 
         float progressUnClamp = (mapFpsCounter->getTimeElapsed() - startMovementAnimation) / movementAnimationTimeCONSTANT;
@@ -67,6 +75,29 @@ public:
         startMovementAnimation = mapFpsCounter->getTimeElapsed();
     }
 
+    void newMarkerSize(
+            std::unordered_map<GLuint, void*>& refreshGroup,
+            MapFpsCounter* mapFpsCounter,
+            float newTargetMarkerSize,
+            float markerSizeAnimationTimeCONSTANT
+    ) {
+        if (newTargetMarkerSize == targetMarkerSize) {
+            // если целевой размер не изменился то ничего не делаем
+            return;
+        }
+
+        refreshGroup[atlasPointer.atlasId] = nullptr; // пересобрать буффера рендринга
+
+        float progressUnClamp = (mapFpsCounter->getTimeElapsed() - startMarkerSizeAnimationTime) / markerSizeAnimationTimeCONSTANT;
+        float previousMarkerSizeProgress = std::clamp(progressUnClamp, 0.0f, 1.0f);
+        float previousMarkerSizeDelta = targetMarkerSize - markerSize;
+        float currentMarkerSize = markerSize + previousMarkerSizeDelta * previousMarkerSizeProgress;
+
+        markerSize = currentMarkerSize;
+        targetMarkerSize = newTargetMarkerSize;
+        startMarkerSizeAnimationTime = mapFpsCounter->getTimeElapsed();
+    }
+
     bool uploadedToAtlas = false;
     int64_t markerId;
     unsigned char* pixels;
@@ -74,13 +105,16 @@ public:
     float latitude;
     float longitude;
     float startAnimationElapsedTime = 0;
-    float markerSize = 1.40f;
+
     float invertAnimationUnit = 0.0;
     float movementX = 0.0f;
     float movementY = 0.0f;
     float movementTargetX = 0.0f;
     float movementTargetY = 0.0f;
     float startMovementAnimation = 0.0f;
+
+    float markerSize = defaultMarkerSize;
+    float startMarkerSizeAnimationTime = 0.0f;
     float targetMarkerSize = markerSize;
 };
 

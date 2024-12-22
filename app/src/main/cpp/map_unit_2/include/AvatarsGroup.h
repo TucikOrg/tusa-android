@@ -15,7 +15,15 @@ public:
     std::vector<UserMarker*> userMarkers;
     GLuint avatarsVBO;
     GLuint avatarsIBO;
-    GLuint avatarsTargetMarkersSizeVBO;
+
+    std::vector<float> avatarsTargetMarkerSize;
+    std::vector<float> movementStartAnimation;
+    std::vector<float> movementTargetLocation;
+    std::vector<float> movementLocation;
+    std::vector<float> invertAnimationUnit;
+    std::vector<float> startAnimationElapsedTime;
+    std::vector<float> latitudeLongitude;
+    std::vector<float> startMarkerSizeAnimation;
 
 
     size_t avatarsIboSize = 0;

@@ -30,6 +30,8 @@ class Markers {
 public:
     Markers(MapFpsCounter* mapFpsCounter) : mapFpsCounter(mapFpsCounter) { }
 
+
+
     void initGL();
     void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
     void removeMarker(int64_t key);
@@ -65,7 +67,9 @@ private:
 
     float borderWidth = 0.17f;
     float arrowBasicHeight = 0.3f;
-    float movementAnimationTime = 0.5;
+    float movementAnimationTime = 0.5f;
+    float markerSizeAnimationTime = 0.5f;
+    float minimumMarkerSize = 0.8f;
 
     std::unordered_map<int64_t, UserMarker> storageMarkers = {};
     std::unordered_map<int64_t, void*> renderMarkers = {};

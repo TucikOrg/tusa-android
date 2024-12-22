@@ -317,11 +317,9 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             if (avatarsGroups.find(nextPlace.atlasId) == avatarsGroups.end()) {
                 GLuint avatarsVBO;
                 GLuint avatarsIBO;
-                GLuint avatarsTargetMarkersSizeVBO;
                 glGenBuffers(1, &avatarsVBO);
                 glGenBuffers(1, &avatarsIBO);
-                glGenBuffers(1, &avatarsTargetMarkersSizeVBO);
-                avatarsGroups[nextPlace.atlasId] = { nextPlace.atlasId, {}, avatarsVBO, avatarsIBO, avatarsTargetMarkersSizeVBO };
+                avatarsGroups[nextPlace.atlasId] = { nextPlace.atlasId, {}, avatarsVBO, avatarsIBO };
             }
             avatarsGroups[nextPlace.atlasId].userMarkers.push_back(&markerPtr);
 
@@ -364,6 +362,28 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 std::vector<float> avatarsTargetMarkersSizeUniform(64);
                 unsigned int avatarsTargetMarkersSizeUniformIndex = 0;
 
+                std::vector<float> movementStartAnimationUniform(64);
+                unsigned int movementStartAnimationUniformIndex = 0;
+
+                std::vector<float> movementTargetLocationUniform(128);
+                unsigned int movementTargetLocationUniformIndex = 0;
+
+                std::vector<float> movementLocationUniform(128);
+                unsigned int movementLocationUniformIndex = 0;
+
+                std::vector<float> invertAnimationUnitUniform(64);
+                unsigned int invertAnimationUnitUniformIndex = 0;
+
+                std::vector<float> latitudeLongitudeUniform(128);
+                unsigned int latitudeLongitudeUniformIndex = 0;
+
+                std::vector<float> startAnimationElapsedTimeUniform(64);
+                unsigned int startAnimationElapsedTimeUniformIndex = 0;
+
+                std::vector<float> startMarkerSizeAnimationTimeUniform(64);
+                unsigned int startMarkerSizeAnimationTimeUniformIndex = 0;
+
+                float positionInUniforms = 0;
                 size_t avatarsToDrawCount = 0;
                 for (auto& markerInGroup : markersOfGroup) {
                     auto& marker = markerInGroup;
@@ -376,15 +396,35 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     avatarsResultToDrawCount++;
 
                     auto& atlasPointer = marker->atlasPointer;
-                    auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
                     auto& markerSize = marker->markerSize;
+
+                    auto& startMarkerSizeAnimationTime = marker->startMarkerSizeAnimationTime;
+                    startMarkerSizeAnimationTimeUniform[startMarkerSizeAnimationTimeUniformIndex++] = startMarkerSizeAnimationTime;
+
                     auto& latitude = marker->latitude;
                     auto& longitude = marker->longitude;
+                    latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -latitude;
+                    latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -longitude;
+
+                    auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
+                    startAnimationElapsedTimeUniform[startAnimationElapsedTimeUniformIndex++] = startAnimationElapsedTime;
+
+                    float invertAnimationUnit = marker->invertAnimationUnit;
+                    invertAnimationUnitUniform[invertAnimationUnitUniformIndex++] = invertAnimationUnit;
+
                     float movementX = marker->movementX;
                     float movementY = marker->movementY;
+                    movementLocationUniform[movementLocationUniformIndex++] = movementX;
+                    movementLocationUniform[movementLocationUniformIndex++] = movementY;
+
                     float movementTargetX = marker->movementTargetX;
                     float movementTargetY = marker->movementTargetY;
+                    movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetX;
+                    movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetY;
+
                     float movementStartAnimation = marker->startMovementAnimation;
+                    movementStartAnimationUniform[movementStartAnimationUniformIndex++] = movementStartAnimation;
+
                     float targetMarkerSize = marker->targetMarkerSize;
                     avatarsTargetMarkersSizeUniform[avatarsTargetMarkersSizeUniformIndex++] = targetMarkerSize;
 
@@ -394,11 +434,12 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     float endV =  FLOAT(atlasPointer.y) / atlasAvatarSize;
 
                     float data[] = {
-                            startU, startV, -latitude, -longitude, -markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
-                            endU, startV, -latitude, -longitude,    markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
-                            endU, endV, -latitude, -longitude,      markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,  movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
-                            startU, endV, -latitude, -longitude,   -markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,  movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
+                            startU, startV,  -markerSize, -markerSize,  positionInUniforms,
+                            endU, startV,    markerSize, -markerSize,  positionInUniforms,
+                            endU, endV,      markerSize, markerSize,   positionInUniforms,
+                            startU, endV,    -markerSize, markerSize,   positionInUniforms,
                     };
+                    positionInUniforms++;
 
                     for (auto item : data) {
                         avatarsData.push_back(item);
@@ -435,13 +476,14 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
                 }
 
-                {
-                    glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsTargetMarkersSizeVBO);
-                    auto data = avatarsTargetMarkersSizeUniform.data();
-                    auto size = avatarsTargetMarkersSizeUniform.size() * sizeof(float);
-                    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-                }
-
+                currentGroup.avatarsTargetMarkerSize = std::move(avatarsTargetMarkersSizeUniform);
+                currentGroup.movementStartAnimation = std::move(movementStartAnimationUniform);
+                currentGroup.movementTargetLocation = std::move(movementTargetLocationUniform);
+                currentGroup.movementLocation = std::move(movementLocationUniform);
+                currentGroup.invertAnimationUnit = std::move(invertAnimationUnitUniform);
+                currentGroup.startAnimationElapsedTime = std::move(startAnimationElapsedTimeUniform);
+                currentGroup.latitudeLongitude = std::move(latitudeLongitudeUniform);
+                currentGroup.startMarkerSizeAnimation = std::move(startMarkerSizeAnimationTimeUniform);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
@@ -520,34 +562,30 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
         glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
         glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
+        glUniform1f(avatarsOnMap->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
 
         // рисуем маркера по группам
         for (auto& pair : avatarsGroups) {
             auto& group = pair.second;
             // сколько компонентов в data для рендринга аватара
-            size_t stride = 13 * sizeof(float);
+            size_t stride = 5 * sizeof(float);
             glBindTexture(GL_TEXTURE_2D, pair.first);
-
-            glBindBuffer(GL_ARRAY_BUFFER, group.avatarsTargetMarkersSizeVBO);
-            glUniform1fv(avatarsOnMap->getTargetMarkerSizeArrayLocation(), 64, 0);
+            glUniform1fv(avatarsOnMap->getTargetMarkerSizeArrayLocation(), 64, group.avatarsTargetMarkerSize.data());
+            glUniform1fv(avatarsOnMap->getMovementStartAnimationTimeLocation(), 64, group.movementStartAnimation.data());
+            glUniform2fv(avatarsOnMap->getMovementTargetMarkerLocation(), 64, group.movementTargetLocation.data());
+            glUniform2fv(avatarsOnMap->getMovementMarkerLocation(), 64, group.movementLocation.data());
+            glUniform1fv(avatarsOnMap->getInvertAnimationUnitLocation(), 64, group.invertAnimationUnit.data());
+            glUniform1fv(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 64, group.startAnimationElapsedTime.data());
+            glUniform2fv(avatarsOnMap->getLatLonLocation(), 64, group.latitudeLongitude.data());
+            glUniform1fv(avatarsOnMap->getStartMarkerSizeAnimation(), 64, group.startMarkerSizeAnimation.data());
 
             glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
             glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
             glEnableVertexAttribArray(avatarsOnMap->getTextureCord());
-            glVertexAttribPointer(avatarsOnMap->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getLatLonLocation());
-            glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
+            glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getBorderDirection());
-            glVertexAttribPointer(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(6 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getStartAnimationElapsedTimeLocation());
-            glVertexAttribPointer(avatarsOnMap->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(7 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getInvertAnimationUnitLocation());
-            glVertexAttribPointer(avatarsOnMap->getMovementMarkerLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getMovementMarkerLocation());
-            glVertexAttribPointer(avatarsOnMap->getMovementTargetMarkerLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(10 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getMovementTargetMarkerLocation());
-            glVertexAttribPointer(avatarsOnMap->getMovementStartAnimationTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(12 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getMovementStartAnimationTimeLocation());
+            glVertexAttribPointer(avatarsOnMap->getPositionInUniformsLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
+            glEnableVertexAttribArray(avatarsOnMap->getPositionInUniformsLocation());
             glUniform1f(avatarsOnMap->getMovementAnimationTimeLocation(), movementAnimationTime);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, group.avatarsIBO);
             glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 1.0);
@@ -678,12 +716,16 @@ void Markers::initGL() {
                 auto& markerId = renderMarkerPair.first;
                 auto& marker = storageMarkers[markerId];
 
-                auto markerSize = marker.markerSize;
+
                 Eigen::Vector3d markerPoint = fromLatLonToSpherePosThread.getPoint(radiusT, marker.latitude, marker.longitude);
                 double markerX = markerPoint.x();
                 double markerY = markerPoint.y();
                 double markerZ = markerPoint.z();
-                double worldRadius = (markerSize + borderWidth) * scaleT;
+
+                float markerSizeForCollision = UserMarker::defaultMarkerSize;
+                double worldRadius = (markerSizeForCollision + borderWidth) * scaleT;
+
+                double worldRadiusConsiderSizeAnimation = (marker.targetMarkerSize + borderWidth) * scaleT;
 
                 Eigen::Vector4d centerAvatarPoint = Eigen::Vector4d { markerX, markerY, markerZ, 1.0 };
                 Eigen::Vector4d PClipCenter = pvT * centerAvatarPoint;
@@ -706,6 +748,7 @@ void Markers::initGL() {
                 int borderScreenY = (1.0f - PNdcBorder.y()) * 0.5f * screenHeightT;
                 testAvatarsVertices.push_back(FLOAT(borderScreenX));
                 testAvatarsVertices.push_back(FLOAT(borderScreenY));
+
 
                 int screenMarkerRadius = sqrt(pow(centerScreenX - borderScreenX, 2) + pow(centerScreenY - borderScreenY, 2));
                 float toWorldK = worldRadius / FLOAT(screenMarkerRadius) / scaleT;
@@ -739,6 +782,12 @@ void Markers::initGL() {
                             0, 0,
                             movementAnimationTime
                     );
+                    marker.newMarkerSize(
+                            refreshGroup,
+                            mapFpsCounter,
+                            UserMarker::defaultMarkerSize,
+                            markerSizeAnimationTime
+                    );
                 } else {
                     // этот маркер мы уже обработали значит дальше мы его игнорируем
                     for (auto elem : intersectionsForMarker) {
@@ -756,15 +805,28 @@ void Markers::initGL() {
                 auto& intersectionsVec = pair.second;
                 for (auto& intersection : intersectionsVec) {
                     auto& otherMarker = storageMarkers[intersection.avatarId];
-                    float newXMovement = intersection.dx * intersection.length * intersection.toWorldK;
-                    float newYMovement = -intersection.dy * intersection.length * intersection.toWorldK;
-                    if (otherMarker.movementTargetY != newYMovement || otherMarker.movementTargetX != newXMovement) {
-                        otherMarker.newMovement(
+
+                    // Делаем радиус поменьше чтобы маркеры не пересекались
+                    if (intersection.length < 70) {
+                        float newMarkerSize = UserMarker::defaultMarkerSize - intersection.length * intersection.toWorldK;
+                        otherMarker.newMarkerSize(
                                 refreshGroup, mapFpsCounter,
-                                newXMovement, newYMovement,
-                                movementAnimationTime
+                                newMarkerSize,
+                                markerSizeAnimationTime
                         );
+                        continue;
                     }
+
+                    float alreadyCompensated = UserMarker::defaultMarkerSize - otherMarker.targetMarkerSize;
+                    float len = intersection.length - alreadyCompensated;
+                    float newXMovement = intersection.dx * len * intersection.toWorldK;
+                    float newYMovement = intersection.dy * len * intersection.toWorldK;
+
+                    otherMarker.newMovement(
+                            refreshGroup, mapFpsCounter,
+                            newXMovement, newYMovement,
+                            movementAnimationTime
+                    );
                 }
             }
 

@@ -16,7 +16,7 @@ public:
     GLint getColorLocation() const {return u_color;}
     GLint getTextureLocation() const {return u_text;}
     GLint getTextureCord() const {return a_textureCord;}
-    GLint getLatLonLocation() const {return a_latLon;}
+    GLint getLatLonLocation() const {return u_latLon;}
     GLint getTargetMarkerSizeLocation() const {return a_targetMarkerSize;}
     GLint getAxisLatitudeLocation() const {return u_axisLatitude;}
     GLint getAxisLongitudeLocation() const {return u_axisLongitude;}
@@ -26,15 +26,18 @@ public:
     GLint getCurrentElapsedTimeLocation() const {return u_current_elapsed_time;}
     GLint getMovementAnimationTimeLocation() const {return u_movementAnimationTime;}
     GLint getBorderDirection() const {return a_border_direction;}
-    GLint getStartAnimationElapsedTimeLocation() const { return a_startAnimationElapsedTime; }
+    GLint getStartAnimationElapsedTimeLocation() const { return u_startAnimationElapsedTime; }
     GLint getAnimationTimeLocation() const { return u_animationTime; }
     GLint getDrawColorMixLocation() const { return u_drawColorMix; }
     GLint getBorderWidthLocation() const { return u_borderWidth; }
     GLint getTargetMarkerSizeArrayLocation() const { return u_targetMarkerSize; }
-    GLint getInvertAnimationUnitLocation() const { return a_invertAnimationUnit; }
-    GLint getMovementMarkerLocation() const { return a_movementMarker; }
-    GLint getMovementTargetMarkerLocation() const { return a_movementTargetMarker; }
-    GLint getMovementStartAnimationTimeLocation() const { return a_movementStartAnimationElapsedTime; }
+    GLint getInvertAnimationUnitLocation() const { return u_invertAnimationUnit; }
+    GLint getMovementMarkerLocation() const { return u_movementMarker; }
+    GLint getMovementTargetMarkerLocation() const { return u_movementTargetMarker; }
+    GLint getMovementStartAnimationTimeLocation() const { return u_movementStartAnimationTime; }
+    GLint getPositionInUniformsLocation() const { return a_positionInUniform; }
+    GLint getStartMarkerSizeAnimation() const { return u_startMarkerSizeAnimation; }
+    GLint getMarkerSizeAnimationTime() const { return u_markerSizeAnimationTime; }
 
 private:
     GLint u_color;
@@ -50,17 +53,20 @@ private:
     GLint u_borderWidth;
     GLint u_movementAnimationTime;
     GLint u_targetMarkerSize;
+    GLint u_movementStartAnimationTime;
+    GLint u_movementTargetMarker;
+    GLint u_startMarkerSizeAnimation;
+    GLint u_markerSizeAnimationTime;
 
     GLint a_textureCord;
-    GLint a_movementStartAnimationElapsedTime;
     GLint a_pos;
-    GLint a_startAnimationElapsedTime;
-    GLint a_latLon;
+    GLint u_startAnimationElapsedTime;
+    GLint u_latLon;
     GLint a_border_direction;
-    GLint a_invertAnimationUnit;
-    GLint a_movementMarker;
-    GLint a_movementTargetMarker;
+    GLint u_invertAnimationUnit;
+    GLint u_movementMarker;
     GLint a_targetMarkerSize;
+    GLint a_positionInUniform;
 };
 
 
