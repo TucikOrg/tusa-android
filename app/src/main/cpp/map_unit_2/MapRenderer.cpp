@@ -130,7 +130,7 @@ void MapRenderer::renderFrame() {
 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
-    markers.drawMarkers(shadersBucket, mn.pvFloat,
+    markers.drawMarkers(shadersBucket, mn.pv,
                         mn, tiles, mapSymbols, mapCamera,
                         canRefreshTitles
     );

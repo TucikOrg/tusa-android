@@ -45,6 +45,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/title_map_shader.cpp
         shader/path_text_shader.cpp
         shader/avatar_on_map_shader.cpp
+        shader/avatar_ray_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp
@@ -121,6 +122,9 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         grid_avatars/Box.cpp
         grid_avatars/Circle.cpp
         grid_avatars/IGridForm.cpp
+        grid_avatars/CircleElement.cpp
+        grid_avatars/CircleNode.cpp
+        grid_avatars/AvatarIntersection.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)

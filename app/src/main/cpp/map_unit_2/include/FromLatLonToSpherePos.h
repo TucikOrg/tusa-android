@@ -22,8 +22,7 @@ public:
         pointOnSphere = rotationPlanetLongitude * rotationPlanetLatitude * Eigen::Vector3d(0, 0, 1);
     }
 
-    Eigen::Vector3d getPoint(MapNumbers& mapNumbers, float latitude, float longitude) {
-        auto radius = mapNumbers.radius;
+    Eigen::Vector3d getPoint(float radius, float latitude, float longitude) {
         Eigen::AngleAxisd rotationLatitude = Eigen::AngleAxisd(-latitude, axisLatitude);
         Eigen::AngleAxisd rotationLongitude = Eigen::AngleAxisd(longitude, axisLongitude);
         Eigen::Vector3d markerDirectionSphere = rotationLongitude * rotationLatitude * pointOnSphere;

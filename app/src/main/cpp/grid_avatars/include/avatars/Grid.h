@@ -10,6 +10,7 @@
 #include "GridNode.h"
 #include "GridElement.h"
 #include "Circle.h"
+#include "AvatarIntersection.h"
 
 
 namespace Avatars {
@@ -19,6 +20,7 @@ namespace Avatars {
 
         bool insert(Circle& circle);
         void clean();
+        std::vector<AvatarIntersection> findIntersections(Circle circle);
     private:
         int widthCellsCount;
         int heightCellsCount;

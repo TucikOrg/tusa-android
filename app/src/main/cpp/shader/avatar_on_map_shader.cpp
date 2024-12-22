@@ -20,6 +20,9 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     a_border_direction = glGetAttribLocation(program, "a_border_direction");
     a_startAnimationElapsedTime = glGetAttribLocation(program, "a_startAnimationElapsedTime");
     a_invertAnimationUnit = glGetAttribLocation(program, "a_invertAnimationUnit");
+    a_movementMarker = glGetAttribLocation(program, "a_movementMarker");
+    a_movementTargetMarker = glGetAttribLocation(program, "a_movementTargetMarker");
+    a_movementStartAnimationElapsedTime = glGetAttribLocation(program, "a_movementStartAnimationElapsedTime");
 
     u_matrix = glGetUniformLocation(program, "u_matrix");
     u_color = glGetUniformLocation(program, "u_color");
@@ -33,5 +36,6 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     u_animationTime = glGetUniformLocation(program, "u_animationTime");
     u_drawColorMix = glGetUniformLocation(program, "u_drawColorMix");
     u_borderWidth = glGetUniformLocation(program, "u_borderWidth");
-    u_arrowHeight = glGetUniformLocation(program, "u_arrowHeight");
+    u_movementAnimationTime = glGetUniformLocation(program, "u_movementAnimationTime");
+    u_targetMarkerSize = glGetUniformLocation(program, "u_targetMarkerSize");
 }

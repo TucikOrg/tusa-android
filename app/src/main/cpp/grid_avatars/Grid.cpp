@@ -14,17 +14,18 @@ void Avatars::Grid::init(int width, int height, int widthCellsCount, int heightC
     nodes = std::vector<GridNode*>(widthCellsCount * heightCellsCount);
 }
 
-bool Avatars::Grid::insert(Circle& circle) {
+std::vector<AvatarIntersection> Avatars::Grid::findIntersections(Circle circle) {
     int startCellX = (circle.x - circle.radius) / widthCellSize;
     int endCellX = (circle.x + circle.radius) / widthCellSize;
-    int startCellY = (circle.y + circle.radius) / heightCellSize;
-    int endCellY = (circle.y - circle.radius) / heightCellSize;
+    int startCellY =  (circle.y - circle.radius) / heightCellSize;
+    int endCellY = (circle.y + circle.radius) / heightCellSize;
 
     startCellX = std::clamp(startCellX, 0, widthCellsCount - 1);
     endCellX = std::clamp(endCellX, 0, widthCellsCount - 1);
     startCellY = std::clamp(startCellY, 0, heightCellsCount - 1);
     endCellY = std::clamp(endCellY, 0, heightCellsCount - 1);
     int checksCurrent = 0;
+    std::vector<AvatarIntersection> intersections;
 
     // проверка пересечений
     for (int cellX = startCellX; cellX <= endCellX; cellX++) {
@@ -37,15 +38,36 @@ bool Avatars::Grid::insert(Circle& circle) {
             while(next != 0) {
                 auto element = elements[next - 1];
                 auto& otherCircle = circles[toBoxId[element.forToBoxId]];
-                int dx = 0;
-                int dy = 0;
-                int intersectLength = 0;
-                bool intersects = otherCircle.intersects(circle, dx, dy, intersectLength);
-                checksCurrent++;
+                if (otherCircle.id != circle.id) { // исключаем проверку пересечений с самим собой
+                    float dx = 0;
+                    float dy = 0;
+                    float intersectLength = 0;
+                    bool intersects = otherCircle.intersects(circle, dx, dy, intersectLength);
+                    if (intersects) {
+                        intersections.push_back(AvatarIntersection { dx, dy, intersectLength, otherCircle.id, otherCircle.toWorldK });
+                    }
+
+                    checksCurrent++;
+                }
+
                 next = element.next;
             }
         }
     }
+
+    return std::move(intersections);
+}
+
+bool Avatars::Grid::insert(Circle& circle) {
+    int startCellX = (circle.x - circle.radius) / widthCellSize;
+    int endCellX = (circle.x + circle.radius) / widthCellSize;
+    int startCellY =  (circle.y - circle.radius) / heightCellSize;
+    int endCellY = (circle.y + circle.radius) / heightCellSize;
+
+    startCellX = std::clamp(startCellX, 0, widthCellsCount - 1);
+    endCellX = std::clamp(endCellX, 0, widthCellsCount - 1);
+    startCellY = std::clamp(startCellY, 0, heightCellsCount - 1);
+    endCellY = std::clamp(endCellY, 0, heightCellsCount - 1);
 
 
     // вставка

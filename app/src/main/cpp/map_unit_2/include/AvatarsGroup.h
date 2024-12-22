@@ -15,6 +15,9 @@ public:
     std::vector<UserMarker*> userMarkers;
     GLuint avatarsVBO;
     GLuint avatarsIBO;
+    GLuint avatarsTargetMarkersSizeVBO;
+
+
     size_t avatarsIboSize = 0;
 };
 

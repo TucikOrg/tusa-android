@@ -13,21 +13,24 @@ namespace Avatars {
     struct Circle {
     public:
         Circle() {}
-        Circle(int x, int y, int radius, int64_t id)
-            : x(x), y(y), radius(radius), id(id) {}
+        Circle(int x, int y, int radius, int64_t id, float toWorldK)
+            : x(x), y(y), radius(radius), id(id), toWorldK(toWorldK) {}
 
         int x;
         int y;
         int radius;
         int64_t id;
+        float toWorldK;
 
-        bool intersects(Circle& circle, int& dx, int&dy, int& length) {
+        bool intersects(Circle& circle, float& dx, float&dy, float& length) {
             dx = x - circle.x;
             dy = y - circle.y;
             int distance = sqrt(dx * dx + dy * dy);
             int radiusSum = radius + circle.radius;
-            length = distance - radiusSum;
-            return distance <= radiusSum;
+            length = abs(distance - radiusSum);
+            dx /= distance;
+            dy /= distance;
+            return distance < radiusSum;
         }
     };
 }

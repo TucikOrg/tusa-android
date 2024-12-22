@@ -13,15 +13,17 @@ void Markers::doubleTap() {
 }
 
 void Markers::drawMarkers(ShadersBucket& shadersBucket,
-                          Eigen::Matrix4f pv,
+                          Eigen::Matrix4d pvD,
                           MapNumbers& mapNumbers,
                           std::unordered_map<uint64_t, MapTile*> tiles,
                           MapSymbols& mapSymbols,
                           MapCamera& mapCamera,
                           bool canRefreshMarkers
 ) {
-    FromLatLonToSpherePos fromLatLonToSpherePos = FromLatLonToSpherePos();
-    fromLatLonToSpherePos.init(mapNumbers.EPSG3857LonNormInf, mapNumbers.EPSG4326CamLat);
+    Eigen::Matrix4f pv = pvD.cast<float>();
+    FromLatLonToSphereDoublePos fromLatLonToSphereDoublePos = FromLatLonToSphereDoublePos();
+    fromLatLonToSphereDoublePos.init(mapNumbers);
+
     float animationTime = 0.5;
     float screenWidth = mapCamera.getScreenW();
     float screenHeight = mapCamera.getScreenH();
@@ -70,7 +72,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     float scaleCurrentText = scale * marker.fontSize;
                     float halfWidth = marker.textWidth / 2.0 * scaleCurrentText;
                     float halfHeight = marker.textHeight / 2.0 * scaleCurrentText;
-                    Eigen::Vector3f markerPoint = fromLatLonToSpherePos.getPoint(mapNumbers.radius, marker);
+                    Eigen::Vector3f markerPoint = fromLatLonToSphereDoublePos.getPoint(mapNumbers.radius, marker.latitude, marker.longitude).cast<float>();
                     float markerX = markerPoint.x();
                     float markerY = markerPoint.y();
                     float markerZ = markerPoint.z();
@@ -231,9 +233,9 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             CSSColorParser::Color color = CSSColorParser::parse("rgb(0, 0, 0)");
             auto titlesMapShader = shadersBucket.titlesMapShader;
             glUseProgram(titlesMapShader->program);
-            Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
-            Eigen::Vector3f axisLat = fromLatLonToSpherePos.axisLatitude.cast<float>();
-            Eigen::Vector3f pointOnSphere = fromLatLonToSpherePos.pointOnSphere.cast<float>();
+            Eigen::Vector3f axisLon = fromLatLonToSphereDoublePos.axisLongitude.cast<float>();
+            Eigen::Vector3f axisLat = fromLatLonToSphereDoublePos.axisLatitude.cast<float>();
+            Eigen::Vector3f pointOnSphere = fromLatLonToSphereDoublePos.pointOnSphere.cast<float>();
             glUniform3f(titlesMapShader->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
             glUniform3f(titlesMapShader->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
             glUniform3f(titlesMapShader->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
@@ -315,9 +317,11 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             if (avatarsGroups.find(nextPlace.atlasId) == avatarsGroups.end()) {
                 GLuint avatarsVBO;
                 GLuint avatarsIBO;
+                GLuint avatarsTargetMarkersSizeVBO;
                 glGenBuffers(1, &avatarsVBO);
                 glGenBuffers(1, &avatarsIBO);
-                avatarsGroups[nextPlace.atlasId] = { nextPlace.atlasId, {}, avatarsVBO, avatarsIBO };
+                glGenBuffers(1, &avatarsTargetMarkersSizeVBO);
+                avatarsGroups[nextPlace.atlasId] = { nextPlace.atlasId, {}, avatarsVBO, avatarsIBO, avatarsTargetMarkersSizeVBO };
             }
             avatarsGroups[nextPlace.atlasId].userMarkers.push_back(&markerPtr);
 
@@ -337,10 +341,15 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
         float elapsedTime = mapFpsCounter->getTimeElapsed();
-        bool refreshAll = refreshAvatarsKey != renderMarkers.size();
+        bool refreshAll = refreshAvatarsKey != renderMarkers.size() || manualRefreshAllAvatars;
         bool refreshSelectedGroups = refreshGroup.size() > 0;
         if (refreshAll || refreshSelectedGroups) {
             refreshAvatarsKey = renderMarkers.size();
+            manualRefreshAllAvatars = false;
+
+            size_t avatarsResultToDrawCount = 0;
+            std::vector<float> avatarsRayData = {};
+
             // cобираем маркера в зависимости от атласов в которых они находятся
             for (auto& pair : avatarsGroups) {
                 // если нужно пересобрать только определенные группы
@@ -352,6 +361,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 auto& currentGroup = avatarsGroups[pair.first];
                 auto markersOfGroup = pair.second.userMarkers;
                 std::vector<float> avatarsData = {};
+                std::vector<float> avatarsTargetMarkersSizeUniform(64);
+                unsigned int avatarsTargetMarkersSizeUniformIndex = 0;
 
                 size_t avatarsToDrawCount = 0;
                 for (auto& markerInGroup : markersOfGroup) {
@@ -362,12 +373,20 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                         continue;
                     }
                     avatarsToDrawCount++;
+                    avatarsResultToDrawCount++;
 
                     auto& atlasPointer = marker->atlasPointer;
                     auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
                     auto& markerSize = marker->markerSize;
                     auto& latitude = marker->latitude;
                     auto& longitude = marker->longitude;
+                    float movementX = marker->movementX;
+                    float movementY = marker->movementY;
+                    float movementTargetX = marker->movementTargetX;
+                    float movementTargetY = marker->movementTargetY;
+                    float movementStartAnimation = marker->startMovementAnimation;
+                    float targetMarkerSize = marker->targetMarkerSize;
+                    avatarsTargetMarkersSizeUniform[avatarsTargetMarkersSizeUniformIndex++] = targetMarkerSize;
 
                     float startU = FLOAT(atlasPointer.x) / atlasAvatarSize;
                     float endU = FLOAT(atlasPointer.x + avatarSize) / atlasAvatarSize;
@@ -375,14 +394,23 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     float endV =  FLOAT(atlasPointer.y) / atlasAvatarSize;
 
                     float data[] = {
-                            startU, startV, -latitude, -longitude, -markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
-                            endU, startV, -latitude, -longitude,    markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
-                            endU, endV, -latitude, -longitude,      markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
-                            startU, endV, -latitude, -longitude,   -markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,
+                            startU, startV, -latitude, -longitude, -markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
+                            endU, startV, -latitude, -longitude,    markerSize, -markerSize, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
+                            endU, endV, -latitude, -longitude,      markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,  movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
+                            startU, endV, -latitude, -longitude,   -markerSize, markerSize, startAnimationElapsedTime, marker->invertAnimationUnit,  movementX, movementY, movementTargetX, movementTargetY, movementStartAnimation,
                     };
 
                     for (auto item : data) {
                         avatarsData.push_back(item);
+                    }
+
+                    float avatarsRayRaw[] = {
+                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, 0, 0, 0, markerSize,
+                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, -1, markerSize,
+                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, 1, markerSize,
+                    };
+                    for (auto item : avatarsRayRaw) {
+                        avatarsRayData.push_back(item);
                     }
                 }
 
@@ -400,37 +428,108 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     currentPoint += 4;
                 }
 
-                glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsVBO);
-                auto data = avatarsData.data();
-                auto size = avatarsData.size() * sizeof(float);
-                glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsVBO);
+                    auto data = avatarsData.data();
+                    auto size = avatarsData.size() * sizeof(float);
+                    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+                }
+
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsTargetMarkersSizeVBO);
+                    auto data = avatarsTargetMarkersSizeUniform.data();
+                    auto size = avatarsTargetMarkersSizeUniform.size() * sizeof(float);
+                    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+                }
+
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
             }
+
+            // cобираем лучи
+            std::vector<unsigned int> indices(avatarsResultToDrawCount * 3);
+            avatarsRayIBOSize = indices.size();
+            unsigned int currentPoint = 0;
+            for (int i = 0; i < avatarsResultToDrawCount; i++) {
+                unsigned int skip = i * 3;
+                indices[skip + 0] = currentPoint + 0;
+                indices[skip + 1] = currentPoint + 1;
+                indices[skip + 2] = currentPoint + 2;
+                currentPoint += 3;
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, avatarRaysVBO);
+            auto data = avatarsRayData.data();
+            auto size = avatarsRayData.size() * sizeof(float);
+            glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsRayIBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, 0);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
 
-        // сколько компонентов в data для рендринга аватара
-        size_t stride = 8 * sizeof(float);
+
+        Eigen::Vector3f axisLon = fromLatLonToSphereDoublePos.axisLongitude.cast<float>();
+        Eigen::Vector3f axisLat = fromLatLonToSphereDoublePos.axisLatitude.cast<float>();
+        Eigen::Vector3f pointOnSphere = fromLatLonToSphereDoublePos.pointOnSphere.cast<float>();
+        auto color = MapColors::getAvatarsBorderColor();
+
+//        if (avatarsRayIBOSize > 0) {
+//            // рендрим лучи
+//            size_t stride = 8 * sizeof(float);
+//
+//            auto avatarsRays = shadersBucket.avatarRayShader;
+//            glUseProgram(avatarsRays->program);
+//            glUniform3f(avatarsRays->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+//            glUniform3f(avatarsRays->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+//            glUniform3f(avatarsRays->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+//            glUniform1f(avatarsRays->getRadiusLocation(), mapNumbers.radius);
+//            glUniform1f(avatarsRays->getScaleLocation(), scale);
+//            glUniformMatrix4fv(avatarsRays->getMatrixLocation(), 1, GL_FALSE, pv.data());
+//            glUniform1f(avatarsRays->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
+//            glUniform1f(avatarsRays->getAnimationTimeLocation(), animationTime);
+//            glUniform3fv(avatarsRays->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
+//
+//            glBindBuffer(GL_ARRAY_BUFFER, avatarRaysVBO);
+//            glVertexAttribPointer(avatarsRays->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(0 * sizeof(float)));
+//            glEnableVertexAttribArray(avatarsRays->getLatLonLocation());
+//            glVertexAttribPointer(avatarsRays->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
+//            glEnableVertexAttribArray(avatarsRays->getStartAnimationElapsedTimeLocation());
+//            glVertexAttribPointer(avatarsRays->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
+//            glEnableVertexAttribArray(avatarsRays->getInvertAnimationUnitLocation());
+//            glVertexAttribPointer(avatarsRays->getMovementMarkerLocation(), 3, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
+//            glEnableVertexAttribArray(avatarsRays->getMovementMarkerLocation());
+//            glVertexAttribPointer(avatarsRays->getMarkerSizeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(7 * sizeof(float)));
+//            glEnableVertexAttribArray(avatarsRays->getMarkerSizeLocation());
+//            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsRayIBO);
+//            glDrawElements(GL_TRIANGLES, avatarsRayIBOSize, GL_UNSIGNED_INT, 0);
+//        }
+
+        auto avatarsOnMap = shadersBucket.avatarOnMapShader;
+        glUseProgram(avatarsOnMap->program);
+        glUniform3f(avatarsOnMap->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+        glUniform3f(avatarsOnMap->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+        glUniform3f(avatarsOnMap->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+        glUniform1f(avatarsOnMap->getRadiusLocation(), mapNumbers.radius);
+        glUniform1f(avatarsOnMap->getScaleLocation(), scale);
+        glUniformMatrix4fv(avatarsOnMap->getMatrixLocation(), 1, GL_FALSE, pv.data());
+        glUniform1i(avatarsOnMap->getTextureLocation(), 0);
+        glUniform1f(avatarsOnMap->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
+        glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
+        glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
+        glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
 
         // рисуем маркера по группам
         for (auto& pair : avatarsGroups) {
             auto& group = pair.second;
+            // сколько компонентов в data для рендринга аватара
+            size_t stride = 13 * sizeof(float);
             glBindTexture(GL_TEXTURE_2D, pair.first);
-            auto avatarsOnMap = shadersBucket.avatarOnMapShader;
-            auto color = MapColors::getAvatarsBorderColor();
 
-            glUseProgram(avatarsOnMap->program);
-            Eigen::Vector3f axisLon = fromLatLonToSpherePos.axisLongitude.cast<float>();
-            Eigen::Vector3f axisLat = fromLatLonToSpherePos.axisLatitude.cast<float>();
-            Eigen::Vector3f pointOnSphere = fromLatLonToSpherePos.pointOnSphere.cast<float>();
-            glUniform3f(avatarsOnMap->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
-            glUniform3f(avatarsOnMap->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
-            glUniform3f(avatarsOnMap->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
-            glUniform1f(avatarsOnMap->getRadiusLocation(), mapNumbers.radius);
-            glUniform1f(avatarsOnMap->getScaleLocation(), scale);
-            glUniformMatrix4fv(avatarsOnMap->getMatrixLocation(), 1, GL_FALSE, pv.data());
-            glUniform1i(avatarsOnMap->getTextureLocation(), 0);
+            glBindBuffer(GL_ARRAY_BUFFER, group.avatarsTargetMarkersSizeVBO);
+            glUniform1fv(avatarsOnMap->getTargetMarkerSizeArrayLocation(), 64, 0);
 
             glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
             glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
@@ -443,27 +542,32 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             glEnableVertexAttribArray(avatarsOnMap->getStartAnimationElapsedTimeLocation());
             glVertexAttribPointer(avatarsOnMap->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(7 * sizeof(float)));
             glEnableVertexAttribArray(avatarsOnMap->getInvertAnimationUnitLocation());
-            glUniform1f(avatarsOnMap->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
-            glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
-            glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
-            glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
-            glUniform1f(avatarsOnMap->getArrowHeightLocation(), arrowBasicHeight);
+            glVertexAttribPointer(avatarsOnMap->getMovementMarkerLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(8 * sizeof(float)));
+            glEnableVertexAttribArray(avatarsOnMap->getMovementMarkerLocation());
+            glVertexAttribPointer(avatarsOnMap->getMovementTargetMarkerLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(10 * sizeof(float)));
+            glEnableVertexAttribArray(avatarsOnMap->getMovementTargetMarkerLocation());
+            glVertexAttribPointer(avatarsOnMap->getMovementStartAnimationTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(12 * sizeof(float)));
+            glEnableVertexAttribArray(avatarsOnMap->getMovementStartAnimationTimeLocation());
+            glUniform1f(avatarsOnMap->getMovementAnimationTimeLocation(), movementAnimationTime);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, group.avatarsIBO);
             glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 1.0);
             glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
             glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 0.0);
             glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
         }
+
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
+
     } // конец рендринга аватаров
 
     if (lockThread == false) {
-        fromLatLonToSpherePosThread = fromLatLonToSpherePos;
+        fromLatLonToSpherePosThread = fromLatLonToSphereDoublePos;
         screenWidthT = screenWidth;
         screenHeightT = screenHeight;
         radiusT = mapNumbers.radius;
-        pvT = pv;
+        pvT = pvD;
         scaleT = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
 
         Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
@@ -554,45 +658,116 @@ void Markers::initGL() {
     glGenBuffers(1, &titlesIBO);
     glGenFramebuffers(1, &frameBuffer);
 
+    glGenBuffers(1, &avatarRaysVBO);
+    glGenBuffers(1, &avatarsRayIBO);
+
     std::thread parallelThreadMarkers([this] {
         while(true) {
             lockThread = false;
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             lockThread = true;
             testAvatarsVertices.clear();
-            Avatars::Grid grid = Avatars::Grid();
-            grid.init(screenWidthT, screenHeightT, 3, 6);
 
-            auto currentTime = std::chrono::system_clock::now();
+            auto grid = Avatars::Grid();
+            grid.init(screenWidthT, screenHeightT, 3, 3);
+            std::unordered_map<int64_t, Avatars::Circle> circles;
+
+            // вычисляем где маркера расположены относительно экрана
+            // cоздаем сетку с ними
             for (auto& renderMarkerPair : renderMarkers) {
                 auto& markerId = renderMarkerPair.first;
                 auto& marker = storageMarkers[markerId];
-                auto markerSize = marker.markerSize;
-                Eigen::Vector3f markerPoint = fromLatLonToSpherePosThread.getPoint(radiusT, marker);
-                float markerX = markerPoint.x();
-                float markerY = markerPoint.y();
-                float markerZ = markerPoint.z();
-                float arrowHeight = arrowBasicHeight;
 
-                Eigen::Vector4f centerAvatarPoint = Eigen::Vector4f { markerX, markerY + (markerSize + arrowHeight) * scaleT, markerZ, 1.0 };
-                Eigen::Vector4f PClipCenter = pvT * centerAvatarPoint;
-                Eigen::Vector3f PNdcCenter;
+                auto markerSize = marker.markerSize;
+                Eigen::Vector3d markerPoint = fromLatLonToSpherePosThread.getPoint(radiusT, marker.latitude, marker.longitude);
+                double markerX = markerPoint.x();
+                double markerY = markerPoint.y();
+                double markerZ = markerPoint.z();
+                double worldRadius = (markerSize + borderWidth) * scaleT;
+
+                Eigen::Vector4d centerAvatarPoint = Eigen::Vector4d { markerX, markerY, markerZ, 1.0 };
+                Eigen::Vector4d PClipCenter = pvT * centerAvatarPoint;
+                Eigen::Vector3d PNdcCenter;
                 PNdcCenter.x() = PClipCenter.x() / PClipCenter.w();
                 PNdcCenter.y() = PClipCenter.y() / PClipCenter.w();
                 PNdcCenter.z() = PClipCenter.z() / PClipCenter.w();
-                float centerScreenX = (PNdcCenter.x() + 1.0f) * 0.5f * screenWidthT;
-                float centerScreenY = (1.0f - PNdcCenter.y()) * 0.5f * screenHeightT;
-                testAvatarsVertices.push_back(centerScreenX);
-                testAvatarsVertices.push_back(centerScreenY);
+                int centerScreenX = (PNdcCenter.x() + 1.0) * 0.5 * screenWidthT;
+                int centerScreenY = (1.0 - PNdcCenter.y()) * 0.5 * screenHeightT;
+                testAvatarsVertices.push_back(FLOAT(centerScreenX));
+                testAvatarsVertices.push_back(FLOAT(centerScreenY));
+
+                Eigen::Vector4d borderAvatarPoint = centerAvatarPoint + Eigen::Vector4d { worldRadius, 0, 0, 0 };
+                Eigen::Vector4d PClipBorder = pvT * borderAvatarPoint;
+                Eigen::Vector3d PNdcBorder;
+                PNdcBorder.x() = PClipBorder.x() / PClipBorder.w();
+                PNdcBorder.y() = PClipBorder.y() / PClipBorder.w();
+                PNdcBorder.z() = PClipBorder.z() / PClipBorder.w();
+                int borderScreenX = (PNdcBorder.x() + 1.0f) * 0.5f * screenWidthT;
+                int borderScreenY = (1.0f - PNdcBorder.y()) * 0.5f * screenHeightT;
+                testAvatarsVertices.push_back(FLOAT(borderScreenX));
+                testAvatarsVertices.push_back(FLOAT(borderScreenY));
+
+                int screenMarkerRadius = sqrt(pow(centerScreenX - borderScreenX, 2) + pow(centerScreenY - borderScreenY, 2));
+                float toWorldK = worldRadius / FLOAT(screenMarkerRadius) / scaleT;
 
                 auto circle = Avatars::Circle(
-                        static_cast<int>(centerScreenX),
-                        static_cast<int>(centerScreenY),
-                        static_cast<int>(markerSize * scaleT),
-                        markerId
+                        centerScreenX, centerScreenY, screenMarkerRadius,
+                        markerId, toWorldK
                 );
+                circles[markerId] = circle;
                 grid.insert(circle);
             }
+
+            // смотрим пересечения маркеров друг с другом
+            // создаем спискок пересечений
+            std::unordered_map<int64_t, void*> ignoreNext = {};
+            std::unordered_map<int64_t, std::vector<AvatarIntersection>> intersections;
+            for (auto& renderMarkerPair : renderMarkers) {
+                auto &markerId = renderMarkerPair.first;
+                if (ignoreNext.count(markerId) > 0) {
+                    continue;
+                }
+                auto &marker = storageMarkers[markerId];
+                auto &circle = circles[markerId];
+
+                auto intersectionsForMarker = grid.findIntersections(circle);
+                if (intersectionsForMarker.empty()) {
+                    // если у этого маркера нету ни с кем пересечений то возвращаем его на прежнюю позицию
+                    marker.newMovement(
+                            refreshGroup,
+                            mapFpsCounter,
+                            0, 0,
+                            movementAnimationTime
+                    );
+                } else {
+                    // этот маркер мы уже обработали значит дальше мы его игнорируем
+                    for (auto elem : intersectionsForMarker) {
+                        ignoreNext[elem.avatarId] = nullptr;
+                    }
+                    intersections[markerId] = intersectionsForMarker;
+                }
+            }
+            grid.clean();
+
+            // проходим по списку и двигаем маркера если он пересекается с другими
+            for (auto& pair : intersections) {
+                auto& markerId = pair.first;
+
+                auto& intersectionsVec = pair.second;
+                for (auto& intersection : intersectionsVec) {
+                    auto& otherMarker = storageMarkers[intersection.avatarId];
+                    float newXMovement = intersection.dx * intersection.length * intersection.toWorldK;
+                    float newYMovement = -intersection.dy * intersection.length * intersection.toWorldK;
+                    if (otherMarker.movementTargetY != newYMovement || otherMarker.movementTargetX != newXMovement) {
+                        otherMarker.newMovement(
+                                refreshGroup, mapFpsCounter,
+                                newXMovement, newYMovement,
+                                movementAnimationTime
+                        );
+                    }
+                }
+            }
+
         }
     });
     parallelThreadMarkers.detach();

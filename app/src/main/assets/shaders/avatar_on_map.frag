@@ -19,7 +19,6 @@ void main() {
 
     // параметры рисования
     float uRadius = 0.45;
-    float arrowUpPow = 4.0;
 
     // это чтобы сделать закругленные края у автарки
     // Центральные координаты
@@ -36,18 +35,12 @@ void main() {
     bool alphaInnerSpaceB = (uv.x < positionOfCornerCircle.x || uv.y < positionOfCornerCircle.y) && (uv.y < size.x && uv.x < size.y);
     bool alphaRoundedB = alphaCornersRoundedB || alphaInnerSpaceB; // закругление углов
 
-
-    float x = corners_coords.x;
-    float y = 1.0 - (corners_coords.y / -arrowMarkerHeightSize);
-    float curveValue = pow(2.0 * arrowUpPow * x - arrowUpPow, 2.0);
-    bool isArrowB = y > curveValue && corners_coords.y < 0.2;
-
-    // это аватар и стрелочка
+    // это аватар
     float alphaRounded = alphaRoundedB ? 1.0 : 0.0;
     vec4 colorFirst = vec4(texture2D(u_text, textureCord).rgb, alphaRounded * alphaAnimation);
 
-    // это фон, обертка для автаара
-    float bgAlpha = isArrowB || alphaRoundedB ? 1.0 : 0.0;
+    // это фон, обертка для аватара
+    float bgAlpha = alphaRoundedB ? 1.0 : 0.0;
     vec4 colorBg = vec4(u_color, bgAlpha * alphaAnimation);
 
     gl_FragColor = mix(colorFirst, colorBg, u_drawColorMix);

@@ -23,16 +23,8 @@
 #include "AvatarAtlasPointer.h"
 #include "AvatarsGroup.h"
 #include "avatars/Grid.h"
-
-struct WStringHash {
-    std::size_t operator()(const std::wstring& str) const {
-        std::size_t hash = 0;
-        for (wchar_t c : str) {
-            hash = hash * 31 + c;
-        }
-        return hash;
-    }
-};
+#include "avatars/CircleElement.h"
+#include "avatars/CircleNode.h"
 
 class Markers {
 public:
@@ -44,7 +36,7 @@ public:
     void updateMarkerGeo(int64_t key, float latitude, float longitude);
     void updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize);
     void drawMarkers(ShadersBucket& shadersBucket,
-                     Eigen::Matrix4f pv,
+                     Eigen::Matrix4d pv,
                      MapNumbers& mapNumbers,
                      std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
@@ -61,17 +53,19 @@ private:
     int avatarSize = 256;
 
     // сохраненное состояние для параллельного потока
-    FromLatLonToSpherePos fromLatLonToSpherePosThread;
+    FromLatLonToSphereDoublePos fromLatLonToSpherePosThread;
     bool lockThread;
+    bool manualRefreshAllAvatars = false;
     float screenWidthT;
     float screenHeightT;
     float radiusT = 0.0;
-    Eigen::Matrix4f pvT;
+    Eigen::Matrix4d pvT;
     std::vector<float> testAvatarsVertices = {};
     float scaleT;
 
     float borderWidth = 0.17f;
     float arrowBasicHeight = 0.3f;
+    float movementAnimationTime = 0.5;
 
     std::unordered_map<int64_t, UserMarker> storageMarkers = {};
     std::unordered_map<int64_t, void*> renderMarkers = {};
@@ -88,6 +82,10 @@ private:
     std::unordered_map<GLuint, void*> refreshGroup = {};
     std::unordered_map<GLuint, AvatarsGroup> avatarsGroups = {};
     size_t refreshAvatarsKey = 0;
+
+    GLuint avatarRaysVBO;
+    GLuint avatarsRayIBO;
+    size_t avatarsRayIBOSize;
 
     void updateMarkerAvatarInternal(int64_t& key, unsigned char *imageData, off_t& fileSize);
 };
