@@ -7,12 +7,12 @@
 
 
 #include <stdint.h>
+#include "avatars/Circle.h"
 
 class AvatarIntersection {
 public:
     float dx, dy, length;
-    int64_t avatarId;
-    float toWorldK;
+    int64_t markerId;
 };
 
 

@@ -15,10 +15,12 @@
 #include "AvatarAtlasPointer.h"
 #include "IGetPointData.h"
 #include <cmath>
+#include "avatars/Circle.h"
 
 class UserMarker: public IGetPointData {
 public:
     constexpr static const float defaultMarkerSize = 1.4;
+    constexpr static const float minimumMarkerSize = 0.8f;
 
     UserMarker() {}
     UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId, float startAnimationElapsedTime)

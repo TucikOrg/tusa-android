@@ -26,6 +26,7 @@ std::vector<AvatarIntersection> Avatars::Grid::findIntersections(Circle circle) 
     endCellY = std::clamp(endCellY, 0, heightCellsCount - 1);
     int checksCurrent = 0;
     std::vector<AvatarIntersection> intersections;
+    std::unordered_map<int64_t, void*> hasIntersection = {};
 
     // проверка пересечений
     for (int cellX = startCellX; cellX <= endCellX; cellX++) {
@@ -38,13 +39,14 @@ std::vector<AvatarIntersection> Avatars::Grid::findIntersections(Circle circle) 
             while(next != 0) {
                 auto element = elements[next - 1];
                 auto& otherCircle = circles[toBoxId[element.forToBoxId]];
-                if (otherCircle.id != circle.id) { // исключаем проверку пересечений с самим собой
+                if (otherCircle.id != circle.id && hasIntersection.count(otherCircle.id) == 0) { // исключаем проверку пересечений с самим собой
                     float dx = 0;
                     float dy = 0;
                     float intersectLength = 0;
                     bool intersects = otherCircle.intersects(circle, dx, dy, intersectLength);
                     if (intersects) {
-                        intersections.push_back(AvatarIntersection { dx, dy, intersectLength, otherCircle.id, otherCircle.toWorldK });
+                        intersections.push_back(AvatarIntersection { dx, dy, intersectLength, otherCircle.id });
+                        hasIntersection[otherCircle.id] = nullptr;
                     }
 
                     checksCurrent++;

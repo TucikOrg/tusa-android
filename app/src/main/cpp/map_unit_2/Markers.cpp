@@ -702,20 +702,19 @@ void Markers::initGL() {
     std::thread parallelThreadMarkers([this] {
         while(true) {
             lockThread = false;
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             lockThread = true;
             testAvatarsVertices.clear();
 
             auto grid = Avatars::Grid();
             grid.init(screenWidthT, screenHeightT, 3, 3);
-            std::unordered_map<int64_t, Avatars::Circle> circles;
 
+            std::unordered_map<int64_t, Avatars::Circle> circles;
             // вычисляем где маркера расположены относительно экрана
             // cоздаем сетку с ними
             for (auto& renderMarkerPair : renderMarkers) {
                 auto& markerId = renderMarkerPair.first;
                 auto& marker = storageMarkers[markerId];
-
 
                 Eigen::Vector3d markerPoint = fromLatLonToSpherePosThread.getPoint(radiusT, marker.latitude, marker.longitude);
                 double markerX = markerPoint.x();
@@ -724,8 +723,6 @@ void Markers::initGL() {
 
                 float markerSizeForCollision = UserMarker::defaultMarkerSize;
                 double worldRadius = (markerSizeForCollision + borderWidth) * scaleT;
-
-                double worldRadiusConsiderSizeAnimation = (marker.targetMarkerSize + borderWidth) * scaleT;
 
                 Eigen::Vector4d centerAvatarPoint = Eigen::Vector4d { markerX, markerY, markerZ, 1.0 };
                 Eigen::Vector4d PClipCenter = pvT * centerAvatarPoint;
@@ -773,25 +770,25 @@ void Markers::initGL() {
                 auto &marker = storageMarkers[markerId];
                 auto &circle = circles[markerId];
 
+                // корневые маркеры не двигаем и не изменяем
+                marker.newMovement(
+                        refreshGroup,
+                        mapFpsCounter,
+                        0, 0,
+                        movementAnimationTime
+                );
+                marker.newMarkerSize(
+                        refreshGroup,
+                        mapFpsCounter,
+                        UserMarker::defaultMarkerSize,
+                        markerSizeAnimationTime
+                );
+
                 auto intersectionsForMarker = grid.findIntersections(circle);
-                if (intersectionsForMarker.empty()) {
-                    // если у этого маркера нету ни с кем пересечений то возвращаем его на прежнюю позицию
-                    marker.newMovement(
-                            refreshGroup,
-                            mapFpsCounter,
-                            0, 0,
-                            movementAnimationTime
-                    );
-                    marker.newMarkerSize(
-                            refreshGroup,
-                            mapFpsCounter,
-                            UserMarker::defaultMarkerSize,
-                            markerSizeAnimationTime
-                    );
-                } else {
+                if (intersectionsForMarker.empty() == false) {
                     // этот маркер мы уже обработали значит дальше мы его игнорируем
                     for (auto elem : intersectionsForMarker) {
-                        ignoreNext[elem.avatarId] = nullptr;
+                        ignoreNext[elem.markerId] = nullptr;
                     }
                     intersections[markerId] = intersectionsForMarker;
                 }
@@ -800,35 +797,66 @@ void Markers::initGL() {
 
             // проходим по списку и двигаем маркера если он пересекается с другими
             for (auto& pair : intersections) {
+                // этот маркер главный и имеет пересечения с другими маркерами
                 auto& markerId = pair.first;
-
+                auto& marker = storageMarkers[markerId];
+                auto& rootCircle = circles[markerId];
                 auto& intersectionsVec = pair.second;
-                for (auto& intersection : intersectionsVec) {
-                    auto& otherMarker = storageMarkers[intersection.avatarId];
 
-                    // Делаем радиус поменьше чтобы маркеры не пересекались
-                    if (intersection.length < 70) {
-                        float newMarkerSize = UserMarker::defaultMarkerSize - intersection.length * intersection.toWorldK;
-                        otherMarker.newMarkerSize(
-                                refreshGroup, mapFpsCounter,
-                                newMarkerSize,
-                                markerSizeAnimationTime
-                        );
-                        continue;
-                    }
 
-                    float alreadyCompensated = UserMarker::defaultMarkerSize - otherMarker.targetMarkerSize;
-                    float len = intersection.length - alreadyCompensated;
-                    float newXMovement = intersection.dx * len * intersection.toWorldK;
-                    float newYMovement = intersection.dy * len * intersection.toWorldK;
+                for (int i = 0; i < intersectionsVec.size(); i++) {
+                    auto& intersection = intersectionsVec[i];
+                    auto& otherMarker = storageMarkers[intersection.markerId];
+                    auto& otherCircle = circles[intersection.markerId];
 
+
+                    // группируем по кругу
+                    float useSizeForRadialMarkers = otherCircle.radius / 2.0;
+                    float radAngle = i * 2.0 * M_PI / 6.0;
+                    float dxToRootScreen = rootCircle.x - otherCircle.x;
+                    float dyToRootScreen = otherCircle.y - rootCircle.y;
+                    float shiftScreenDistance = rootCircle.radius + otherCircle.radius;
+                    float movementXRadialScreen = dxToRootScreen + shiftScreenDistance * cos(radAngle);
+                    float movementYRadialScreen = dyToRootScreen + shiftScreenDistance * sin(radAngle);
                     otherMarker.newMovement(
                             refreshGroup, mapFpsCounter,
-                            newXMovement, newYMovement,
+                            movementXRadialScreen * rootCircle.toWorldK, movementYRadialScreen * rootCircle.toWorldK,
                             movementAnimationTime
                     );
+//                    otherMarker.newMarkerSize(
+//                            refreshGroup, mapFpsCounter,
+//                            useSizeForRadialMarkers,
+//                            markerSizeAnimationTime
+//                    );
+
+                    continue;
+
+                    // Делаем радиус поменьше чтобы маркеры не пересекались
+                    float worldIntersection = intersection.length * otherCircle.toWorldK;
+                    float onMarkerPressure = UserMarker::defaultMarkerSize - worldIntersection;
+                    float needCompensationMovement = -1.0 * (onMarkerPressure - UserMarker::minimumMarkerSize);
+
+                    float useMarkerSize = std::max(onMarkerPressure, UserMarker::minimumMarkerSize);
+                    otherMarker.newMarkerSize(
+                            refreshGroup, mapFpsCounter,
+                            useMarkerSize,
+                            markerSizeAnimationTime
+                    );
+
+                    // значит уперлись в минимальную границу уменьшения маркера
+                    // значит нужно сдвинуть маркеры друг от друга
+                    if (needCompensationMovement > 0) {
+                        float newXMovement = intersection.dx * needCompensationMovement;
+                        float newYMovement = intersection.dy * needCompensationMovement;
+                        otherMarker.newMovement(
+                                refreshGroup, mapFpsCounter,
+                                newXMovement, newYMovement,
+                                movementAnimationTime
+                        );
+                    }
                 }
             }
+
 
         }
     });

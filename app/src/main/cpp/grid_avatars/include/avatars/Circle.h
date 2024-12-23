@@ -28,7 +28,6 @@ namespace Avatars {
             int distance = sqrt(dx * dx + dy * dy);
             int radiusSum = radius + circle.radius;
             length = abs(distance - radiusSum);
-            //realLength = abs(distance - currentAnimRadius - circle.currentAnimRadius);
             dx /= distance;
             dy /= distance;
             dy *= -1;
