@@ -25,6 +25,7 @@
 #include "avatars/Grid.h"
 #include "avatars/CircleElement.h"
 #include "avatars/CircleNode.h"
+#include "avatars/AvatarCollisionShift.h"
 
 class Markers {
 public:

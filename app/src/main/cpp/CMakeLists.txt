@@ -125,6 +125,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         grid_avatars/CircleElement.cpp
         grid_avatars/CircleNode.cpp
         grid_avatars/AvatarIntersection.cpp
+        grid_avatars/AvatarCollisionShift.cpp
 )
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/eigen)
