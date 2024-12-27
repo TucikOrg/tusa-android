@@ -26,12 +26,11 @@
 #include "avatars/CircleElement.h"
 #include "avatars/CircleNode.h"
 #include "avatars/AvatarCollisionShift.h"
+#include "avatars/AvatarIntersection.h"
 
 class Markers {
 public:
     Markers(MapFpsCounter* mapFpsCounter) : mapFpsCounter(mapFpsCounter) { }
-
-
 
     void initGL();
     void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
@@ -66,7 +65,7 @@ private:
     std::vector<float> testAvatarsVertices = {};
     float scaleT;
 
-    float borderWidth = 0.17f;
+    float borderWidth = 10.0f;
     float arrowBasicHeight = 0.3f;
     float movementAnimationTime = 0.5f;
     float markerSizeAnimationTime = 0.5f;
@@ -93,6 +92,16 @@ private:
     size_t avatarsRayIBOSize;
 
     void updateMarkerAvatarInternal(int64_t& key, unsigned char *imageData, off_t& fileSize);
+
+    void saveNewMarkerPositionAndSize(
+            std::unordered_map<int64_t, AvatarCollisionShift>& resultAvatarsShifts,
+            std::vector<Avatars::Circle>& circles,
+            std::unordered_map<int64_t, uint>& circlesMap,
+            float newMovementX,
+            float newMovementY,
+            float newSize,
+            int64_t markerId
+    );
 };
 
 

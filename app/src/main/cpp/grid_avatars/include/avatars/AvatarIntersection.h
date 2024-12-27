@@ -7,7 +7,6 @@
 
 
 #include <stdint.h>
-#include "avatars/Circle.h"
 
 class AvatarIntersection {
 public:

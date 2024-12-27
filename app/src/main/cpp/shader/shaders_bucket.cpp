@@ -58,11 +58,11 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     pathTextShader = std::shared_ptr<PathTextShader>(new PathTextShader(
             assetManager, "shaders/path_text.vert", "shaders/path_text.frag"
     ));
-    avatarOnMapShader = std::shared_ptr<AvatarOnMapShader>(new AvatarOnMapShader(
-            assetManager, "shaders/avatar_on_map.vert", "shaders/avatar_on_map.frag"
-    ));
     avatarRayShader = std::shared_ptr<AvatarRayShader>(new AvatarRayShader(
             assetManager, "shaders/avatar_ray.vert", "shaders/avatar_ray.frag"
+    ));
+    avatarOnMapNewShader = std::shared_ptr<AvatarOnMapNewShader>(new AvatarOnMapNewShader(
+            assetManager, "shaders/avatar_on_map_new.vert", "shaders/avatar_on_map_new.frag"
     ));
 }
 

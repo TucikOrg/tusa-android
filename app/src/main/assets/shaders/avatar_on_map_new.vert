@@ -26,6 +26,8 @@ uniform float u_invertAnimationUnit[64];
 uniform float u_startAnimationElapsedTime[64];
 uniform float u_startMarkerSizeAnimation[64];
 
+uniform mat4 u_matrixPV_SCREEN;
+uniform vec2 u_screenSize;
 
 varying vec2 textureCord;
 varying float startAnimationElapsedTime;
@@ -41,7 +43,7 @@ void main() {
     vec2 latLon = u_latLon[int(a_positionInUniform)];
     float latitude = latLon.x;
     float longitude = latLon.y;
-    
+
     mat3 rotationLatitude = mat3(
     cos(-latitude) + u_axisLatitude.x * u_axisLatitude.x * (1.0 - cos(-latitude)),
     u_axisLatitude.x * u_axisLatitude.y * (1.0 - cos(-latitude)) - u_axisLatitude.z * sin(-latitude),
@@ -76,7 +78,14 @@ void main() {
     vec3 markerDirectionSphere = rotationLongitude * rotationLatitude * u_pointOnSphere;
 
     // Compute the final location on the sphere
-    vec3 markerPointLocation = markerDirectionSphere * u_radius;
+    vec3 markerPointLocation = markerDirectionSphere * u_radius - vec3(0.0, 0.0, u_radius);
+    vec4 pClip = u_matrix * vec4(markerPointLocation, 1.0);
+    vec3 pNdc = vec3(pClip.x / pClip.w, pClip.y / pClip.w, pClip.z / pClip.w);
+    float screenWidthT = u_screenSize.x;
+    float screenHeightT = u_screenSize.y;
+    float screenX = (pNdc.x + 1.0) * 0.5 * screenWidthT;
+    float screenY = (1.0 - pNdc.y) * 0.5 * screenHeightT;
+    vec3 screenPos = vec3(screenX, screenY, 0.0);
 
     // параметры рисования
     float markerFloatSpeed = 3.0;
@@ -94,7 +103,7 @@ void main() {
 
     // чтобы сделать границу вокруг аватара, нужно сдвинуть точку на границе на borderWidth
     // u_drawColorMix отвечает за то аватар это или нет
-    vec2 shiftBorder = vec2(a_border_direction.x < 0.0 ? -1.0 : 1.0, a_border_direction.y < 0.0 ? -1.0 : 1.0) * borderWidth * u_drawColorMix;
+    vec2 shiftBorder = vec2(a_border_direction.x < 0.0 ? 1.0 : -1.0, a_border_direction.y < 0.0 ? 1.0 : -1.0) * borderWidth * (1.0 - u_drawColorMix);
 
     float startMovementTime = u_movementStartAnimationTime[int(a_positionInUniform)];
     float moveAnimationTime = u_movementAnimationTime;
@@ -106,9 +115,9 @@ void main() {
     vec2 currentMovement = movementMarker + movementDelta * movementProgress;
 
     // куда двигать точку относительно места где аватар расположен
-    vec2 shift = (useBorderDirection + shiftBorder + currentMovement) * u_scale;
+    vec2 shift = (useBorderDirection + shiftBorder + currentMovement);
     gl_PointSize = 20.0;
-    gl_Position = u_matrix * vec4(markerPointLocation.xy + shift, markerPointLocation.z - u_radius, 1.0);
+    gl_Position = u_matrixPV_SCREEN * vec4(screenPos.xy + shift, screenPos.z, 1.0);
 
     startAnimationElapsedTime = u_startAnimationElapsedTime[int(a_positionInUniform)];
     textureCord = a_textureCord;

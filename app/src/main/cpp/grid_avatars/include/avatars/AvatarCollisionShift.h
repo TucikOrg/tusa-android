@@ -8,7 +8,7 @@
 
 class AvatarCollisionShift {
 public:
-    float worldDx, worldDy, worldSize;
+    float screenDx, screenDY, screenSize;
 };
 
 

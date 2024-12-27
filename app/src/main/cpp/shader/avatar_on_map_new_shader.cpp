@@ -1,13 +1,14 @@
 //
-// Created by Artem on 13.12.2024.
+// Created by Artem on 26.12.2024.
 //
 
-#include "shader/avatar_on_map_shader.h"
+#include "shader/avatar_on_map_new_shader.h"
 
 
-AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
-                               const char *vertexShaderName,
-                               const char *fragmentShaderName) :
+
+AvatarOnMapNewShader::AvatarOnMapNewShader(AAssetManager *assetManager,
+                                     const char *vertexShaderName,
+                                     const char *fragmentShaderName) :
         Shader(assetManager, vertexShaderName, fragmentShaderName) {
 
     if (!valid) {
@@ -41,4 +42,6 @@ AvatarOnMapShader::AvatarOnMapShader(AAssetManager *assetManager,
     u_latLon = glGetUniformLocation(program, "u_latLon");
     u_startMarkerSizeAnimation = glGetUniformLocation(program, "u_startMarkerSizeAnimation");
     u_markerSizeAnimationTime = glGetUniformLocation(program, "u_markerSizeAnimationTime");
+    u_matrixPV_SCREEN = glGetUniformLocation(program, "u_matrixPV_SCREEN");
+    u_screenSize = glGetUniformLocation(program, "u_screenSize");
 }

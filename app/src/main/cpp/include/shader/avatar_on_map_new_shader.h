@@ -1,16 +1,16 @@
 //
-// Created by Artem on 13.12.2024.
+// Created by Artem on 26.12.2024.
 //
 
-#ifndef TUSA_ANDROID_AVATAR_ON_MAP_SHADER_H
-#define TUSA_ANDROID_AVATAR_ON_MAP_SHADER_H
+#ifndef TUSA_ANDROID_AVATAR_ON_MAP_NEW_SHADER_H
+#define TUSA_ANDROID_AVATAR_ON_MAP_NEW_SHADER_H
 
 #include <GLES2/gl2.h>
 #include "shader/shader.h"
 
-class AvatarOnMapShader: public Shader {
+class AvatarOnMapNewShader: public Shader {
 public:
-    AvatarOnMapShader(AAssetManager* assetManager, const char* vertexShaderName, const char* fragmentShaderName);
+    AvatarOnMapNewShader(AAssetManager* assetManager, const char* vertexShaderName, const char* fragmentShaderName);
 
     GLint getPosLocation() const {return a_pos;}
     GLint getColorLocation() const {return u_color;}
@@ -38,6 +38,8 @@ public:
     GLint getPositionInUniformsLocation() const { return a_positionInUniform; }
     GLint getStartMarkerSizeAnimation() const { return u_startMarkerSizeAnimation; }
     GLint getMarkerSizeAnimationTime() const { return u_markerSizeAnimationTime; }
+    GLint getPvScreenLocation() const { return u_matrixPV_SCREEN; }
+    GLint getScreenSizeLocation() const { return u_screenSize; }
 
 private:
     GLint u_color;
@@ -58,6 +60,9 @@ private:
     GLint u_startMarkerSizeAnimation;
     GLint u_markerSizeAnimationTime;
 
+    GLint u_matrixPV_SCREEN;
+    GLint u_screenSize;
+
     GLint a_textureCord;
     GLint a_pos;
     GLint u_startAnimationElapsedTime;
@@ -70,4 +75,4 @@ private:
 };
 
 
-#endif //TUSA_ANDROID_AVATAR_ON_MAP_SHADER_H
+#endif //TUSA_ANDROID_AVATAR_ON_MAP_NEW_SHADER_H

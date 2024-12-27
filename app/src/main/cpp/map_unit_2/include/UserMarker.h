@@ -19,8 +19,8 @@
 
 class UserMarker: public IGetPointData {
 public:
-    constexpr static const float defaultMarkerSize = 1.4;
-    constexpr static const float minimumMarkerSize = 0.8f;
+    constexpr static const float defaultMarkerScreenSize = 100.0;
+    constexpr static const float minimumMarkerSize = defaultMarkerScreenSize / 1.7;
 
     UserMarker() {}
     UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId, float startAnimationElapsedTime)
@@ -48,7 +48,10 @@ public:
             float newTargetY,
             float movementAnimationTimeCONSTANT
     ) {
-        if (newTargetX == movementTargetX && newTargetY == movementTargetY) {
+        if (
+                CommonUtils::compareFloats(newTargetX, movementTargetX, 0.0001) &&
+                CommonUtils::compareFloats(newTargetY, movementTargetY, 0.0001)
+        ) {
             // если целевоt местоположение не изменилось то ничего не делаем
             return;
         }
@@ -115,7 +118,7 @@ public:
     float movementTargetY = 0.0f;
     float startMovementAnimation = 0.0f;
 
-    float markerSize = defaultMarkerSize;
+    float markerSize = defaultMarkerScreenSize;
     float startMarkerSizeAnimationTime = 0.0f;
     float targetMarkerSize = markerSize;
 };
