@@ -9,6 +9,7 @@
 class AvatarCollisionShift {
 public:
     float screenDx, screenDY, screenSize;
+    float visibleState = 0.0;
 };
 
 

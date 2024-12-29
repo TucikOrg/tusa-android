@@ -27,9 +27,14 @@ namespace Avatars {
         int realX;
         int realY;
 
+        int vectorIndex;
+
+        float radialRadStart = -1;
+        std::unordered_map<short, void*> busyPlace;
+
         bool intersects(Circle& circle, float& dx, float&dy, float& length) {
-            dx = circle.realX - realX;
-            dy = circle.realY - realY;
+            dx = realX - circle.realX;
+            dy = realY - circle.realY;
             float distance = sqrt(dx * dx + dy * dy);
             float radiusSum = radius + circle.radius;
             length = radiusSum - distance;
@@ -40,9 +45,12 @@ namespace Avatars {
 
         std::vector<AvatarIntersection> findIntersections(
                 std::vector<Circle>& circles,
-                std::unordered_map<int64_t, void*>& ignoreMeInCollisionsChecks
+                std::unordered_map<int64_t, void*>& ignoreMeInCollisionsChecks,
+                int& mainIntersectionIndex
         ) {
             std::vector<AvatarIntersection> intersections = {};
+            mainIntersectionIndex = 100000000;
+            int currentCircleIndex = 100000000;
             for (auto& otherCircle : circles) {
                 if (ignoreMeInCollisionsChecks.count(otherCircle.id) > 0) continue;
 
@@ -50,9 +58,15 @@ namespace Avatars {
                 auto intersects = this->intersects(otherCircle, dx, dy, len);
                 if (!intersects) continue;
 
-                intersections.push_back(AvatarIntersection {
+                if (currentCircleIndex > otherCircle.vectorIndex) {
+                    mainIntersectionIndex = intersections.size();
+                    currentCircleIndex = otherCircle.vectorIndex;
+                }
+
+                intersections.push_back({
                         dx, dy, len,
                         otherCircle.id,
+                        otherCircle.vectorIndex
                 });
             }
             return intersections;

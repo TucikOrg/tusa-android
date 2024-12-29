@@ -61,6 +61,7 @@ private:
     float screenWidthT;
     float screenHeightT;
     float radiusT = 0.0;
+    float cameraLongitudeT;
     Eigen::Matrix4d pvT;
     std::vector<float> testAvatarsVertices = {};
     float scaleT;
@@ -69,7 +70,9 @@ private:
     float arrowBasicHeight = 0.3f;
     float movementAnimationTime = 0.5f;
     float markerSizeAnimationTime = 0.5f;
+    float markerAlphaAnimationTime = 0.5f;
     float minimumMarkerSize = 0.8f;
+    float longitudeHideMarkerDelta = M_PI / 2.0;
 
     std::unordered_map<int64_t, UserMarker> storageMarkers = {};
     std::unordered_map<int64_t, void*> renderMarkers = {};
@@ -101,6 +104,11 @@ private:
             float newMovementY,
             float newSize,
             int64_t markerId
+    );
+
+    void saveMarkerVisibleState(
+            std::unordered_map<int64_t, AvatarCollisionShift>& resultAvatarsShifts,
+            float state, int64_t markerId
     );
 };
 

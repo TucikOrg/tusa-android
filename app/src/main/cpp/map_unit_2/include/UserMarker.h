@@ -103,6 +103,26 @@ public:
         startMarkerSizeAnimationTime = mapFpsCounter->getTimeElapsed();
     }
 
+    void visibleState(
+            std::unordered_map<GLuint, void*>& refreshGroup,
+            MapFpsCounter* mapFpsCounter,
+            float visibleState,
+            float markerAlphaAnimationTimeCONSTANT
+    ) {
+        if (invertAnimationUnit == visibleState) {
+            // значит уже установили нужное состояние
+            return;
+        }
+
+        refreshGroup[atlasPointer.atlasId] = nullptr; // пересобрать буффера рендринга
+
+        float progressAlpha = (mapFpsCounter->getTimeElapsed() - startAnimationElapsedTime) / markerAlphaAnimationTimeCONSTANT;
+        float previousAlphaProgress = std::clamp(progressAlpha, 0.0f, 1.0f);
+
+        invertAnimationUnit = visibleState;
+        startAnimationElapsedTime = mapFpsCounter->getTimeElapsed();
+    }
+
     bool uploadedToAtlas = false;
     int64_t markerId;
     unsigned char* pixels;

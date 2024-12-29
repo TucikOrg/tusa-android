@@ -171,10 +171,10 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    //mapControls.setCamPos(DEG2RAD(55.7474), DEG2RAD(37.8469));
+    //mapControls.setCamPos(DEG2RAD(54.1930), DEG2RAD(38.5193));
     //mapControls.setCamPos(moscowLat, moscowLon);
     //mapControls.setZoom(16.5);
-    mapControls.setZoom(0.5);
+    //mapControls.setZoom(5.1);
 }
 
 void MapRenderer::drag(float dx, float dy) {
@@ -191,16 +191,7 @@ void MapRenderer::doubleTap() {
 }
 
 MapRenderer::MapRenderer() {
-    float moscowLat = DEG2RAD(55.7558);
-    float moscowLon = DEG2RAD(37.6176);
-    // 78.236812, 15.623110
-    float latitude = DEG2RAD(78.236812);
-    float longitude = DEG2RAD(15.623110);
-
     mapControls.initCamUnit(planeSize);
-    mapControls.setCamPos(0, 0);
-    //mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(0);
 }
 
  void MapRenderer::drawTestTexture(GLuint textureId, float width, float height, float shift) {

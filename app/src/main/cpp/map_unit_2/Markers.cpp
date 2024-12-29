@@ -31,7 +31,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     // рендрим текст городов стран и тп
     {
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
-        std::vector<float> testVertices = {};
         int checks = 0;
 
         if (canRefreshMarkers) {
@@ -337,6 +336,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             }
         }
 
+
+
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
         float elapsedTime = mapFpsCounter->getTimeElapsed();
         bool refreshAll = refreshAvatarsKey != renderMarkers.size() || manualRefreshAllAvatars;
@@ -613,6 +614,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         radiusT = mapNumbers.radius;
         pvT = pvD;
         scaleT = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
+        cameraLongitudeT = mapNumbers.camLongitude;
 
         Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
         Eigen::Matrix4f viewTest = mapCamera.createView();
@@ -708,9 +710,12 @@ void Markers::initGL() {
     std::thread parallelThreadMarkers([this] {
         while(true) {
             lockThread = false;
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(300));
             lockThread = true;
             testAvatarsVertices.clear();
+
+            std::unordered_map<int64_t, AvatarCollisionShift> resultAvatarsShifts;
+
 
             // вычисляем пересечения коллизий
             std::vector<Avatars::Circle> circles;
@@ -718,6 +723,12 @@ void Markers::initGL() {
             for (auto& renderMarkerPair : renderMarkers) {
                 auto& markerId = renderMarkerPair.first;
                 auto& marker = storageMarkers[markerId];
+
+                float longitudeDelta = abs(marker.longitude - cameraLongitudeT);
+                if (longitudeDelta > longitudeHideMarkerDelta) {
+                    saveMarkerVisibleState(resultAvatarsShifts, 1.0, markerId);
+                    continue;
+                }
 
                 Eigen::Vector3d markerPoint = fromLatLonToSpherePosThread.getPoint(radiusT, marker.latitude, marker.longitude);
                 double markerX = markerPoint.x();
@@ -733,150 +744,116 @@ void Markers::initGL() {
                 PNdcCenter.z() = PClipCenter.z() / PClipCenter.w();
                 int centerScreenX = (PNdcCenter.x() + 1.0) * 0.5 * screenWidthT;
                 int centerScreenY = (1.0 - PNdcCenter.y()) * 0.5 * screenHeightT;
-                testAvatarsVertices.push_back(centerScreenX);
-                testAvatarsVertices.push_back(centerScreenY);
 
-                auto circle = Avatars::Circle(
+                circles.push_back(Avatars::Circle(
                         centerScreenX, centerScreenY, markerRadius,  markerId
-                );
-                circles.push_back(circle);
+                ));
                 circlesMap[markerId] = circles.size() - 1;
-            }
+                circles.back().vectorIndex = circles.size() - 1;
+                Avatars::Circle& circle = circles.back();
 
-            std::unordered_map<int64_t, AvatarCollisionShift> resultAvatarsShifts;
-            std::unordered_map<int64_t, void*> skipMyCollisionsCheck = {};
-
-            for (auto& circle : circles) {
-                auto& markerId = circle.id;
-
-                if (skipMyCollisionsCheck.count(markerId) > 0) {
-                    continue;
-                }
-
-                std::unordered_map<int64_t, void*> ignoreMeInCollisionsChecks = {};
-                ignoreMeInCollisionsChecks[markerId] = nullptr;
-                std::vector<AvatarIntersection> intersections = circle.findIntersections(
-                    circles, ignoreMeInCollisionsChecks
-                );
+                int mainIntersectionIndex = 0;
+                std::unordered_map<int64_t, void*> ignoreCircles = {};
+                ignoreCircles[markerId] = nullptr;
 
 
-                if (intersections.empty() && resultAvatarsShifts.count(markerId) == 0) {
+
+                short inRadialMaxPlaces = 8;
+                auto intersections = circle.findIntersections(circles, ignoreCircles, mainIntersectionIndex);
+                if (intersections.empty()) {
                     saveNewMarkerPositionAndSize(
                             resultAvatarsShifts, circles, circlesMap,
                             0.0, 0.0,
                             UserMarker::defaultMarkerScreenSize,
                             markerId
                     );
+                    saveMarkerVisibleState(resultAvatarsShifts, 0.0, markerId);
+                    continue;
                 }
 
-                short inRadialMaxPlaces = 8;
-                if (intersections.size() >= 1) {
+                auto& intersectionWithMainMarker = intersections[mainIntersectionIndex];
+                auto& mainCircle = circles[circlesMap[intersectionWithMainMarker.markerId]];
 
 
-                    for (short i = 0; i < intersections.size(); i++) {
-                        auto& intersection = intersections[i];
-                        int64_t otherMarkerId = intersection.markerId;
-                        auto& otherCircle = circles[circlesMap[otherMarkerId]];
+                auto directionX = circle.x - mainCircle.realX;
+                auto directionY = mainCircle.realY - circle.y;
+                auto theMostSuitableRad = abs(atan2(directionY, -directionX) - M_PI);
 
-
-                        // Делаем радиус поменьше чтобы маркеры не пересекались
-                        float intersectionLength = intersection.length;
-                        float useMarkerSize = otherCircle.radius - intersectionLength;
-                        if (useMarkerSize >= UserMarker::minimumMarkerSize) {
-                            saveNewMarkerPositionAndSize(
-                                    resultAvatarsShifts, circles, circlesMap,
-                                    0.0, 0.0,
-                                    useMarkerSize,
-                                    intersection.markerId
-                            );
-                        } else {
-                            // значит уперлись в минимальную границу уменьшения маркера
-                            // значит нужно сдвинуть маркеры друг от друга
-                            float moveLen = intersectionLength - abs(otherCircle.radius - UserMarker::minimumMarkerSize);
-                            float newXMovement = intersection.dx * moveLen;
-                            float newYMovement = intersection.dy * moveLen;
-                            saveNewMarkerPositionAndSize(
-                                    resultAvatarsShifts, circles, circlesMap,
-                                    newXMovement, newYMovement,
-                                    UserMarker::minimumMarkerSize,
-                                    intersection.markerId
-                            );
-                        }
-
-                        ignoreMeInCollisionsChecks[otherMarkerId] = nullptr;
-                    }
-
-
-                    std::vector<Avatars::Circle> intersectionsWith(intersections.size());
-                    for (short _i = 0; _i < intersections.size(); _i++) {
-                        auto& inter = intersections[_i];
-                        auto& circleDuplicate = circles[circlesMap[inter.markerId]];
-                        intersectionsWith[_i] = circleDuplicate;
-                    }
-
-                    std::unordered_map<int64_t, void*> ignoreCircles = {};
-                    for (short i = 0; i < intersections.size(); i++) {
-                        auto& intersection = intersections[i];
-                        int64_t otherMarkerId = intersection.markerId;
-                        auto& otherCircle = circles[circlesMap[otherMarkerId]];
-                        ignoreCircles[otherMarkerId] = nullptr;
-
-                        std::vector<AvatarIntersection> currentIterationIntersections = otherCircle.findIntersections(
-                                intersectionsWith, ignoreCircles
-                        );
-
-                        // c этого угла мы будем все двигать
-                        auto directionX = otherCircle.realX - circle.realX;
-                        auto directionY = circle.realY - otherCircle.realY;
-                        auto startRad = abs(atan2(directionY, -directionX) - M_PI);
-                        auto startDeg = RAD2DEG(startRad);
-
-                        std::unordered_map<short, void*> occupedIndexes = {};
-                        occupedIndexes[0] = nullptr;
-                        for (short i2 = 0; i2 < currentIterationIntersections.size(); i2++) {
-                            auto& intersection2 = currentIterationIntersections[i2];
-                            int64_t useMarkerId2 = intersection2.markerId;
-                            auto& otherCircle2 = circles[circlesMap[useMarkerId2]];
-                            skipMyCollisionsCheck[useMarkerId2] = nullptr;
-
-                            auto directionXOther = otherCircle2.x - circle.x;
-                            auto directionYOther = circle.y - otherCircle2.y;
-                            auto theMostSuitableRad = abs(atan2(directionYOther, -directionXOther) - M_PI);
-                            auto theMostSuitableDeg = RAD2DEG(theMostSuitableRad);
-
-                            float radAngle = 0.0;
-                            float angleDelta = 2.0 * M_PI;
-                            short occupedIndex = -1;
-                            for (short angleI = 0; angleI < inRadialMaxPlaces; angleI++) {
-                                if (occupedIndexes.count(angleI) > 0) continue;
-                                float checkRad = fmod(startRad + angleI * 2.0 * M_PI / inRadialMaxPlaces, 2.0 * M_PI);
-                                float delta = abs(checkRad - theMostSuitableRad);
-                                if (delta < angleDelta) {
-                                    angleDelta = delta;
-                                    radAngle = checkRad;
-                                    occupedIndex = angleI;
-                                }
-                            }
-                            occupedIndexes[occupedIndex] = nullptr;
-                            float radDeg = RAD2DEG(radAngle);
-
-                            float newOtherCircleRadius = UserMarker::minimumMarkerSize;
-                            float dxToRootScreen = circle.x - otherCircle2.x;
-                            float dyToRootScreen = circle.y - otherCircle2.y;
-                            float shiftScreenDistance = newOtherCircleRadius + circle.radius;
-                            float movementXRadialScreen = dxToRootScreen + shiftScreenDistance * cos(-radAngle);
-                            float movementYRadialScreen = dyToRootScreen + shiftScreenDistance * sin(-radAngle);
-                            saveNewMarkerPositionAndSize(
-                                    resultAvatarsShifts, circles, circlesMap,
-                                    movementXRadialScreen, movementYRadialScreen,
-                                    newOtherCircleRadius,
-                                    useMarkerId2
-                            );
-                        }
-                    }
-
-
+                // рассчет текущего угла
+                float startRad = 0.0f;
+                bool isRadialGroup = mainCircle.radialRadStart != -1;
+                if (isRadialGroup) {
+                    startRad = mainCircle.radialRadStart;
+                } else {
+                    mainCircle.radialRadStart = theMostSuitableRad;
+                    startRad = theMostSuitableRad;
                 }
+                auto startDeg_DONT_USE = RAD2DEG(startRad);
+
+                if (circle.id == 202) {
+                    int i = 0;
+                }
+
+
+                bool freeSpaceFounded = false;
+                while(true) {
+                    float selectedRad = 0.0;
+                    float currentDelta = 2 * M_PI;
+                    short selectedPlace = -1;
+                    bool hasPlaces = false;
+                    for (short place = 0; place < inRadialMaxPlaces; place++) {
+                        if (mainCircle.busyPlace.count(place) > 0) {
+                            continue;
+                        }
+                        hasPlaces = true;
+
+                        float checkRad = fmod(startRad + place * 2.0 * M_PI / inRadialMaxPlaces, 2.0 * M_PI);
+                        float radDeg_DONT_USE = RAD2DEG(checkRad);
+
+                        float deltaRad = abs(checkRad - theMostSuitableRad);
+                        if (currentDelta >= deltaRad) {
+                            selectedRad = checkRad;
+                            currentDelta = deltaRad;
+                            selectedPlace = place;
+                        }
+                    }
+                    if (hasPlaces == false) {
+                        break;
+                    }
+
+                    float newCircleRadius = UserMarker::minimumMarkerSize;
+                    float dxToRootScreen = mainCircle.realX - circle.x;
+                    float dyToRootScreen = mainCircle.realY - circle.y;
+                    float shiftScreenDistance = newCircleRadius + mainCircle.radius;
+                    float movementXRadialScreen = dxToRootScreen + shiftScreenDistance * cos(-selectedRad);
+                    float movementYRadialScreen = dyToRootScreen + shiftScreenDistance * sin(-selectedRad);
+                    saveNewMarkerPositionAndSize(
+                            resultAvatarsShifts, circles, circlesMap,
+                            movementXRadialScreen, movementYRadialScreen,
+                            newCircleRadius,
+                            circle.id
+                    );
+
+                    auto intersectionsNew = circle.findIntersections(circles, ignoreCircles, mainIntersectionIndex);
+                    mainCircle.busyPlace[selectedPlace] = nullptr;
+                    if (intersectionsNew.empty()) {
+                        freeSpaceFounded = true;
+                        break;
+                    }
+                }
+
+                if (freeSpaceFounded == false) {
+                    saveMarkerVisibleState(resultAvatarsShifts, 1.0, circle.id);
+                }
+
+//                if (circle.id == 202) {
+//                    int i = 0;
+//                    testAvatarsVertices.push_back(circle.realX);
+//                    testAvatarsVertices.push_back(circle.realY);
+//                    testAvatarsVertices.push_back(mainCircle.realX);
+//                    testAvatarsVertices.push_back(mainCircle.realY);
+//                }
+
 
             }
 
@@ -897,11 +874,43 @@ void Markers::initGL() {
                         shift.screenSize,
                         markerSizeAnimationTime
                 );
+                marker.visibleState(
+                        refreshGroup,
+                        mapFpsCounter,
+                        shift.visibleState,
+                        markerAlphaAnimationTime
+                );
+
+                if (pair.first == 253) {
+                    int i = 0;
+                }
+
+                if (circlesMap.count(pair.first) > 0 && false) {
+                    auto circle = circles[circlesMap[pair.first]];
+                    testAvatarsVertices.push_back(circle.realX);
+                    testAvatarsVertices.push_back(circle.realY);
+                }
+
             }
 
         }
     });
     parallelThreadMarkers.detach();
+}
+
+void Markers::saveMarkerVisibleState(
+        std::unordered_map<int64_t, AvatarCollisionShift>& resultAvatarsShifts,
+        float state, int64_t markerId
+) {
+    if (resultAvatarsShifts.count(markerId) == 0) {
+        auto& marker = storageMarkers[markerId];
+        resultAvatarsShifts[markerId] = AvatarCollisionShift {
+                marker.movementTargetX, marker.movementTargetY, marker.targetMarkerSize, state
+        };
+        return;
+    }
+
+    resultAvatarsShifts[markerId].visibleState = state;
 }
 
 void Markers::saveNewMarkerPositionAndSize(

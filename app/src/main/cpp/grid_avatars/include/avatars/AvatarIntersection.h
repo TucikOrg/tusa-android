@@ -12,6 +12,7 @@ class AvatarIntersection {
 public:
     float dx, dy, length;
     int64_t markerId;
+    int vectorIndex;
 };
 
 
