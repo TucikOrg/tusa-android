@@ -12,12 +12,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class CredentialsManagerAuthViewModel @Inject constructor(
-    val authenticationState: AuthenticationState
+    val authenticationState: AuthenticationState?
 ): ViewModel() {
     fun enter(activityContext: Context) {
         viewModelScope.launch {
             withContext(Dispatchers.IO) {
-                authenticationState.login(activityContext)
+                authenticationState?.login(activityContext)
             }
         }
     }

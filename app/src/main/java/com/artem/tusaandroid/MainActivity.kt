@@ -134,9 +134,6 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
             } else {
                 // not authenticated
                 CredentialsManagerAuth(
-                    modifier = Modifier
-                        .align(Alignment.BottomCenter)
-                        .padding(16.dp),
                     model = hiltViewModel()
                 )
             }
