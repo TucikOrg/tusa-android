@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.app.action.auth
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -29,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -39,8 +41,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.artem.tusaandroid.R
 
 @Preview
 @Composable
@@ -53,21 +58,29 @@ fun CredentialsManagerAuthPreview() {
 fun CredentialsManagerAuth(model: CredentialsManagerAuthViewModel) {
     val activityContext = LocalContext.current
     val context = LocalContext.current
-    var isChecked by remember { mutableStateOf(false) }
+    var isChecked by remember { mutableStateOf(model.getAgreementState()) }
+    val alreadyAccepted = model.getAgreementState()
 
     Box(
         modifier = Modifier
-            .fillMaxWidth()
+            .fillMaxSize()
             .background(Color.Transparent)
             .padding(16.dp),
         contentAlignment = Alignment.BottomCenter
     ) {
+
+        if (alreadyAccepted) {
+            // Sign in button with Gmail icon
+            EnterButton(activityContext, model, isChecked)
+            return
+        }
+
         Card(
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+            shape = RoundedCornerShape(16.dp),
             elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 120.dp) // Min height
+                .heightIn(min = 60.dp) // Min height
         ) {
             Column(
                 modifier = Modifier
@@ -75,7 +88,8 @@ fun CredentialsManagerAuth(model: CredentialsManagerAuthViewModel) {
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Checkbox and Text
+
+                // Принять пользовательское соглашение
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
@@ -84,7 +98,12 @@ fun CredentialsManagerAuth(model: CredentialsManagerAuthViewModel) {
                 ) {
                     Checkbox(
                         checked = isChecked,
-                        onCheckedChange = { isChecked = it }
+                        onCheckedChange = {
+                            isChecked = it
+                            if (isChecked) {
+                                model.acceptAgreement()
+                            }
+                        }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
@@ -92,7 +111,7 @@ fun CredentialsManagerAuth(model: CredentialsManagerAuthViewModel) {
                         modifier = Modifier.clickable {
                             val intent = Intent(
                                 Intent.ACTION_VIEW,
-                                Uri.parse("https://your-terms-and-conditions-link.com")
+                                Uri.parse("https://tucik.fun/privacy.pdf")
                             )
                             context.startActivity(intent)
                         },
@@ -101,39 +120,38 @@ fun CredentialsManagerAuth(model: CredentialsManagerAuthViewModel) {
                     )
                 }
 
+
                 // Sign in button with Gmail icon
-                Button(
-                    onClick = {
-                        // Handle sign-in logic here
-                    },
-                    enabled = isChecked,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor = Color.White
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Email, // Or a Gmail logo if you have one
-                        contentDescription = "Gmail Icon",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Войти",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
+                EnterButton(activityContext, model, isChecked)
             }
         }
     }
+}
 
-//    ElevatedButton(
-//        modifier = modifier,
-//        onClick = {
-//            model.enter(activityContext)
-//        }
-//    ) {
-//        Text("Войти")
-//    }
+@Composable
+fun EnterButton(context: Context, model: CredentialsManagerAuthViewModel, isChecked: Boolean) {
+    // Sign in button with Gmail icon
+    Button(
+        onClick = {
+            model.enter(context)
+        },
+        enabled = isChecked,
+        modifier = Modifier.fillMaxWidth(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = Color.White
+        )
+    ) {
+        Icon(
+            imageVector = ImageVector.vectorResource(id = R.drawable.gmail_icon),
+            contentDescription = "Gmail Icon",
+            modifier = Modifier.size(20.dp),
+            tint = Color.Unspecified
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "Войти",
+            fontWeight = FontWeight.Bold
+        )
+    }
 }

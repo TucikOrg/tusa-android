@@ -129,8 +129,8 @@ public:
 
     float getTransition() {
         float transition = 1.0f;
-        float from = 4.0f;
-        float to = 4.5f;
+        float from = 6.5f;
+        float to = 7.0f;
         if (getZoom() > from && getZoom() < to) {
             transition = (to - getZoom()) / (to - from);
         }

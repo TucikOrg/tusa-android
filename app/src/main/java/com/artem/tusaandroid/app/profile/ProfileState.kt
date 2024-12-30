@@ -21,6 +21,7 @@ open class ProfileState(
     private var phone: MutableState<String> = mutableStateOf("")
     private var jwt: String? = null
     private var userId: Long? = null
+    private var agreement: Boolean = false
 
     private var profiles: MutableMap<Long, Profile> = mutableMapOf()
 
@@ -68,6 +69,11 @@ open class ProfileState(
         uniqueName.value = ""
     }
 
+    fun saveAgreementState(state: Boolean) {
+        sharedPreferences.edit().putBoolean("agreement", state).apply()
+        agreement = state
+    }
+
     fun saveJwt(jwt: String) {
         this.jwt = jwt
         JwtGlobal.jwt = jwt
@@ -92,6 +98,10 @@ open class ProfileState(
     fun saveUniqueName(uniqueName: String) {
         this.uniqueName.value = uniqueName
         sharedPreferences.edit().putString(getKey() + "uniqueName", uniqueName).apply()
+    }
+
+    fun getAgreementState(): Boolean {
+        return agreement
     }
 
     fun getIsAuthenticated(): Boolean {
@@ -135,6 +145,7 @@ open class ProfileState(
         JwtGlobal.jwt = jwt
         this.userId = sharedPreferences.getLong("userId", userId)
         val key = this.userId.toString()
+        this.agreement = sharedPreferences.getBoolean("agreement", false)
 
         uniqueName.value = sharedPreferences.getString(key + "uniqueName", "")!!
         phone.value = sharedPreferences.getString(key + "phone", "")!!

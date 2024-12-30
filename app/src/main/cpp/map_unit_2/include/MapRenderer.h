@@ -49,9 +49,9 @@ private:
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
 
-    float forwardRenderingToWorldZoom = 5.0f;
+    float forwardRenderingToWorldZoom = 7.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    int textureTileSizeUnit = 1024 * 1.4;
     std::string textureKey;
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
