@@ -31,6 +31,9 @@ import com.artem.tusaandroid.app.login.InputUniqueName
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.app.selected.SelectedMarkerModal
+import com.artem.tusaandroid.app.selected.SelectedMarkerViewModel
+import com.artem.tusaandroid.app.selected.SelectedMarkerViewModelPreview
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.location.LastLocationState
@@ -130,6 +133,10 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                         model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
                     )
                 }
+
+                SelectedMarkerModal(
+                    model = TucikViewModel(preview = model.isPreview(), previewModel = SelectedMarkerViewModelPreview())
+                )
 
             } else {
                 // not authenticated

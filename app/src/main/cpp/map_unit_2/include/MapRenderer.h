@@ -31,6 +31,8 @@ public:
     void drag(float dx, float dy);
     void scale(float scaleFactor);
     void doubleTap();
+    int64_t confirmedClick(float x, float y);
+    void deselectSelectedMarker();
 
     Markers& getMarkers() {  return markers; }
     MapControls& getMapControls() { return mapControls; }

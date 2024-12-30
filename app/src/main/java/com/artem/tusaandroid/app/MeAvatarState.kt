@@ -13,6 +13,10 @@ class MeAvatarState(
     private var needUpdateInRenderFlag = false
     private var hideMeFlag = false
 
+    fun getMeId(): Long {
+        return profileState?.getUserId()!!
+    }
+
     fun getAvatar(): MutableState<Bitmap?>? {
         return avatarState?.getAvatarBitmap(profileState!!.getUserId())
     }

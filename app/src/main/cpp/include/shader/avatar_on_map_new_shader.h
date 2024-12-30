@@ -40,6 +40,8 @@ public:
     GLint getMarkerSizeAnimationTime() const { return u_markerSizeAnimationTime; }
     GLint getPvScreenLocation() const { return u_matrixPV_SCREEN; }
     GLint getScreenSizeLocation() const { return u_screenSize; }
+    GLint getMarkerAnimationType() const { return u_animationMarkerType; }
+    GLint getStartSelectionAnimationTime() const { return u_startSelectionAnimationTime; }
 
 private:
     GLint u_color;
@@ -59,6 +61,8 @@ private:
     GLint u_movementTargetMarker;
     GLint u_startMarkerSizeAnimation;
     GLint u_markerSizeAnimationTime;
+    GLint u_animationMarkerType;
+    GLint u_startSelectionAnimationTime;
 
     GLint u_matrixPV_SCREEN;
     GLint u_screenSize;

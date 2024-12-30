@@ -14,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,13 +45,10 @@ fun FriendRow(
     friend: FriendDto
 ) {
     val scope = rememberCoroutineScope()
-    val leftSwipeFriendRow = LeftSwipeFriendRow(scope, R.drawable.person_remove)
-
-    LaunchedEffect(Unit) {
-        leftSwipeFriendRow.onLeftSwiped = {
-            model.removeFriend(friend.id!!)
-        }
+    val leftSwipeFriendRow = LeftSwipeFriendRow(scope, R.drawable.person_remove) {
+        model.removeFriend(friend.id!!)
     }
+
     leftSwipeFriendRow.SwipeWrapper {
         FriendRowCard(
             model = model,

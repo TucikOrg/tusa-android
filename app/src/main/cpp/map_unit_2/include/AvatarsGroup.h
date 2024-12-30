@@ -24,6 +24,7 @@ public:
     std::vector<float> startAnimationElapsedTime;
     std::vector<float> latitudeLongitude;
     std::vector<float> startMarkerSizeAnimation;
+    std::vector<float> animationType;
 
 
     size_t avatarsIboSize = 0;

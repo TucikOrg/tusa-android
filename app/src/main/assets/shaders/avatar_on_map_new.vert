@@ -26,6 +26,9 @@ uniform float u_invertAnimationUnit[64];
 uniform float u_startAnimationElapsedTime[64];
 uniform float u_startMarkerSizeAnimation[64];
 
+uniform float u_startSelectionAnimationTime;
+uniform float u_animationMarkerType[64];
+
 uniform mat4 u_matrixPV_SCREEN;
 uniform vec2 u_screenSize;
 
@@ -114,8 +117,26 @@ void main() {
     vec2 movementDelta = movementTargetMarker - movementMarker;
     vec2 currentMovement = movementMarker + movementDelta * movementProgress;
 
+    // анимация выделения
+    float selectedMarkerSquizeDelta = 0.15;
+    float selectedAnimationSpeed = 4.0;
+    float animationType = u_animationMarkerType[int(a_positionInUniform)];
+    bool isMarkerSelectedAnimation = animationType == 1.0;
+    float useTime = u_current_elapsed_time - u_startSelectionAnimationTime;
+    float selectedAnimProgressX = abs(sin(useTime * selectedAnimationSpeed));
+    float selectedAnimProgressY = abs(sin((useTime) * selectedAnimationSpeed));
+    float markerSelectedAnimationX = 1.0 - selectedAnimProgressX * selectedMarkerSquizeDelta;
+    float markerSelectedAnimationY = 1.0 - selectedAnimProgressY * selectedMarkerSquizeDelta;
+
+    float animShiftXResult = isMarkerSelectedAnimation ? markerSelectedAnimationX : 1.0;
+    float animShiftYResult = isMarkerSelectedAnimation ? markerSelectedAnimationY : 1.0;
+
     // куда двигать точку относительно места где аватар расположен
-    vec2 shift = (useBorderDirection + shiftBorder + currentMovement);
+    vec2 sizingShift = (useBorderDirection + shiftBorder);
+    sizingShift.x *= animShiftXResult;
+    sizingShift.y *= animShiftYResult;
+    vec2 shift = (sizingShift + currentMovement);
+
     gl_PointSize = 20.0;
     gl_Position = u_matrixPV_SCREEN * vec4(screenPos.xy + shift, screenPos.z, 1.0);
 

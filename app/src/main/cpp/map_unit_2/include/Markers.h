@@ -47,6 +47,8 @@ public:
     );
     bool hasMarker(int64_t key);
     void doubleTap();
+    int64_t confirmedClick(float x, float y);
+    void deselectSelectedMarker();
 
     AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();
 private:
@@ -65,6 +67,10 @@ private:
     Eigen::Matrix4d pvT;
     std::vector<float> testAvatarsVertices = {};
     float scaleT;
+    std::vector<Avatars::Circle> circles;
+    std::unordered_map<int64_t, uint> circlesMap;
+    UserMarker* selectedMarker = nullptr;
+    float markerWasSelectedTime = 0.0;
 
     float borderWidth = 10.0f;
     float arrowBasicHeight = 0.3f;
@@ -75,8 +81,11 @@ private:
     float longitudeHideMarkerDelta = M_PI / 2.0;
 
     std::unordered_map<int64_t, UserMarker> storageMarkers = {};
-    std::unordered_map<int64_t, void*> renderMarkers = {};
+
     std::unordered_map<uint64_t, MarkerMapTitle*> titleMarkersForRenderStorage = {};
+
+    std::vector<int64_t> renderMarkers = {};
+    std::unordered_map<int64_t, void*> renderMarkersMap = {};
 
     DrawTitlesThreadInput drawTitlesThreadInput;
     GLuint frameBuffer;

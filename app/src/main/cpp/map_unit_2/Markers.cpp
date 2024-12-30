@@ -273,7 +273,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
     }
 
 
-
     // рендрим аватары юзеров, маркера
     {
         // создаем свободный атлас для аватаров
@@ -384,13 +383,16 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 std::vector<float> startMarkerSizeAnimationTimeUniform(64);
                 unsigned int startMarkerSizeAnimationTimeUniformIndex = 0;
 
+                std::vector<float> animationTypeUniform(64);
+                unsigned int animationTypeUniformIndex = 0;
+
                 float positionInUniforms = 0;
                 size_t avatarsToDrawCount = 0;
                 for (auto& markerInGroup : markersOfGroup) {
                     auto& marker = markerInGroup;
 
                     // если маркер не должен быть на экране, но встретился в атласе то игнорируем его
-                    if (renderMarkers.count(marker->markerId) == 0) {
+                    if (renderMarkersMap.count(marker->markerId) == 0) {
                         continue;
                     }
                     avatarsToDrawCount++;
@@ -428,6 +430,13 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
 
                     float targetMarkerSize = marker->targetMarkerSize;
                     avatarsTargetMarkersSizeUniform[avatarsTargetMarkersSizeUniformIndex++] = targetMarkerSize;
+
+                    if (selectedMarker != nullptr && marker->markerId == selectedMarker->markerId) {
+                        animationTypeUniform[animationTypeUniformIndex++] = 1.0;
+                    } else {
+                        animationTypeUniform[animationTypeUniformIndex++] = 0.0;
+                    }
+
 
                     float startU = FLOAT(atlasPointer.x) / atlasAvatarSize;
                     float endU = FLOAT(atlasPointer.x + avatarSize) / atlasAvatarSize;
@@ -485,6 +494,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 currentGroup.startAnimationElapsedTime = std::move(startAnimationElapsedTimeUniform);
                 currentGroup.latitudeLongitude = std::move(latitudeLongitudeUniform);
                 currentGroup.startMarkerSizeAnimation = std::move(startMarkerSizeAnimationTimeUniform);
+                currentGroup.animationType = std::move(animationTypeUniform);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
@@ -571,6 +581,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
         glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
         glUniform1f(avatarsOnMap->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
+        glUniform1f(avatarsOnMap->getStartSelectionAnimationTime(), markerWasSelectedTime);
 
         // рисуем маркера по группам
         for (auto& pair : avatarsGroups) {
@@ -586,6 +597,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             glUniform1fv(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 64, group.startAnimationElapsedTime.data());
             glUniform2fv(avatarsOnMap->getLatLonLocation(), 64, group.latitudeLongitude.data());
             glUniform1fv(avatarsOnMap->getStartMarkerSizeAnimation(), 64, group.startMarkerSizeAnimation.data());
+            glUniform1fv(avatarsOnMap->getMarkerAnimationType(), 64, group.animationType.data());
 
             glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
             glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
@@ -646,7 +658,7 @@ void Markers::updateMarkerGeo(int64_t key, float latitude, float longitude) {
 
     // локация изменилась для этого маркера
     // если этот маркер видимый то пересобираем буффер для рендринга
-    if (renderMarkers.count(key) == 0) return;
+    if (renderMarkersMap.count(key) == 0) return;
 
     auto markerGroup = storageMarkers[key].atlasPointer.atlasId;
     refreshGroup[markerGroup] = nullptr;
@@ -654,7 +666,8 @@ void Markers::updateMarkerGeo(int64_t key, float latitude, float longitude) {
 
 void Markers::removeMarker(int64_t key) {
     // больше его не рендрим но он все равно в памяти
-    renderMarkers.erase(key);
+    renderMarkersMap.erase(key);
+    renderMarkers.erase(std::remove( renderMarkers.begin(),  renderMarkers.end(), key),  renderMarkers.end());
 }
 
 void Markers::updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize) {
@@ -689,13 +702,16 @@ void Markers::addMarker(
     auto find = storageMarkers.find(key);
     if (find != storageMarkers.end()) {
         updateMarkerAvatarInternal(key, imageData, fileSize);
-        renderMarkers[key] = nullptr;
+        renderMarkersMap[key] = nullptr;
+        renderMarkers.push_back(key);
         return;
     }
 
     auto pixels = TextureUtils::loadPixels(imageData, fileSize);
     storageMarkers[key] = { pixels, latitude, longitude, key, mapFpsCounter->getTimeElapsed() };
-    renderMarkers[key] = nullptr;
+    renderMarkersMap[key] = nullptr;
+    renderMarkers.push_back(key);
+
     // тут нужно потестировать с удалением imageData
 }
 
@@ -713,15 +729,21 @@ void Markers::initGL() {
             std::this_thread::sleep_for(std::chrono::milliseconds(300));
             lockThread = true;
             testAvatarsVertices.clear();
-
             std::unordered_map<int64_t, AvatarCollisionShift> resultAvatarsShifts;
 
+            // делаем выделенный маркер самым главным
+            if (selectedMarker != nullptr) {
+                bool drawSelectedMarker = renderMarkersMap.count(selectedMarker->markerId) > 0;
+                if (drawSelectedMarker) {
+                    renderMarkers.erase(std::remove(renderMarkers.begin(),  renderMarkers.end(), selectedMarker->markerId));
+                    renderMarkers.insert(renderMarkers.begin(), selectedMarker->markerId);
+                }
+            }
 
             // вычисляем пересечения коллизий
-            std::vector<Avatars::Circle> circles;
-            std::unordered_map<int64_t, uint> circlesMap;
-            for (auto& renderMarkerPair : renderMarkers) {
-                auto& markerId = renderMarkerPair.first;
+            circles.clear();
+            circlesMap.clear();
+            for (auto& markerId : renderMarkers) {
                 auto& marker = storageMarkers[markerId];
 
                 float longitudeDelta = abs(marker.longitude - cameraLongitudeT);
@@ -932,4 +954,36 @@ void Markers::saveNewMarkerPositionAndSize(
     circle.realX = circle.x + newMovementX;
     circle.realY = circle.y + newMovementY;
     circle.radius = newSize;
+}
+
+int64_t Markers::confirmedClick(float x, float y) {
+    unsigned short limit = 20;
+    while(lockThread && limit > 0) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
+        limit--;
+    }
+
+    auto circle = Avatars::Circle(x, y, 2, 0);
+    std::unordered_map<int64_t, void*> ignore = {};
+    int mainIntersectionIndex = 0;
+    auto intersections = circle.findIntersections(circles, ignore, mainIntersectionIndex);
+    if (intersections.empty()) {
+        return 0;
+    }
+
+    auto mainIntersection = intersections[mainIntersectionIndex];
+    int64_t markerId = mainIntersection.markerId;
+    selectedMarker = &storageMarkers[markerId];
+    refreshGroup[selectedMarker->atlasPointer.atlasId] = nullptr;
+    markerWasSelectedTime = mapFpsCounter->getTimeElapsed();
+    return markerId;
+}
+
+void Markers::deselectSelectedMarker() {
+    if (selectedMarker == nullptr) {
+        return;
+    }
+
+    refreshGroup[selectedMarker->atlasPointer.atlasId] = nullptr;
+    selectedMarker = nullptr;
 }

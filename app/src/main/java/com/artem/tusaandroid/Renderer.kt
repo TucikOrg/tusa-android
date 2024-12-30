@@ -5,8 +5,7 @@ import android.opengl.GLSurfaceView
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.location.LastLocationState
-import com.artem.tusaandroid.location.LocationDto
-import com.artem.tusaandroid.socket.EventListener
+import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.socket.SocketListener
 import java.util.concurrent.Executors
 import javax.microedition.khronos.egl.EGLConfig
@@ -17,13 +16,13 @@ class Renderer(
     private val meAvatarState: MeAvatarState?,
     private val lastLocationState: LastLocationState?,
     private val socketListener: SocketListener?,
-    private val avatarState: AvatarState?
+    private val avatarState: AvatarState?,
+    private val locationsState: LocationsState?
 ) : GLSurfaceView.Renderer {
     private var defaultAvatar: ByteArray? = null
 
 
-    private val meAvatarKey = -1L
-    private var locations: List<LocationDto> = listOf()
+    private var meAvatarKey = meAvatarState?.getMeId()?: 0L
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
@@ -31,18 +30,12 @@ class Renderer(
             defaultAvatar = asset.readBytes()
         }
 
-        socketListener?.getReceiveMessage()?.locationsBus?.addListener(object: EventListener<List<LocationDto>> {
-            override fun onEvent(event: List<LocationDto>) {
-                locations = event
-            }
-        })
-
         // периодически загружаем геопозиции друзей
         executor.execute {
             Thread.sleep(1000)
             while (true) {
                 socketListener?.getSendMessage()?.locations()
-                Thread.sleep(10000)
+                Thread.sleep(5000)
             }
         }
     }
@@ -91,7 +84,8 @@ class Renderer(
 
         // добавляем маркера друзей
         // обновляем геопозицию маркеров друзей
-        for (location in locations) {
+        val currentLocations = locationsState?.currentLocations ?: listOf()
+        for (location in currentLocations) {
             val key = location.ownerId
             val existMarker = NativeLibrary.existMarker(key)
             if (!existMarker) {

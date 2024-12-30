@@ -150,3 +150,19 @@ Java_com_artem_tusaandroid_NativeLibrary_getCameraPos(JNIEnv *env, jobject thiz)
     jobject obj = env->NewObject(cls, constructor, (float) RAD2DEG(camPos.latitude), (float) RAD2DEG(camPos.longitude), camPos.zoom);
     return obj;
 }
+
+extern "C"
+JNIEXPORT jobject JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_confirmedClick(JNIEnv *env, jobject thiz, jfloat x, jfloat y) {
+    auto selectedMarkerID = renderer.confirmedClick(x, y);
+    jclass cls = env->FindClass("com/artem/tusaandroid/MapClickResult");
+    jmethodID constructor = env->GetMethodID(cls, "<init>", "(J)V");
+    jobject obj = env->NewObject(cls, constructor, selectedMarkerID);
+    return obj;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_deselectSelectedMarker(JNIEnv *env, jobject thiz) {
+    renderer.deselectSelectedMarker();
+}

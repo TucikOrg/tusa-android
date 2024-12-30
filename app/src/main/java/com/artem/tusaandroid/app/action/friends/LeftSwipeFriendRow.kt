@@ -36,9 +36,9 @@ import kotlin.math.abs
 
 class LeftSwipeFriendRow(
     viewModelScope: CoroutineScope,
-    private val useIconRes: Int
-) {
+    private val useIconRes: Int,
     var onLeftSwiped: (() -> Unit)? = null
+) {
 
     private fun getWidth(density: Density): Dp {
         return with(density) { offsetX.value.toDp() }

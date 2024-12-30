@@ -44,4 +44,6 @@ AvatarOnMapNewShader::AvatarOnMapNewShader(AAssetManager *assetManager,
     u_markerSizeAnimationTime = glGetUniformLocation(program, "u_markerSizeAnimationTime");
     u_matrixPV_SCREEN = glGetUniformLocation(program, "u_matrixPV_SCREEN");
     u_screenSize = glGetUniformLocation(program, "u_screenSize");
+    u_animationMarkerType = glGetUniformLocation(program, "u_animationMarkerType");
+    u_startSelectionAnimationTime = glGetUniformLocation(program, "u_startSelectionAnimationTime");
 }

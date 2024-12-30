@@ -5,8 +5,10 @@ import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.notification.NotificationsService
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
@@ -24,6 +26,20 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun providerLocationState(
+        socketListener: SocketListener
+    ): LocationsState {
+        return LocationsState(socketListener)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSelectedState(): SelectedState {
+        return SelectedState()
+    }
 
     @Provides
     @Singleton

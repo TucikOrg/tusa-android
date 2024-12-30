@@ -223,6 +223,14 @@ MapRenderer::MapRenderer() {
      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
  }
 
+ int64_t MapRenderer::confirmedClick(float x, float y) {
+    return markers.confirmedClick(x, y);
+}
+
+void MapRenderer::deselectSelectedMarker() {
+    markers.deselectSelectedMarker();
+}
+
 
 
 

@@ -12,7 +12,9 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import android.view.SurfaceHolder
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
+import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.socket.SocketListener
 import kotlin.math.abs
 
@@ -23,7 +25,9 @@ class MapView(
     private val lastLocationState: LastLocationState?,
     private val requestTile: RequestTile,
     private val socketListener: SocketListener?,
-    private val avatarState: AvatarState?
+    private val avatarState: AvatarState?,
+    private val selectedState: SelectedState?,
+    private val locationsState: LocationsState?
 ) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
@@ -39,7 +43,8 @@ class MapView(
             meAvatarState,
             lastLocationState,
             socketListener,
-            avatarState
+            avatarState,
+            locationsState
         ))
     }
 
@@ -113,6 +118,14 @@ class MapView(
             isDragging = false
             NativeLibrary.onDown()
             return true
+        }
+
+        override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+            val screenX = e.x
+            val screenY = e.y
+            val selectedMarker = NativeLibrary.confirmedClick(screenX, screenY)
+            selectedState?.selectedMarker?.value = selectedMarker.selectedMarker
+            return super.onSingleTapConfirmed(e)
         }
     }
 }

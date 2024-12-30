@@ -2,6 +2,7 @@ package com.artem.tusaandroid.app.action.friends
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.ReceiveMessage
 import com.artem.tusaandroid.socket.SendMessage
@@ -79,6 +80,7 @@ class FriendsState(
     fun removeFriend(id: Long) {
         socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("delete-friend", Cbor.encodeToByteArray(id)))
         friends.value = friends.value.filter { it.id != id }
+        NativeLibrary.removeMarker(id)
     }
 
     @OptIn(ExperimentalSerializationApi::class)
