@@ -9,6 +9,8 @@
 
 class TransferTilesToGPU {
 public:
+    uint16_t createdSurfaceCount = 0;
+
     void transfer(std::unordered_map<uint64_t, MapTile*> tilesMap) {
         for (auto& tileMap : tilesMap) {
             auto tile = tileMap.second;
@@ -33,8 +35,10 @@ public:
                 polygon.vbo = vbo;
                 polygon.ibo = ibo;
                 polygon.iboSize = polygon.indices.size();
-                polygon.vertices.clear();
-                polygon.indices.clear();
+
+                // пробуем не чистить память
+//                polygon.vertices.clear();
+//                polygon.indices.clear();
             }
 
             auto& resultLines = tile->resultLinesAggregatedByStyles;

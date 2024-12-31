@@ -72,12 +72,18 @@ class SocketListener(
         socketConnectionState.failed()
         println("Error: ${t.message}")
 
-        val connectionLoosed = t is java.net.SocketException || t is java.net.SocketTimeoutException
+        val connectionLoosed =
+                t is java.net.SocketException ||
+                t is java.net.SocketTimeoutException ||
+                t is java.io.EOFException
+
         if (connectionLoosed) {
             // Пробуем восстановить соединение через время
             socketConnectionState.waitToReconnect()
             reconnectExecutor.submit {
                 Thread.sleep(2000)
+                // после попытки если не получиться то опять бросит onFailure()
+                // и так он будет в итоге каждые 2 секунды пытаться переподключиться
                 connect(meUserId)
             }
         }

@@ -144,6 +144,8 @@ void MapRenderer::renderFrame() {
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTileRender.getMapTexture(), 2, 2);
     //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
+
+    //drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.2);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -158,14 +160,23 @@ void MapRenderer::onSurfaceChanged(int screenW, int screenH) {
 }
 
 void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
+    auto error = CommonUtils::getGLErrorString();
     shadersBucket.compileAllShaders(assetManager);
+    error = CommonUtils::getGLErrorString();
     mapSymbols.initGl(assetManager, mapCamera, shadersBucket);
+    error = CommonUtils::getGLErrorString();
     mapTileRender.initTilesTexture();
+    error = CommonUtils::getGLErrorString();
     mapEnvironment.init(planeSize);
+    error = CommonUtils::getGLErrorString();
     markers.initGL();
+    error = CommonUtils::getGLErrorString();
+    surfaceCreated = true;
 
     int maxTextureSize;
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTextureSize);
+
+    error = CommonUtils::getGLErrorString();
 
     float moscowLat = DEG2RAD(55.7558);
     float moscowLon = DEG2RAD(37.6176);
@@ -175,6 +186,8 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     //mapControls.setCamPos(moscowLat, moscowLon);
     //mapControls.setZoom(16.5);
     //mapControls.setZoom(5.1);
+
+    transferTilesToGpu.createdSurfaceCount++;
 }
 
 void MapRenderer::drag(float dx, float dy) {
@@ -223,8 +236,8 @@ MapRenderer::MapRenderer() {
      glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
  }
 
- int64_t MapRenderer::confirmedClick(float x, float y) {
-    return markers.confirmedClick(x, y);
+ int64_t MapRenderer::confirmedClick(float x, float y, int64_t ignore) {
+    return markers.confirmedClick(x, y, ignore);
 }
 
 void MapRenderer::deselectSelectedMarker() {

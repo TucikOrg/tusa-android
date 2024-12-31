@@ -112,11 +112,14 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                     hiltViewModel()
                 )
 
-                AdminFab(modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp),
-                    hiltViewModel()
-                )
+                if (model.profileState.getUserId() == 1L) {
+                    AdminFab(modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(16.dp),
+                        hiltViewModel()
+                    )
+                }
+
 
                 Column(
                     modifier = Modifier

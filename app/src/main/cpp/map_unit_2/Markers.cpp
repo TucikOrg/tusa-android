@@ -956,7 +956,7 @@ void Markers::saveNewMarkerPositionAndSize(
     circle.radius = newSize;
 }
 
-int64_t Markers::confirmedClick(float x, float y) {
+int64_t Markers::confirmedClick(float x, float y, int64_t ignore) {
     unsigned short limit = 20;
     while(lockThread && limit > 0) {
         std::this_thread::sleep_for(std::chrono::milliseconds(30));
@@ -964,15 +964,19 @@ int64_t Markers::confirmedClick(float x, float y) {
     }
 
     auto circle = Avatars::Circle(x, y, 2, 0);
-    std::unordered_map<int64_t, void*> ignore = {};
+    std::unordered_map<int64_t, void*> ignoreMarkers = {};
     int mainIntersectionIndex = 0;
-    auto intersections = circle.findIntersections(circles, ignore, mainIntersectionIndex);
+    auto intersections = circle.findIntersections(circles, ignoreMarkers, mainIntersectionIndex);
     if (intersections.empty()) {
         return 0;
     }
 
     auto mainIntersection = intersections[mainIntersectionIndex];
     int64_t markerId = mainIntersection.markerId;
+    if (markerId == ignore) {
+        return 0;
+    }
+
     selectedMarker = &storageMarkers[markerId];
     refreshGroup[selectedMarker->atlasPointer.atlasId] = nullptr;
     markerWasSelectedTime = mapFpsCounter->getTimeElapsed();

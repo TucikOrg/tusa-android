@@ -31,11 +31,12 @@ public:
     void drag(float dx, float dy);
     void scale(float scaleFactor);
     void doubleTap();
-    int64_t confirmedClick(float x, float y);
+    int64_t confirmedClick(float x, float y, int64_t ignore);
     void deselectSelectedMarker();
 
     Markers& getMarkers() {  return markers; }
     MapControls& getMapControls() { return mapControls; }
+
 private:
     MapControls mapControls = MapControls();
     MapCamera mapCamera = MapCamera();
@@ -53,8 +54,9 @@ private:
 
     float forwardRenderingToWorldZoom = 7.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024 * 1.4;
+    int textureTileSizeUnit = 1024;
     std::string textureKey;
+    bool surfaceCreated = false;
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
 };

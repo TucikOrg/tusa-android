@@ -47,7 +47,7 @@ public:
     );
     bool hasMarker(int64_t key);
     void doubleTap();
-    int64_t confirmedClick(float x, float y);
+    int64_t confirmedClick(float x, float y, int64_t ignore);
     void deselectSelectedMarker();
 
     AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();

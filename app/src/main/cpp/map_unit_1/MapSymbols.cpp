@@ -213,7 +213,9 @@ Symbol MapSymbols::getSymbol(wchar_t c) {
 }
 
 void MapSymbols::initGl(AAssetManager *assetManager, MapCamera& mapCamera, ShadersBucket& shadersBucket) {
+    auto error = CommonUtils::getGLErrorString();
     glGenFramebuffers(1, &framebuffer);
+    error = CommonUtils::getGLErrorString();
     glGenTextures(1, &charsAtlas);
     createFontTextures(mapCamera, shadersBucket);
 }

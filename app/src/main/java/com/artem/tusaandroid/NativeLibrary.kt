@@ -19,7 +19,7 @@ object NativeLibrary {
     external fun onDown()
     external fun setCameraPos(latitude: Float, longitude: Float, zoom: Float)
     external fun getCameraPos(): CameraPos
-    external fun confirmedClick(x: Float, y: Float): MapClickResult
+    external fun confirmedClick(x: Float, y: Float, ignore: Long): MapClickResult
     external fun deselectSelectedMarker()
 
     // Markers

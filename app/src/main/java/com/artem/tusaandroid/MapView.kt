@@ -123,7 +123,7 @@ class MapView(
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
             val screenX = e.x
             val screenY = e.y
-            val selectedMarker = NativeLibrary.confirmedClick(screenX, screenY)
+            val selectedMarker = NativeLibrary.confirmedClick(screenX, screenY, meAvatarState?.getMeId()?: 0L)
             selectedState?.selectedMarker?.value = selectedMarker.selectedMarker
             return super.onSingleTapConfirmed(e)
         }

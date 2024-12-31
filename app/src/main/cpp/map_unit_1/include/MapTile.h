@@ -62,6 +62,7 @@ public:
     int getZ() {return z; };
 
     bool uploadedToGPU = false;
+
     std::unordered_map<unsigned short, MapSimpleLine> resultLinesAggregatedByStyles;
     std::unordered_map<unsigned short, MapPolygonAggregated> resultPolygonsAggregatedByStyles;
     std::unordered_map<unsigned short, MapSimplePoint> resultPointsAggregatedByStyles;
