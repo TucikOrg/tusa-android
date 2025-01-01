@@ -624,7 +624,6 @@ void MapTile::parseRoadTitleText(
         forRender.push_back({symbol, w, h, xPixelsShift});
     }
 
-
 //    auto& points = point_array;
 //    float sumLength = 0;
 //    for (int i = 1; i < points.size(); i++) {
@@ -745,6 +744,45 @@ void MapTile::parseRoadTitleText(
                 textureWidth, textureHeight, maxTop, sumLength, featureId,
                 MapTile::makeKey(getX(), getY(), getZ()), regionPoints, region.type
         });
+    }
+}
+
+void MapTile::destroy() {
+    for (auto& linesPair : resultLinesAggregatedByStyles) {
+        auto& mapSimpleLine = linesPair.second;
+        glDeleteFramebuffers(1, &mapSimpleLine.vbo);
+        glDeleteFramebuffers(1, &mapSimpleLine.ibo);
+    }
+
+    for (auto& polygonsPair : resultPolygonsAggregatedByStyles) {
+        auto& mapPolygon = polygonsPair.second;
+        glDeleteFramebuffers(1, &mapPolygon.vbo);
+        glDeleteFramebuffers(1, &mapPolygon.ibo);
+    }
+
+    for (auto& pointsPair : resultPointsAggregatedByStyles) {
+        auto& mapSimplePoint = pointsPair.second;
+        glDeleteFramebuffers(1, &mapSimplePoint.vbo);
+    }
+
+    for (auto& squarePointsPair : resultSquarePointsAggregatedByStyles) {
+        auto& mapSquarePoints = squarePointsPair.second;
+        glDeleteFramebuffers(1, &mapSquarePoints.vbo);
+        glDeleteFramebuffers(1, &mapSquarePoints.ibo);
+        glDeleteFramebuffers(1, &mapSquarePoints.vboUVs);
+        glDeleteFramebuffers(1, &mapSquarePoints.vboShifts);
+    }
+
+    for (auto& wideLinesPair : resultWideLineAggregatedByStyles) {
+        auto& mapWideLine = wideLinesPair.second;
+        glDeleteFramebuffers(1, &mapWideLine.vbo);
+        glDeleteFramebuffers(1, &mapWideLine.vboUv);
+        glDeleteFramebuffers(1, &mapWideLine.ibo);
+        glDeleteFramebuffers(1, &mapWideLine.vboPerpendiculars);
+    }
+
+    for (auto& drawTextAlongPath : resultDrawTextAlongPath) {
+        glDeleteFramebuffers(1, &drawTextAlongPath.ibo);
     }
 }
 

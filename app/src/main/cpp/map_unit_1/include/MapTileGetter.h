@@ -23,6 +23,12 @@ public:
     MapTile* findExistParent(int x, int y, int z);
     std::vector<MapTile*> findChildInPreviousTiles(int x, int y, int z);
     void clearActualTiles();
+    void destroy();
+
+    bool threadsActive = true;
+    std::vector<std::thread> networkThreads;
+
+    void joinThreads();
 private:
     unsigned short networkThreadsCount = 2;
     std::unordered_map<uint64_t, MapTile*> cacheTiles = {};

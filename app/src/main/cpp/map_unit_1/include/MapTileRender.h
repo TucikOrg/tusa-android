@@ -72,6 +72,8 @@ public:
     GLuint getMapTexture() {
         return mapTexture;
     }
+
+    void destroy();
 private:
 
     float extent = 4096;

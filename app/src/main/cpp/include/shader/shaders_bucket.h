@@ -34,6 +34,7 @@ public:
     ~ShadersBucket();
 
     void compileAllShaders(AAssetManager* assetManager);
+    void destroy();
 
     std::shared_ptr<RoadShader> roadShader;
     std::shared_ptr<PlainShader> plainShader;

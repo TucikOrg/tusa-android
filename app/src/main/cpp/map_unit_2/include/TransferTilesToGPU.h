@@ -36,9 +36,8 @@ public:
                 polygon.ibo = ibo;
                 polygon.iboSize = polygon.indices.size();
 
-                // пробуем не чистить память
-//                polygon.vertices.clear();
-//                polygon.indices.clear();
+                polygon.vertices.clear();
+                polygon.indices.clear();
             }
 
             auto& resultLines = tile->resultLinesAggregatedByStyles;

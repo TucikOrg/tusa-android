@@ -240,8 +240,23 @@ MapRenderer::MapRenderer() {
     return markers.confirmedClick(x, y, ignore);
 }
 
+void MapRenderer::cleanup() {
+    markers.joinThreads();
+    mapTileGetter->joinThreads();
+    delete mapTileGetter;
+}
+
 void MapRenderer::deselectSelectedMarker() {
     markers.deselectSelectedMarker();
+}
+
+void MapRenderer::destroyGL() {
+    markers.destroy();
+    mapTileRender.destroy();
+    mapEnvironment.destroy();
+    mapSymbols.destroy();
+    shadersBucket.destroy();
+    mapTileGetter->destroy();
 }
 
 

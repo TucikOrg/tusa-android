@@ -85,9 +85,31 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
     error = CommonUtils::getGLErrorString();
 }
 
+void ShadersBucket::destroy() {
+    glDeleteProgram(plainShader->program);
+    glDeleteProgram(symbolShader->program);
+    glDeleteProgram(planetShader->program);
+    glDeleteProgram(planet2Shader->program);
+    glDeleteProgram(starsShader->program);
+    glDeleteProgram(planetGlowShader->program);
+    glDeleteProgram(textureShader->program);
+    glDeleteProgram(userMarkerShader->program);
+    glDeleteProgram(planet3Shader->program);
+    glDeleteProgram(roadShader->program);
+    glDeleteProgram(simplePointShader->program);
+    glDeleteProgram(squarePointShader->program);
+    glDeleteProgram(spaceDarkShader->program);
+    glDeleteProgram(titlesMapShader->program);
+    glDeleteProgram(pathTextShader->program);
+    glDeleteProgram(avatarRayShader->program);
+    glDeleteProgram(avatarOnMapNewShader->program);
+}
+
 ShadersBucket::~ShadersBucket() {
 
 }
+
+
 
 
 

@@ -49,6 +49,7 @@ public:
     );
 
     void selectClearColor(float zoom);
+    void destroy();
 private:
     void createTopCap(float planeSize);
     void createBottomCap(float planeSize);

@@ -8,14 +8,17 @@ object NativeLibrary {
         System.loadLibrary("tusaandroid")
     }
 
+    external fun create()
+    external fun cleanup()
+
     external fun render()
     external fun onSurfaceChanged(width: Int, height: Int)
     external fun surfaceCreated(assetManager: AssetManager?)
+    external fun surfaceDestroyed()
     external fun noOpenGlContextInit(assetManager: AssetManager?, requestTile: RequestTile)
     external fun drag(dx: Float, dy: Float)
     external fun scale(scaleFactor: Float)
     external fun doubleTap()
-    external fun onStop()
     external fun onDown()
     external fun setCameraPos(latitude: Float, longitude: Float, zoom: Float)
     external fun getCameraPos(): CameraPos

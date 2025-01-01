@@ -75,6 +75,7 @@ public:
     std::vector<float> firstPointsTest = {};
 
     MapStyle style = MapStyle();
+    void destroy();
 private:
     int z;
     int x;

@@ -554,6 +554,14 @@ void MapTileRender::drawBackground(
 }
 
 
+void MapTileRender::destroy() {
+    glDeleteFramebuffers(1, &tilesFrameBuffer);
+    glDeleteTextures(1, &tilesTexture);
+    glDeleteFramebuffers(1, &mapTextureFramebuffer);
+    glDeleteTextures(1, &mapTexture);
+}
+
+
 
 
 

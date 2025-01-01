@@ -25,7 +25,16 @@ MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile, MapSymbols& map
     for (short i = 0; i <= networkThreadsCount; i++) {
         std::thread networkTileThread([this, gJvm, i] { this->networkTilesFunction(gJvm, i); });
         networkTileThread.detach();
+        networkThreads.push_back(std::move(networkTileThread));
     }
+}
+
+void MapTileGetter::joinThreads() {
+    for (auto& thread : networkThreads) {
+        if (thread.joinable())
+            thread.join();
+    }
+    threadsActive = false;
 }
 
 void MapTileGetter::clearActualTiles() {
@@ -38,7 +47,7 @@ void MapTileGetter::networkTilesFunction(JavaVM* gJvm, short num) {
     JNIEnv* threadEnv;
     gJvm->AttachCurrentThread(&threadEnv, NULL);
 
-    while (true) {
+    while (threadsActive) {
         // Берем тайлы для загрузки из списка и грузим потом
         bool exists = false;
         networkTileStackMutex2.lock();
@@ -178,4 +187,13 @@ std::vector<MapTile*> MapTileGetter::findChildInPreviousTiles(int x, int y, int 
 
     cacheMutex2.unlock();
     return childrens;
+}
+
+void MapTileGetter::destroy() {
+    for (auto& tilePair : cacheTiles) {
+        auto tile = tilePair.second;
+        tile->destroy();
+        delete tile;
+    }
+    cacheTiles.clear();
 }

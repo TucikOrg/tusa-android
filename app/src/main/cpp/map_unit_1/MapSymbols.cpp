@@ -379,5 +379,14 @@ void MapSymbols::renderText3DByAtlas(
     }
 }
 
+void MapSymbols::destroy() {
+    glDeleteFramebuffers(1, &framebuffer);
+    glDeleteTextures(1, &charsAtlas);
+    for (auto& symbol : symbols) {
+        glDeleteTextures(1, &symbol.second.textureId);
+    }
+
+}
+
 
 

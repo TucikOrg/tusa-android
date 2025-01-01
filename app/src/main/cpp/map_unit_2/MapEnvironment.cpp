@@ -310,3 +310,12 @@ void MapEnvironment::drawGlowing(
     glEnableVertexAttribArray(spaceDarkShader->getUVLocation());
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
+
+void MapEnvironment::destroy() {
+    glDeleteBuffers(1, &topCapVbo);
+    glDeleteBuffers(1, &topCapIbo);
+    glDeleteBuffers(1, &bottomCapVbo);
+    glDeleteBuffers(1, &bottomCapIbo);
+    glDeleteBuffers(1, &starsVbo);
+    glDeleteBuffers(1, &starsSizeVbo);
+}

@@ -67,6 +67,8 @@ public:
     float atlasWidth;
     float atlasHeight;
 
+    void destroy();
+
 private:
     void createFontTextures(MapCamera& mapCamera, ShadersBucket& shadersBucket);
     void prepareWCharForRendering(wchar_t wchar, PrepareCharAtlas& prepareCharAtlas);

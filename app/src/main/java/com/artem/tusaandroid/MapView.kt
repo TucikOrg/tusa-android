@@ -34,6 +34,7 @@ class MapView(
 
     init {
         // Настраиваем карту первоначально перед запуском
+        NativeLibrary.create()
         NativeLibrary.noOpenGlContextInit(resources.assets, requestTile)
 
         setEGLContextClientVersion(2)
@@ -59,7 +60,11 @@ class MapView(
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         super.surfaceDestroyed(holder)
-        NativeLibrary.onStop()
+
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
     }
 
     @SuppressLint("ClickableViewAccessibility")

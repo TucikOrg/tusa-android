@@ -30,7 +30,7 @@
 
 class Markers {
 public:
-    Markers(MapFpsCounter* mapFpsCounter) : mapFpsCounter(mapFpsCounter) { }
+    Markers(MapFpsCounter* mapFpsCounter);
 
     void initGL();
     void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
@@ -51,6 +51,19 @@ public:
     void deselectSelectedMarker();
 
     AvatarAtlasPointer nextPlaceForAvatar = AvatarAtlasPointer();
+    bool parallelThreadMarkersRunning = true;
+    std::thread parallelThreadMarkers;
+
+    void joinThreads() {
+        bool joinable = parallelThreadMarkers.joinable();
+        if (joinable) {
+            parallelThreadMarkers.join();
+            parallelThreadMarkersRunning = false;
+        }
+    }
+
+    void destroy();
+
 private:
     MapFpsCounter* mapFpsCounter = nullptr;
     int atlasAvatarSize = 2048;
@@ -71,6 +84,8 @@ private:
     std::unordered_map<int64_t, uint> circlesMap;
     UserMarker* selectedMarker = nullptr;
     float markerWasSelectedTime = 0.0;
+
+
 
     float borderWidth = 10.0f;
     float arrowBasicHeight = 0.3f;
