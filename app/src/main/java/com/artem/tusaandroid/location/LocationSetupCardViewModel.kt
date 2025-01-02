@@ -16,7 +16,7 @@ open class LocationSetupCardViewModel @Inject constructor(
     private val meAvatarState: MeAvatarState?,
     private val notificationsService: NotificationsService?
 ): ViewModel() {
-    var locationServiceStarted = mutableStateOf(false)
+    var locationServiceStarted = mutableStateOf(lastLocationState?.getLocationForegroundServiceStarted())
     val gpsDisabledAlert = mutableStateOf(false)
 
     fun determineInitState(context: Context) {

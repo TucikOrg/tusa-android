@@ -1,8 +1,10 @@
 package com.artem.tusaandroid.app
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
@@ -32,7 +34,10 @@ fun AppLaunchActions(model: AppLaunchActionsViewModel) {
         ) {
             // Если сервис был запущен и разрешение на геолокацию есть и он был запущен, то запускаем сервис
             // это еще так же значит что пользователь желает отображать себя на карте
-            if (model.getLocationForegroundServiceStarted() == true) {
+            // + gps включен
+            val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+            val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            if (model.getLocationForegroundServiceStarted() == true && gpsEnabled) {
                 val startIntent = Intent(context, LocationForegroundService::class.java).apply {
                     action = LocationForegroundService.ACTION_START
                 }
