@@ -36,9 +36,22 @@ public:
     }
 
     unsigned char* getPixels() { return pixels; }
-    void setPosition(float latitude, float longitude) {
+    void setPosition(float latitude, float longitude, MapFpsCounter* mapFpsCounter, float animationTime) {
+        this->latitudePrevious = this->latitude;
+        this->longitudePrevious = this->longitude;
+
         this->latitude = latitude;
         this->longitude = longitude;
+
+        if (latitudePrevious == 0.0 && longitudePrevious == 0.0) {
+            latitudePrevious = latitude;
+            longitudePrevious = longitude;
+        }
+
+        float progressLatLonUnClamp = (mapFpsCounter->getTimeElapsed() - startAnimationLatLonTime) / animationTime;
+        float previousLatLonProgress = std::clamp(progressLatLonUnClamp, 0.0f, 1.0f);
+
+        startAnimationLatLonTime = mapFpsCounter->getTimeElapsed();
     }
 
     void newMovement(
@@ -129,7 +142,10 @@ public:
     AvatarAtlasPointer atlasPointer;
     float latitude;
     float longitude;
+    float latitudePrevious;
+    float longitudePrevious;
     float startAnimationElapsedTime = 0;
+    float startAnimationLatLonTime = 0;
 
     float invertAnimationUnit = 0.0;
     float movementX = 0.0f;

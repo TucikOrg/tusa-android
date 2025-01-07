@@ -85,23 +85,27 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     auto makeTileRequest = parallelThreadEnv->GetMethodID(requestTileClassGlobal, "request", "(III)[B");
     jbyteArray byteArray = (jbyteArray) parallelThreadEnv->CallObjectMethod(requestTileGlobal, makeTileRequest, z, x, y);
     jsize length = parallelThreadEnv->GetArrayLength(byteArray);
-    if (length == 0) {
-        // нету интернета скорее всего
-        // тайл не смогли загрузить
-        return nullptr;
+
+    if (length != 0) {
+        jbyte* bytes = parallelThreadEnv->GetByteArrayElements(byteArray, nullptr);
+        std::string tileData((char*) bytes, length);
+        parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
+        vtzero::vector_tile vectorTile(tileData);
+        // тяжелая операция
+        // здесь происходит распознование данных вектора и подготовка их к отрисовке
+        MapTile* mapTile = new MapTile(x, y, z, vectorTile, mapSymbols);
+        cacheMutex2.lock();
+        cacheTiles.insert({key, mapTile});
+        cacheMutex2.unlock();
+        return mapTile;
     }
-    jbyte* bytes = parallelThreadEnv->GetByteArrayElements(byteArray, nullptr);
-    std::string tileData((char*) bytes, length);
-    parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
 
-    vtzero::vector_tile vectorTile(tileData);
-    MapTile* mapTile = new MapTile(x, y, z, vectorTile, mapSymbols);
-
+    // нету интернета скорее всего
+    // тайл не смогли загрузить
     cacheMutex2.lock();
-    cacheTiles.insert({key, mapTile});
+    pushedToNetwork.erase(key);
     cacheMutex2.unlock();
-
-    return mapTile;
+    return nullptr;
 }
 
 MapTile* MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
@@ -120,7 +124,6 @@ MapTile* MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
         cacheMutex2.unlock();
         return it->second;
     }
-    cacheMutex2.unlock();
 
     if (!reqExists && !forceMem) {
         pushedToNetwork.insert({key, nullptr });
@@ -128,6 +131,7 @@ MapTile* MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
         networkTilesStack.push({x, y, z});
         networkTileStackMutex2.unlock();
     }
+    cacheMutex2.unlock();
 
     return &emptyTile;
 }

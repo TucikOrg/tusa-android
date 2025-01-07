@@ -23,8 +23,10 @@ public:
     std::vector<float> invertAnimationUnit;
     std::vector<float> startAnimationElapsedTime;
     std::vector<float> latitudeLongitude;
+    std::vector<float> latitudeLongitudePrevious;
     std::vector<float> startMarkerSizeAnimation;
     std::vector<float> animationType;
+    std::vector<float> startAnimationLatLonTime;
 
 
     size_t avatarsIboSize = 0;

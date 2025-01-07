@@ -22,6 +22,7 @@ class RequestTile(private val context: Context) {
 
     fun request(zoom: Int, x: Int, y: Int): ByteArray {
         val fileName = "$zoom-$x-$y.mvt"
+        // это чтение кеша из файлов системы
         readByteArrayFromCache(fileName)?.let {
             return it
         }
@@ -40,6 +41,7 @@ class RequestTile(private val context: Context) {
                 }
             }
 
+            // это запись кеша в файловую систему
             val bytesResult = result.toByteArray()
             saveByteArrayToCache(fileName, bytesResult)
         } catch (e: Exception) {

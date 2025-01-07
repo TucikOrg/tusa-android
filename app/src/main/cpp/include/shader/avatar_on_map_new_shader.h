@@ -17,6 +17,7 @@ public:
     GLint getTextureLocation() const {return u_text;}
     GLint getTextureCord() const {return a_textureCord;}
     GLint getLatLonLocation() const {return u_latLon;}
+    GLint getLatLonPreviousLocation() const {return u_latLon_previous;}
     GLint getTargetMarkerSizeLocation() const {return a_targetMarkerSize;}
     GLint getAxisLatitudeLocation() const {return u_axisLatitude;}
     GLint getAxisLongitudeLocation() const {return u_axisLongitude;}
@@ -42,6 +43,8 @@ public:
     GLint getScreenSizeLocation() const { return u_screenSize; }
     GLint getMarkerAnimationType() const { return u_animationMarkerType; }
     GLint getStartSelectionAnimationTime() const { return u_startSelectionAnimationTime; }
+    GLint getStartAnimationLatLonTime() const { return u_startAnimationLatLonTime; }
+    GLint getAnimationLatLonTime() const { return u_animationLatLonTime; }
 
 private:
     GLint u_color;
@@ -63,6 +66,8 @@ private:
     GLint u_markerSizeAnimationTime;
     GLint u_animationMarkerType;
     GLint u_startSelectionAnimationTime;
+    GLint u_startAnimationLatLonTime;
+    GLint u_animationLatLonTime;
 
     GLint u_matrixPV_SCREEN;
     GLint u_screenSize;
@@ -71,6 +76,7 @@ private:
     GLint a_pos;
     GLint u_startAnimationElapsedTime;
     GLint u_latLon;
+    GLint u_latLon_previous;
     GLint a_border_direction;
     GLint u_invertAnimationUnit;
     GLint u_movementMarker;

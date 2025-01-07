@@ -40,10 +40,13 @@ AvatarOnMapNewShader::AvatarOnMapNewShader(AAssetManager *assetManager,
     u_invertAnimationUnit = glGetUniformLocation(program, "u_invertAnimationUnit");
     u_startAnimationElapsedTime = glGetUniformLocation(program, "u_startAnimationElapsedTime");
     u_latLon = glGetUniformLocation(program, "u_latLon");
+    u_latLon_previous = glGetUniformLocation(program, "u_latLon_previous");
     u_startMarkerSizeAnimation = glGetUniformLocation(program, "u_startMarkerSizeAnimation");
     u_markerSizeAnimationTime = glGetUniformLocation(program, "u_markerSizeAnimationTime");
     u_matrixPV_SCREEN = glGetUniformLocation(program, "u_matrixPV_SCREEN");
     u_screenSize = glGetUniformLocation(program, "u_screenSize");
     u_animationMarkerType = glGetUniformLocation(program, "u_animationMarkerType");
     u_startSelectionAnimationTime = glGetUniformLocation(program, "u_startSelectionAnimationTime");
+    u_startAnimationLatLonTime = glGetUniformLocation(program, "u_startAnimationLatLonTime");
+    u_animationLatLonTime = glGetUniformLocation(program, "u_animationLatLonTime");
 }

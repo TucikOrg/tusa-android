@@ -92,6 +92,7 @@ private:
     float movementAnimationTime = 0.5f;
     float markerSizeAnimationTime = 0.5f;
     float markerAlphaAnimationTime = 0.5f;
+    float markerLatLonAnimationTime = 3.0f;
     float minimumMarkerSize = 0.8f;
     float longitudeHideMarkerDelta = M_PI / 2.0;
 

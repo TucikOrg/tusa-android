@@ -3,11 +3,14 @@ precision highp float;
 uniform vec2 u_movementTargetMarker[64];
 uniform vec2 u_movementMarker[64];
 uniform vec2 u_latLon[64];
+uniform vec2 u_latLon_previous[64];
+uniform float u_startAnimationLatLonTime[64];
 
 attribute vec2 a_textureCord;
 attribute vec2 a_border_direction;
 attribute float a_positionInUniform;
 
+uniform float u_animationLatLonTime;
 uniform float u_scale;
 uniform mat4 u_matrix;
 uniform vec3 u_axisLatitude;
@@ -41,9 +44,7 @@ varying float arrowMarkerHeightSize;
 
 const float M_PI = 3.1415926535897932384626433832795;
 
-
-void main() {
-    vec2 latLon = u_latLon[int(a_positionInUniform)];
+vec3 getLocation(vec2 latLon) {
     float latitude = latLon.x;
     float longitude = latLon.y;
 
@@ -81,7 +82,14 @@ void main() {
     vec3 markerDirectionSphere = rotationLongitude * rotationLatitude * u_pointOnSphere;
 
     // Compute the final location on the sphere
+    // Результат рассчета точки на сфере
+    // Теперь маркер находится по этим координатам на сфере
     vec3 markerPointLocation = markerDirectionSphere * u_radius - vec3(0.0, 0.0, u_radius);
+
+    return markerPointLocation;
+}
+
+vec3 getScreenPos(vec3 markerPointLocation) {
     vec4 pClip = u_matrix * vec4(markerPointLocation, 1.0);
     vec3 pNdc = vec3(pClip.x / pClip.w, pClip.y / pClip.w, pClip.z / pClip.w);
     float screenWidthT = u_screenSize.x;
@@ -89,6 +97,23 @@ void main() {
     float screenX = (pNdc.x + 1.0) * 0.5 * screenWidthT;
     float screenY = (1.0 - pNdc.y) * 0.5 * screenHeightT;
     vec3 screenPos = vec3(screenX, screenY, 0.0);
+    return screenPos;
+}
+
+void main() {
+    vec2 latLon = u_latLon[int(a_positionInUniform)];
+    vec2 previousLatLon = u_latLon_previous[int(a_positionInUniform)];
+
+    vec3 markerPointLocation = getLocation(latLon);
+    vec3 previousMarkerPointLocation = getLocation(previousLatLon);
+
+    vec3 screenPos = getScreenPos(markerPointLocation);
+    vec3 screenPosPrevious = getScreenPos(previousMarkerPointLocation);
+
+    float animationLatLonTime = u_animationLatLonTime;
+    float startAnimationLatLonTime = u_startAnimationLatLonTime[int(a_positionInUniform)];
+    float animationLatLonProgress = clamp((u_current_elapsed_time - startAnimationLatLonTime) / animationLatLonTime, 0.0, 1.0);
+    vec3 useScreenPos = mix(screenPosPrevious, screenPos, animationLatLonProgress);
 
     // параметры рисования
     float markerFloatSpeed = 3.0;
@@ -138,7 +163,7 @@ void main() {
     vec2 shift = (sizingShift + currentMovement);
 
     gl_PointSize = 20.0;
-    gl_Position = u_matrixPV_SCREEN * vec4(screenPos.xy + shift, screenPos.z, 1.0);
+    gl_Position = u_matrixPV_SCREEN * vec4(useScreenPos.xy + shift, useScreenPos.z, 1.0);
 
     startAnimationElapsedTime = u_startAnimationElapsedTime[int(a_positionInUniform)];
     textureCord = a_textureCord;

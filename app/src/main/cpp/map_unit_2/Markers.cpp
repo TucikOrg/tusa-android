@@ -576,11 +576,17 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 std::vector<float> latitudeLongitudeUniform(128);
                 unsigned int latitudeLongitudeUniformIndex = 0;
 
+                std::vector<float> latitudeLongitudePreviousUniform(128);
+                unsigned int latitudeLongitudePreviousUniformIndex = 0;
+
                 std::vector<float> startAnimationElapsedTimeUniform(64);
                 unsigned int startAnimationElapsedTimeUniformIndex = 0;
 
                 std::vector<float> startMarkerSizeAnimationTimeUniform(64);
                 unsigned int startMarkerSizeAnimationTimeUniformIndex = 0;
+
+                std::vector<float> startAnimationLatLonTimeUniform(64);
+                unsigned int startAnimationLatLonTimeUniformIndex = 0;
 
                 std::vector<float> animationTypeUniform(64);
                 unsigned int animationTypeUniformIndex = 0;
@@ -603,10 +609,18 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     auto& startMarkerSizeAnimationTime = marker->startMarkerSizeAnimationTime;
                     startMarkerSizeAnimationTimeUniform[startMarkerSizeAnimationTimeUniformIndex++] = startMarkerSizeAnimationTime;
 
+                    auto& startAnimationLatLonTime = marker->startAnimationLatLonTime;
+                    startAnimationLatLonTimeUniform[startAnimationLatLonTimeUniformIndex++] = startAnimationLatLonTime;
+
                     auto& latitude = marker->latitude;
                     auto& longitude = marker->longitude;
                     latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -latitude;
                     latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -longitude;
+
+                    auto& latitudePrevious = marker->latitudePrevious;
+                    auto& longitudePrevious = marker->longitudePrevious;
+                    latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -latitudePrevious;
+                    latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -longitudePrevious;
 
                     auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
                     startAnimationElapsedTimeUniform[startAnimationElapsedTimeUniformIndex++] = startAnimationElapsedTime;
@@ -692,8 +706,10 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 currentGroup.invertAnimationUnit = std::move(invertAnimationUnitUniform);
                 currentGroup.startAnimationElapsedTime = std::move(startAnimationElapsedTimeUniform);
                 currentGroup.latitudeLongitude = std::move(latitudeLongitudeUniform);
+                currentGroup.latitudeLongitudePrevious = std::move(latitudeLongitudePreviousUniform);
                 currentGroup.startMarkerSizeAnimation = std::move(startMarkerSizeAnimationTimeUniform);
                 currentGroup.animationType = std::move(animationTypeUniform);
+                currentGroup.startAnimationLatLonTime = std::move(startAnimationLatLonTimeUniform);
 
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
@@ -781,6 +797,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
         glUniform1f(avatarsOnMap->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
         glUniform1f(avatarsOnMap->getStartSelectionAnimationTime(), markerWasSelectedTime);
+        glUniform1f(avatarsOnMap->getAnimationLatLonTime(), markerLatLonAnimationTime);
 
         // рисуем маркера по группам
         for (auto& pair : avatarsGroups) {
@@ -797,6 +814,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             glUniform2fv(avatarsOnMap->getLatLonLocation(), 64, group.latitudeLongitude.data());
             glUniform1fv(avatarsOnMap->getStartMarkerSizeAnimation(), 64, group.startMarkerSizeAnimation.data());
             glUniform1fv(avatarsOnMap->getMarkerAnimationType(), 64, group.animationType.data());
+            glUniform1fv(avatarsOnMap->getStartAnimationLatLonTime(), 64, group.startAnimationLatLonTime.data());
+            glUniform2fv(avatarsOnMap->getLatLonPreviousLocation(), 64, group.latitudeLongitudePrevious.data());
 
             glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
             glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
@@ -853,7 +872,7 @@ void Markers::updateMarkerGeo(int64_t key, float latitude, float longitude) {
     bool changed = CommonUtils::compareFloats(marker.longitude, longitude, epsilon) == false || CommonUtils::compareFloats(marker.latitude, latitude, epsilon) == false;
     if (changed == false) return;
 
-    marker.setPosition(latitude, longitude);
+    marker.setPosition(latitude, longitude, mapFpsCounter, markerLatLonAnimationTime);
 
     // локация изменилась для этого маркера
     // если этот маркер видимый то пересобираем буффер для рендринга

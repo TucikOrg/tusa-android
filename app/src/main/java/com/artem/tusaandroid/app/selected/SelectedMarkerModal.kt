@@ -140,9 +140,6 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
                         contentDescription = "Отправить сообщение",
                     )
                 }
-                Spacer(
-                    modifier = Modifier.height(80.dp)
-                )
             }
         }
     }
