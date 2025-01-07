@@ -4,6 +4,9 @@ import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.avatar.AvatarState
+import com.artem.tusaandroid.app.chat.ChatState
+import com.artem.tusaandroid.app.chat.ChatsState
+import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.cropper.CropperState
@@ -26,6 +29,32 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun providerAppDialogState(): AppDialogState {
+        return AppDialogState()
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatsState(
+        socketListener: SocketListener
+    ): ChatsState {
+        return ChatsState(socketListener)
+    }
+
+    @Provides
+    @Singleton
+    fun provideChatState(
+        socketListener: SocketListener,
+        profileState: ProfileState
+    ): ChatState {
+        return ChatState(
+            socketListener,
+            profileState
+        )
+    }
 
     @Provides
     @Singleton
@@ -67,8 +96,10 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideCropperState(): CropperState {
-        return CropperState()
+    fun provideCropperState(
+        dialogState: AppDialogState
+    ): CropperState {
+        return CropperState(dialogState)
     }
 
     @Provides

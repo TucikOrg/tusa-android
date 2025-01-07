@@ -2,6 +2,7 @@ package com.artem.tusaandroid.app.selected
 
 import androidx.lifecycle.ViewModel
 import com.artem.tusaandroid.app.action.friends.FriendsState
+import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.location.LocationsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -11,7 +12,12 @@ import javax.inject.Inject
 open class SelectedMarkerViewModel @Inject constructor(
     val selectedState: SelectedState?,
     val locationsState: LocationsState?,
-    val friendsState: FriendsState?
+    val friendsState: FriendsState?,
+    val chatState: ChatState?
 ): ViewModel() {
+
+    fun openChatWithUser(userId: Long) {
+        chatState?.openChatWithUser(userId)
+    }
 
 }

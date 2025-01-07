@@ -1,14 +1,11 @@
 package com.artem.tusaandroid.location
 
-import android.content.Context
-import android.content.Intent
+import com.artem.tusaandroid.R
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +26,7 @@ import android.provider.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.res.painterResource
 
 @Preview
 @Composable
@@ -84,7 +82,7 @@ fun LocationSetupCard(model: LocationSetupCardViewModel) {
         )
         Spacer(modifier = Modifier.width(8.dp))
         Icon(
-            imageVector = Icons.Default.LocationOn,
+            painter = painterResource(id = R.drawable.location_on),
             contentDescription = "Искать меня на карте",
             modifier = Modifier.size(30.dp)
         )

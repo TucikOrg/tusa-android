@@ -11,7 +11,9 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.paddingFromBaseline
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.Button
@@ -19,6 +21,7 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -41,14 +44,16 @@ fun InputNameModal(showModal: MutableState<Boolean>, onDone: (String) -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
         sheetState = sheetState,
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
         onDismissRequest = { showModal.value = false },
-        modifier = Modifier.navigationBarsPadding()
+        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+        properties = ModalBottomSheetProperties(
+            isAppearanceLightStatusBars = false
+        ),
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .imePadding()
                 .padding(horizontal = 10.dp)
                 .padding(bottom = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally

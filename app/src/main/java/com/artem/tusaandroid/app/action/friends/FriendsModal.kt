@@ -4,20 +4,25 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -37,11 +42,15 @@ import com.artem.tusaandroid.isPreview
 fun FriendsModal(model: FriendViewModel) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ModalBottomSheet(
-        modifier = Modifier.navigationBarsPadding(),
+        shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
         sheetState = sheetState,
         onDismissRequest = {
             model.showModal.value = false
         },
+        properties = ModalBottomSheetProperties(
+            isAppearanceLightStatusBars = false
+        ),
+        modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         val friends = model.getFriends()
         val requests = model.getRequests()
@@ -117,7 +126,6 @@ fun FriendsModal(model: FriendViewModel) {
                     model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFindFriendViewModel()),
                 )
             }
-            Spacer(modifier = Modifier.height(60.dp))
         }
     }
 }

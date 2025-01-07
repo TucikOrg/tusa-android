@@ -3,8 +3,11 @@ package com.artem.tusaandroid.cropper
 import android.graphics.Bitmap
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import com.artem.tusaandroid.app.dialog.AppDialogState
 
-class CropperState {
+class CropperState(
+    private val dialog: AppDialogState
+) {
     val cropperOpened = mutableStateOf(false)
     private var bitmap: Bitmap? = null
     private var croppedBitmap: Bitmap? = null
@@ -13,6 +16,11 @@ class CropperState {
     fun getBitmap() = bitmap
 
     fun openCropper(bitmap: Bitmap, onCropped: (Bitmap?) -> Unit) {
+        if (bitmap.width < 512 || bitmap.height < 512) {
+            dialog.open(title = "Картинка не подходит", message = "Должна быть не менее 512x512")
+            return
+        }
+
         this.bitmap = bitmap
         cropperOpened.value = true
         this.onCropped = onCropped
@@ -38,7 +46,7 @@ class CropperState {
 
         fun preview(): CropperState {
             if (previewState == null) {
-                previewState = CropperState()
+                previewState = CropperState(AppDialogState())
             }
             return previewState!!
         }

@@ -85,6 +85,11 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     auto makeTileRequest = parallelThreadEnv->GetMethodID(requestTileClassGlobal, "request", "(III)[B");
     jbyteArray byteArray = (jbyteArray) parallelThreadEnv->CallObjectMethod(requestTileGlobal, makeTileRequest, z, x, y);
     jsize length = parallelThreadEnv->GetArrayLength(byteArray);
+    if (length == 0) {
+        // нету интернета скорее всего
+        // тайл не смогли загрузить
+        return nullptr;
+    }
     jbyte* bytes = parallelThreadEnv->GetByteArrayElements(byteArray, nullptr);
     std::string tileData((char*) bytes, length);
     parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);

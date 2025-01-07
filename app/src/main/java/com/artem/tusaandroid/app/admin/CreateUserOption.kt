@@ -2,15 +2,19 @@ package com.artem.tusaandroid.app.admin
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -31,8 +35,13 @@ import com.artem.tusaandroid.app.action.AdminFabViewModel
 fun CreateUserOption(model: AdminFabViewModel) {
     if (model.showCreateUser) {
         ModalBottomSheet(
+            shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
             onDismissRequest = { model.showCreateUser = false },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, )
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, ),
+            properties = ModalBottomSheetProperties(
+                isAppearanceLightStatusBars = false
+            ),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
             var uniqueName by remember {
                 mutableStateOf("")

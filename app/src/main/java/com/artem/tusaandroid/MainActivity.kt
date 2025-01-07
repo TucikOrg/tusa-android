@@ -3,21 +3,43 @@ package com.artem.tusaandroid
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeGesturesPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.app.AppLaunchActions
 import com.artem.tusaandroid.app.action.MainActionFab
@@ -25,14 +47,18 @@ import com.artem.tusaandroid.app.MainActivityViewModel
 import com.artem.tusaandroid.app.TestInfoLine
 import com.artem.tusaandroid.app.action.AdminFab
 import com.artem.tusaandroid.app.action.auth.CredentialsManagerAuth
+import com.artem.tusaandroid.app.action.chats.ChatsActionFab
+import com.artem.tusaandroid.app.action.chats.ChatsViewModelPreview
 import com.artem.tusaandroid.app.action.friends.FriendsActionFab
 import com.artem.tusaandroid.app.action.friends.PreviewFriendViewModel
+import com.artem.tusaandroid.app.chat.ChatModal
+import com.artem.tusaandroid.app.dialog.AppDialog
+import com.artem.tusaandroid.app.dialog.AppDialogViewModelPreview
 import com.artem.tusaandroid.app.login.InputUniqueName
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedMarkerModal
-import com.artem.tusaandroid.app.selected.SelectedMarkerViewModel
 import com.artem.tusaandroid.app.selected.SelectedMarkerViewModelPreview
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
@@ -60,10 +86,15 @@ class MainActivity : ComponentActivity() {
         profileState.load(sharedPreferences, -1)
         lastLocationState.load(sharedPreferences, profileState.getUserId())
 
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
+            navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
+        )
+
         setContent {
-            TusaAndroidTheme {
+            TusaAndroidTheme() {
                 AppLaunchActions(hiltViewModel())
-                TucikScaffold()
+                Tucik()
             }
         }
     }
@@ -85,18 +116,30 @@ fun PreviewTucikMap() {
 }
 
 @Composable
-fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
-    Scaffold(modifier = Modifier.fillMaxSize() ) { innerPadding ->
-        Box(modifier = Modifier.padding(innerPadding)) {
-            TucikMap(
-                model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMapViewModel())
+fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
+    val snackbarHostState = remember { SnackbarHostState() }
+    Scaffold(
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
             )
+        },
+    ) { it ->
 
+        TucikMap(
+            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMapViewModel())
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+        ) {
             TestInfoLine(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(4.dp),
-                line = "v12.2024"
+                line = "v01.2025"
             )
 
             ConnectionStatus(
@@ -125,7 +168,6 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                     )
                 }
 
-
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -140,10 +182,19 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                         modifier = Modifier,
                         model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
                     )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    ChatsActionFab(
+                        modifier = Modifier,
+                        model = TucikViewModel(preview = model.isPreview(), previewModel = ChatsViewModelPreview())
+                    )
                 }
 
                 SelectedMarkerModal(
                     model = TucikViewModel(preview = model.isPreview(), previewModel = SelectedMarkerViewModelPreview())
+                )
+
+                ChatModal(
+                    chatViewModel = TucikViewModel(preview = model.isPreview(), previewModel = ChatsViewModelPreview())
                 )
 
             } else {
@@ -152,8 +203,10 @@ fun TucikScaffold(model: MainActivityViewModel = hiltViewModel()) {
                     model = hiltViewModel()
                 )
             }
-
-            CropperModal(model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewCropperModalViewModel()))
         }
     }
+
+    CropperModal(model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewCropperModalViewModel()))
+
+    AppDialog(model = TucikViewModel(preview = model.isPreview(), previewModel = AppDialogViewModelPreview()))
 }

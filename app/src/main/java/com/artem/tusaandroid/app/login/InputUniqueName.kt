@@ -42,7 +42,7 @@ fun InputUniqueName(model: InputUniqueNameViewModel) {
     }
 
     ModalBottomSheet(
-        modifier = Modifier.navigationBarsPadding(),
+        shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
         sheetState = sheetState,
         onDismissRequest = {
             model.showModal.value = false
@@ -52,8 +52,7 @@ fun InputUniqueName(model: InputUniqueNameViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 10.dp)
-                .padding(bottom = 10.dp)
-                .imePadding(),
+                .padding(bottom = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(

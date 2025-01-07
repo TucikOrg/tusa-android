@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -19,7 +17,9 @@ import com.artem.tusaandroid.isPreview
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.R
 
 @Composable
 fun ScrollableUsersLazyList(model: AdminFabViewModel) {
@@ -67,7 +67,7 @@ fun ScrollableUsersLazyList(model: AdminFabViewModel) {
             }
         ) {
             Icon(
-                imageVector = Icons.Default.Refresh,
+                painter = painterResource(id = R.drawable.refresh),
                 contentDescription = "Refresh"
             )
         }

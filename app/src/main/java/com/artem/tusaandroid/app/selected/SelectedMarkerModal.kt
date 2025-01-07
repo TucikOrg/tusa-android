@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -11,18 +12,18 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -39,6 +40,7 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.artem.tusaandroid.NativeLibrary
@@ -64,18 +66,24 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
 
     if (selectedMarker.value != 0L) {
         ModalBottomSheet(
-            modifier = Modifier.navigationBarsPadding(),
+            shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
             sheetState = sheetState,
             onDismissRequest = {
                 selectedMarker.value = 0L
                 NativeLibrary.deselectSelectedMarker()
-            }
+            },
+            properties = ModalBottomSheetProperties(
+                isAppearanceLightStatusBars = false
+            ),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
-            Column {
+            Column(
+                modifier = Modifier
+                    .padding(vertical = 6.dp, horizontal = 6.dp),
+            ) {
                 Row(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 6.dp, horizontal = 6.dp),
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     FriendAvatar(
@@ -111,13 +119,26 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
                         }
                     ) {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
+                            painter = painterResource(id = R.drawable.location_on),
                             contentDescription = "Point to marker",
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(50.dp)
                         )
                     }
                     Spacer(modifier = Modifier.width(20.dp))
+                }
+                ElevatedButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        model.openChatWithUser(selectedMarker.value)
+                    }
+                ) {
+                    Text("Отправить сообщение")
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Icon(
+                        imageVector = ImageVector.vectorResource(id = R.drawable.chat),
+                        contentDescription = "Отправить сообщение",
+                    )
                 }
                 Spacer(
                     modifier = Modifier.height(80.dp)

@@ -7,17 +7,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -70,11 +74,14 @@ fun CropperModal(model: CropperModalViewModel) {
 
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
-            modifier = Modifier.navigationBarsPadding(),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
             onDismissRequest = {
                 model.getShowState().value = false
             },
-            sheetState = sheetState
+            sheetState = sheetState,
+            properties = ModalBottomSheetProperties(
+                isAppearanceLightStatusBars = false
+            ),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),

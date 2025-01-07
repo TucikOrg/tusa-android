@@ -3,8 +3,12 @@ package com.artem.tusaandroid.socket
 import com.artem.tusaandroid.app.action.friends.FriendDto
 import com.artem.tusaandroid.app.action.friends.FriendRequestDto
 import com.artem.tusaandroid.app.avatar.AvatarDTO
+import com.artem.tusaandroid.dto.ChatResponse
+import com.artem.tusaandroid.dto.ChatsResponse
 import com.artem.tusaandroid.dto.CreatedUser
-import com.artem.tusaandroid.dto.User
+import com.artem.tusaandroid.dto.MessageResponse
+import com.artem.tusaandroid.dto.NewChat
+import com.artem.tusaandroid.dto.ResponseMessages
 import com.artem.tusaandroid.dto.UsersPage
 import com.artem.tusaandroid.location.LocationDto
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -26,11 +30,42 @@ class ReceiveMessage() {
     val deleteRequestBus: EventBus<Long> = EventBus()
     val createdUser: EventBus<CreatedUser> = EventBus()
     val allUsers: EventBus<UsersPage> = EventBus()
+    val findChatBus: EventBus<ChatResponse> = EventBus()
+    val noChatBus: EventBus<Long> = EventBus()
+    val messagesBus: EventBus<ResponseMessages> = EventBus()
+    val newChatBus: EventBus<NewChat> = EventBus()
+    val chatsBus: EventBus<ChatsResponse> = EventBus()
+    val sendMessageNotifyBus: EventBus<MessageResponse> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
         val socketBinaryMessage = Cbor.decodeFromByteArray<SocketBinaryMessage>(message.toByteArray())
         when (socketBinaryMessage.type) {
+            "message" -> {
+                val messageNotify = Cbor.decodeFromByteArray<MessageResponse>(socketBinaryMessage.data)
+                sendMessageNotifyBus.pushEvent(messageNotify)
+            }
+            "chats" -> {
+                val chatsResponse = Cbor.decodeFromByteArray<ChatsResponse>(socketBinaryMessage.data)
+                chatsBus.pushEvent(chatsResponse)
+            }
+            "messages" -> {
+                val messages = Cbor.decodeFromByteArray<ResponseMessages>(socketBinaryMessage.data)
+                messagesBus.pushEvent(messages)
+            }
+            "chat" -> {
+                val findChatResult = Cbor.decodeFromByteArray<ChatResponse>(socketBinaryMessage.data)
+                findChatBus.pushEvent(findChatResult)
+            }
+            "no-chat" -> {
+                val noChatResult = Cbor.decodeFromByteArray<Long>(socketBinaryMessage.data)
+                noChatBus.pushEvent(noChatResult)
+            }
+            "new-chat" -> {
+                val newChatResult = Cbor.decodeFromByteArray<NewChat>(socketBinaryMessage.data)
+                newChatBus.pushEvent(newChatResult)
+            }
+
             // admins
             "created-user" -> {
                 val data = Cbor.decodeFromByteArray<CreatedUser>(socketBinaryMessage.data)

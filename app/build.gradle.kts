@@ -86,6 +86,7 @@ dependencies {
     implementation(libs.accompanist.permissions)
     implementation(libs.core)
     implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.accompanist.systemuicontroller)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.exifinterface)

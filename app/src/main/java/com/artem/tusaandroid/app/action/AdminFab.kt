@@ -1,11 +1,15 @@
 package com.artem.tusaandroid.app.action
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,11 +32,14 @@ fun AdminFab(modifier: Modifier, model: AdminFabViewModel) {
         val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ModalBottomSheet(
             sheetState = sheetState,
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
             onDismissRequest = {
                 model.showModal = false
             },
-            modifier = Modifier.navigationBarsPadding()
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
+            properties = ModalBottomSheetProperties(
+                isAppearanceLightStatusBars = false
+            ),
         ) {
             AdminActionsInModal(model)
         }

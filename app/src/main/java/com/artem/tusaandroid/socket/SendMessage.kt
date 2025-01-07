@@ -4,6 +4,10 @@ import com.artem.tusaandroid.dto.AddUserDto
 import com.artem.tusaandroid.dto.AllUsersRequest
 import com.artem.tusaandroid.dto.ChangeNameOther
 import com.artem.tusaandroid.dto.FakeLocation
+import com.artem.tusaandroid.dto.RequestChats
+import com.artem.tusaandroid.dto.RequestLastMessages
+import com.artem.tusaandroid.dto.RequestMessages
+import com.artem.tusaandroid.dto.SendMessage
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
@@ -14,6 +18,12 @@ import okio.ByteString.Companion.toByteString
 class SendMessage(
     private val socket: WebSocket?
 ) {
+    @OptIn(ExperimentalSerializationApi::class)
+    fun getMessages(chatId: Long, page: Int, size: Int) {
+        val data = SocketBinaryMessage("messages", Cbor.encodeToByteArray(RequestMessages(chatId, page, size)))
+        sendMessage(data)
+    }
+
     // admin
     @OptIn(ExperimentalSerializationApi::class)
     fun fakeLocation(latitude: Float, longitude: Float, userId: Long) {
@@ -75,5 +85,23 @@ class SendMessage(
 
     fun loadFriendsAvatars() {
         sendMessage(SocketBinaryMessage("friends-avatars", byteArrayOf()))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun findChatWithUser(userid: Long) {
+        sendMessage(SocketBinaryMessage("find-chat", Cbor.encodeToByteArray(userid)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun sendChatMessage(sendMessage: SendMessage) {
+        sendMessage(SocketBinaryMessage("send-message", Cbor.encodeToByteArray(sendMessage)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun loadChats(page: Int, size: Int) {
+        sendMessage(SocketBinaryMessage(
+            "chats",
+            Cbor.encodeToByteArray(RequestChats(page, size))
+        ))
     }
 }
