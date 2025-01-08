@@ -61,9 +61,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
 import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.ChatResponse
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.isPreview
@@ -102,7 +104,7 @@ fun ChatModal(chatViewModel: ChatViewModel) {
             scrimColor = Color.Transparent,
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
         ) {
             ChatWindow(

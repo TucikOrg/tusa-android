@@ -29,7 +29,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +47,7 @@ fun ForAdminUserProfile(model: ForAdminUserProfileViewModel) {
             model.closeModal()
         },
         properties = ModalBottomSheetProperties(
-            isAppearanceLightStatusBars = false
+            isAppearanceLightStatusBars = !IsLightGlobal.isLight
         ),
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {

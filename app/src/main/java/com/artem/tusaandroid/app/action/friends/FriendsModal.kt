@@ -33,8 +33,10 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,7 +50,7 @@ fun FriendsModal(model: FriendViewModel) {
             model.showModal.value = false
         },
         properties = ModalBottomSheetProperties(
-            isAppearanceLightStatusBars = false
+            isAppearanceLightStatusBars = !IsLightGlobal.isLight
         ),
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {

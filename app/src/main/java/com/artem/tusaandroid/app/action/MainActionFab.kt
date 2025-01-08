@@ -30,10 +30,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.profile.PreviewProfileCardViewModel
 import com.artem.tusaandroid.app.profile.ProfileCard
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 import com.artem.tusaandroid.location.LocationSetupCard
 import com.artem.tusaandroid.location.PreviewLocationSetupCardViewModel
@@ -53,7 +55,7 @@ fun MainActionFab(modifier: Modifier, model: MainActionFabViewModel) {
             },
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
         ) {
             MainActionInModal(model)

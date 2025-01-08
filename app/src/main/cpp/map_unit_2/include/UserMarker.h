@@ -26,9 +26,11 @@ public:
     UserMarker(unsigned char* pixels, float latitude, float longitude, int64_t markerId, float startAnimationElapsedTime)
         : pixels(pixels), latitude(latitude),
           longitude(longitude), markerId(markerId),
+          longitudePrevious(longitude), latitudePrevious(latitude),
           startAnimationElapsedTime(startAnimationElapsedTime),
           startMovementAnimation(startAnimationElapsedTime),
-          startMarkerSizeAnimationTime(startAnimationElapsedTime){
+          startMarkerSizeAnimationTime(startAnimationElapsedTime),
+          startAnimationLatLonTime(startAnimationElapsedTime) {
         cos_minus_lat = cos(-latitude);
         sin_minus_lat = sin(-latitude);
         sin_lon = sin(longitude);
@@ -36,16 +38,16 @@ public:
     }
 
     unsigned char* getPixels() { return pixels; }
-    void setPosition(float latitude, float longitude, MapFpsCounter* mapFpsCounter, float animationTime) {
+    void setPosition(float lat, float lon, MapFpsCounter* mapFpsCounter, float animationTime) {
         this->latitudePrevious = this->latitude;
         this->longitudePrevious = this->longitude;
 
-        this->latitude = latitude;
-        this->longitude = longitude;
+        this->latitude = lat;
+        this->longitude = lon;
 
         if (latitudePrevious == 0.0 && longitudePrevious == 0.0) {
-            latitudePrevious = latitude;
-            longitudePrevious = longitude;
+            latitudePrevious = lat;
+            longitudePrevious = lon;
         }
 
         float progressLatLonUnClamp = (mapFpsCounter->getTimeElapsed() - startAnimationLatLonTime) / animationTime;

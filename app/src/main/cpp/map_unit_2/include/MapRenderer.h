@@ -29,7 +29,7 @@ public:
     void onSurfaceChanged(int w, int h);
     void onSurfaceCreated(AAssetManager* assetManager);
     void drag(float dx, float dy);
-    void scale(float scaleFactor);
+    float scale(float scaleFactor);
     void doubleTap();
     void destroyGL();
     int64_t confirmedClick(float x, float y, int64_t ignore);

@@ -16,8 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.app.admin.AdminActionsInModal
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 
 @Preview
 @Composable
@@ -38,7 +40,7 @@ fun AdminFab(modifier: Modifier, model: AdminFabViewModel) {
             },
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
         ) {
             AdminActionsInModal(model)

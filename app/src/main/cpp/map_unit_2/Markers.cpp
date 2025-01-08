@@ -66,7 +66,6 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
                 ignoreCircles[markerId] = nullptr;
 
 
-
                 short inRadialMaxPlaces = 8;
                 auto intersections = circle.findIntersections(circles, ignoreCircles, mainIntersectionIndex);
                 if (intersections.empty()) {
@@ -163,7 +162,6 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
 //                    testAvatarsVertices.push_back(mainCircle.realY);
 //                }
 
-
             }
 
             // сдвигаем маркеры на экране
@@ -204,7 +202,6 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
 
         }
     });
-    //parallelThreadMarkers.detach();
 }
 
 void Markers::doubleTap() {
@@ -918,6 +915,7 @@ void Markers::addMarker(
 ) {
     auto find = storageMarkers.find(key);
     if (find != storageMarkers.end()) {
+        // если маркер уже есть то обновляем его аватар и рендрим
         updateMarkerAvatarInternal(key, imageData, fileSize);
         renderMarkersMap[key] = nullptr;
         renderMarkers.push_back(key);
@@ -925,7 +923,7 @@ void Markers::addMarker(
     }
 
     auto pixels = TextureUtils::loadPixels(imageData, fileSize);
-    storageMarkers[key] = { pixels, latitude, longitude, key, mapFpsCounter->getTimeElapsed() };
+    storageMarkers[key] = UserMarker(pixels, latitude, longitude, key, mapFpsCounter->getTimeElapsed());
     renderMarkersMap[key] = nullptr;
     renderMarkers.push_back(key);
 

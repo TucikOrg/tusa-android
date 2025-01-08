@@ -17,7 +17,7 @@ object NativeLibrary {
     external fun surfaceDestroyed()
     external fun noOpenGlContextInit(assetManager: AssetManager?, requestTile: RequestTile)
     external fun drag(dx: Float, dy: Float)
-    external fun scale(scaleFactor: Float)
+    external fun scale(scaleFactor: Float): Float
     external fun doubleTap()
     external fun onDown()
     external fun setCameraPos(latitude: Float, longitude: Float, zoom: Float)

@@ -13,6 +13,7 @@ import android.view.SurfaceHolder
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.selected.SelectedState
+import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.socket.SocketListener
@@ -27,7 +28,8 @@ class MapView(
     private val socketListener: SocketListener?,
     private val avatarState: AvatarState?,
     private val selectedState: SelectedState?,
-    private val locationsState: LocationsState?
+    private val locationsState: LocationsState?,
+    private val systemUIState: SystemUIState?
 ) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
@@ -36,6 +38,7 @@ class MapView(
         // Настраиваем карту первоначально перед запуском
         NativeLibrary.create()
         NativeLibrary.noOpenGlContextInit(resources.assets, requestTile)
+        systemUIState?.setLight(NativeLibrary.getCameraPos().zoom < 3.0f)
 
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
@@ -82,7 +85,8 @@ class MapView(
         private var height: Float
     ) : SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            NativeLibrary.scale(detector.scaleFactor)
+            val zoom = NativeLibrary.scale(detector.scaleFactor)
+            systemUIState?.setLight(zoom < 3.0f)
             return true
         }
 

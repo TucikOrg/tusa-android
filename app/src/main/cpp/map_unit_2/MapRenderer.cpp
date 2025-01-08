@@ -196,8 +196,9 @@ void MapRenderer::drag(float dx, float dy) {
     mapControls.drag(dx, dy);
 }
 
-void MapRenderer::scale(float scaleFactor) {
+float MapRenderer::scale(float scaleFactor) {
     mapControls.scale(scaleFactor);
+    return mapControls.getZoom();
 }
 
 void MapRenderer::doubleTap() {

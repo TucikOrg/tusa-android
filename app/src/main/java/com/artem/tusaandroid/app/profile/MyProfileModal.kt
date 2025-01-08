@@ -37,12 +37,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.MainActionFabViewModel
 import com.artem.tusaandroid.app.action.PreviewMainActionFabViewModel
 import com.artem.tusaandroid.app.avatar.MeAvatar
 import com.artem.tusaandroid.app.avatar.PreviewMeAvatarViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 
 @Preview
@@ -64,7 +66,7 @@ fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewMode
         },
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
         properties = ModalBottomSheetProperties(
-            isAppearanceLightStatusBars = false
+            isAppearanceLightStatusBars = !IsLightGlobal.isLight
         ),
     ) {
         Column(

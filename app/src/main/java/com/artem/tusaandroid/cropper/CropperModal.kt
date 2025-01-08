@@ -43,7 +43,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,7 +82,7 @@ fun CropperModal(model: CropperModalViewModel) {
             },
             sheetState = sheetState,
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
         ) {
             Column(

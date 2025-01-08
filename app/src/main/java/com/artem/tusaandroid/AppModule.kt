@@ -9,6 +9,7 @@ import com.artem.tusaandroid.app.chat.ChatsState
 import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
+import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationsState
@@ -29,6 +30,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun provideSystemUIState(): SystemUIState {
+        return SystemUIState()
+    }
 
     @Provides
     @Singleton

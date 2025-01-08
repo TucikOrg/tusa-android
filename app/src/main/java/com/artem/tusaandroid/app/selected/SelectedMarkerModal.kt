@@ -49,6 +49,7 @@ import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
 import com.artem.tusaandroid.app.action.friends.FriendAvatarViewModel
 import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 
 @Preview
@@ -73,7 +74,7 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
                 NativeLibrary.deselectSelectedMarker()
             },
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
         ) {

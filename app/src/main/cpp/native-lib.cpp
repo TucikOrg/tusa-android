@@ -81,9 +81,9 @@ Java_com_artem_tusaandroid_NativeLibrary_drag(JNIEnv *env, jclass clazz, jfloat 
 }
 
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jfloat JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_scale(JNIEnv *env, jclass clazz, jfloat scale_factor) {
-    renderer->scale(scale_factor);
+    return renderer->scale(scale_factor);
 }
 
 extern "C"
@@ -185,3 +185,4 @@ JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_deselectSelectedMarker(JNIEnv *env, jobject thiz) {
     renderer->deselectSelectedMarker();
 }
+

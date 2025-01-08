@@ -20,7 +20,8 @@ fun TucikMap(model: MapViewModel, innerPadding: PaddingValues = PaddingValues(0.
                 model.socketListener,
                 model.avatarState,
                 model.selectedState,
-                model.locationsState
+                model.locationsState,
+                model.systemUIState
             )
         },
         modifier = Modifier.padding(innerPadding)

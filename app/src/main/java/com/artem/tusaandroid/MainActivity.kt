@@ -61,6 +61,7 @@ import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedMarkerModal
 import com.artem.tusaandroid.app.selected.SelectedMarkerViewModelPreview
+import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.location.LastLocationState
@@ -68,7 +69,9 @@ import com.artem.tusaandroid.location.MoveToMyLocationFab
 import com.artem.tusaandroid.location.PreviewMoveToMyLocationViewModel
 import com.artem.tusaandroid.socket.ConnectionStatus
 import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
+import com.artem.tusaandroid.socket.SocketListener
 import com.artem.tusaandroid.theme.TusaAndroidTheme
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -79,6 +82,8 @@ class MainActivity : ComponentActivity() {
     lateinit var profileState: ProfileState
     @Inject
     lateinit var lastLocationState: LastLocationState
+    @Inject
+    lateinit var socketListener: SocketListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,6 +116,8 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onResume() {
+        // при возвращении в приложение включаем сокет Он снова нужен для общения
+        socketListener.connect(null)
         super.onResume()
     }
 
@@ -119,10 +126,10 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onStop() {
+        // чтобы интернет трафик поберечь отключаем сокет в ситуации сворачивания приложения
+        socketListener.disconnect()
         super.onStop()
     }
-
-
 }
 
 @Composable
@@ -138,6 +145,33 @@ fun PreviewTucikMap() {
 @Composable
 fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val systemUiController = rememberSystemUiController()
+
+    val uiShouldBeLight = model.systemUIState.getIsLight()
+    LaunchedEffect(uiShouldBeLight.value) {
+        if (uiShouldBeLight.value) {
+            systemUiController.setStatusBarColor(
+                color = Color.Transparent,
+                darkIcons = false
+            )
+            systemUiController.setNavigationBarColor(
+                color = Color.Transparent,
+                darkIcons = false,
+            )
+            return@LaunchedEffect
+        }
+
+        systemUiController.setStatusBarColor(
+            color = Color.Transparent,
+            darkIcons = true
+        )
+        systemUiController.setNavigationBarColor(
+            color = Color.Transparent,
+            darkIcons = true
+        )
+    }
+
+
     Scaffold(
         snackbarHost = {
             SnackbarHost(

@@ -27,20 +27,22 @@ class SocketListener(
     }
 
     fun disconnect() {
-        webSocket.close(1000, "Goodbye")
+        val result = webSocket.close(1000, "Goodbye")
     }
 
-    fun connect(meId: Long) {
-        meUserId = meId
+    fun connect(meId: Long?) {
         val request = Request.Builder()
             .url(socketUrl)
             .build()
         webSocket = client.newWebSocket(request, this)
         sendMessage = SendMessage(webSocket)
 
-        sendMessage?.loadAvatar(meId)
-        sendMessage?.loadFriendsAndRequests()
-        sendMessage?.loadFriendsAvatars()
+        if (meId != null) {
+            meUserId = meId
+            sendMessage?.loadAvatar(meId)
+            sendMessage?.loadFriendsAndRequests()
+            sendMessage?.loadFriendsAvatars()
+        }
     }
 
     override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
@@ -57,12 +59,13 @@ class SocketListener(
         }
     }
 
+    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
+        super.onClosed(webSocket, code, reason)
+        socketConnectionState.closed()
+    }
+
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
         super.onClosing(webSocket, code, reason)
-        val result = webSocket.close(1000, null)
-        if (result) {
-            socketConnectionState.closed()
-        }
         println("Closing: $code / $reason")
     }
 

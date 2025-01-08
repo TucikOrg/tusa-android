@@ -28,7 +28,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.app.action.AdminFabViewModel
+import com.artem.tusaandroid.app.systemui.IsLightGlobal
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,7 +41,7 @@ fun CreateUserOption(model: AdminFabViewModel) {
             onDismissRequest = { model.showCreateUser = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true, ),
             properties = ModalBottomSheetProperties(
-                isAppearanceLightStatusBars = false
+                isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
             modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
