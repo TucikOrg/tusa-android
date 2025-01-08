@@ -151,6 +151,7 @@ class LocationForegroundService: Service() {
 
         val stopIntent = Intent(this, LocationForegroundService::class.java).apply {
             action = ACTION_STOP
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val stopPendingIntent = PendingIntent.getService(
             this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE

@@ -21,7 +21,6 @@ class Renderer(
 ) : GLSurfaceView.Renderer {
     private var defaultAvatar: ByteArray? = null
 
-
     private var meAvatarKey = meAvatarState?.getMeId()?: 0L
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -42,7 +41,6 @@ class Renderer(
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         NativeLibrary.surfaceCreated(_assetManager)
-        // NativeLibrary.addMarker("artem", 55.7558f, 37.6176f, artemAvatar!!)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {

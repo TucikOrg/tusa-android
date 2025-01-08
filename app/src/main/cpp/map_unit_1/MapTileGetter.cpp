@@ -22,19 +22,18 @@ MapTileGetter::MapTileGetter(JNIEnv *env, jobject& request_tile, MapSymbols& map
     requestTileClassGlobal = static_cast<jclass>(env->NewGlobalRef(env->FindClass("com/artem/tusaandroid/RequestTile")));
     requestTileGlobal = env->NewGlobalRef(request_tile);
 
-    for (short i = 0; i <= networkThreadsCount; i++) {
-        std::thread networkTileThread([this, gJvm, i] { this->networkTilesFunction(gJvm, i); });
-        networkTileThread.detach();
-        networkThreads.push_back(std::move(networkTileThread));
+    for (short i = 0; i < networkThreadsCount; i++) {
+        networkThreads.emplace_back(([this, gJvm, i] { this->networkTilesFunction(gJvm, i); }));
     }
 }
 
 void MapTileGetter::joinThreads() {
-    for (auto& thread : networkThreads) {
-        if (thread.joinable())
-            thread.join();
-    }
     threadsActive = false;
+    for (auto& thread : networkThreads) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
 }
 
 void MapTileGetter::clearActualTiles() {
@@ -70,9 +69,7 @@ void MapTileGetter::networkTilesFunction(JavaVM* gJvm, short num) {
 
         if (isActual) {
             // Загружаем тайл
-            //LOGI("Load tile(%d) %d %d %d", num, tileToNetwork[0], tileToNetwork[1], tileToNetwork[2]);
             auto loaded = load(tileToNetwork[0], tileToNetwork[1], tileToNetwork[2], threadEnv);
-            //LOGI("Tile ready (%d)", num);
         }
     }
 

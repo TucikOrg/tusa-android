@@ -204,7 +204,7 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
 
         }
     });
-    parallelThreadMarkers.detach();
+    //parallelThreadMarkers.detach();
 }
 
 void Markers::doubleTap() {
@@ -533,7 +533,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                 break;
             }
         }
-
 
 
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;

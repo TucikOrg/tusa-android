@@ -39,6 +39,7 @@ open class LocationSetupCardViewModel @Inject constructor(
 
             val startIntent = Intent(context, LocationForegroundService::class.java).apply {
                 action = LocationForegroundService.ACTION_START
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             context.startService(startIntent)
             locationServiceStarted.value = true
@@ -46,6 +47,7 @@ open class LocationSetupCardViewModel @Inject constructor(
         } else {
             val stopIntent = Intent(context, LocationForegroundService::class.java).apply {
                 action = LocationForegroundService.ACTION_STOP
+                flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             context.startService(stopIntent)
             locationServiceStarted.value = false

@@ -160,6 +160,8 @@ void MapRenderer::onSurfaceChanged(int screenW, int screenH) {
 }
 
 void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
+    if (surfaceCreated) return; // если уже все что нужно для карты создано то не создаем заново
+
     auto error = CommonUtils::getGLErrorString();
     shadersBucket.compileAllShaders(assetManager);
     error = CommonUtils::getGLErrorString();

@@ -39,6 +39,8 @@ public:
     Markers& getMarkers() {  return markers; }
     MapControls& getMapControls() { return mapControls; }
 
+    bool surfaceCreated = false;
+
 private:
     MapControls mapControls = MapControls();
     MapCamera mapCamera = MapCamera();
@@ -58,7 +60,7 @@ private:
     float planeSize = 10000000;
     int textureTileSizeUnit = 1024;
     std::string textureKey;
-    bool surfaceCreated = false;
+
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
 };

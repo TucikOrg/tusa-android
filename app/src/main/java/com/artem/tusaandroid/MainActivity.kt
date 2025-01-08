@@ -1,6 +1,7 @@
 package com.artem.tusaandroid
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.WindowManager
@@ -99,10 +100,29 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        NativeLibrary.cleanup()
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
     }
+
+    // вызывается при полном зактытии приложения
+    override fun onDestroy() {
+        NativeLibrary.cleanup()
+        super.onDestroy()
+    }
+
+    override fun onResume() {
+        super.onResume()
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+    }
+
+
 }
 
 @Composable

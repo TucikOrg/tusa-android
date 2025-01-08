@@ -35,7 +35,9 @@ fun GpsDisabledDialog(model: LocationSetupCardViewModel) {
                 onClick = {
                     val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
                     if (!gpsEnabled) {
-                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                        val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS).apply {
+                            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                        }
                         context.startActivity(intent)
                     }
                     model.gpsDisabledAlert.value = false

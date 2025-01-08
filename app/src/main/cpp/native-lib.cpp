@@ -55,6 +55,7 @@ JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_surfaceCreated(JNIEnv *env, jclass clazz,
                                                         jobject assetManager) {
     AAssetManager* assetManagerFromJava = AAssetManager_fromJava(env, assetManager);
+
     renderer->onSurfaceCreated(assetManagerFromJava);
 }
 extern "C"

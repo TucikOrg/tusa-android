@@ -55,10 +55,9 @@ public:
     std::thread parallelThreadMarkers;
 
     void joinThreads() {
-        bool joinable = parallelThreadMarkers.joinable();
-        if (joinable) {
+        parallelThreadMarkersRunning = false;
+        if (parallelThreadMarkers.joinable()) {
             parallelThreadMarkers.join();
-            parallelThreadMarkersRunning = false;
         }
     }
 

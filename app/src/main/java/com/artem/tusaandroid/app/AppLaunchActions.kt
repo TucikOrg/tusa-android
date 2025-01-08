@@ -40,6 +40,7 @@ fun AppLaunchActions(model: AppLaunchActionsViewModel) {
             if (model.getLocationForegroundServiceStarted() == true && gpsEnabled) {
                 val startIntent = Intent(context, LocationForegroundService::class.java).apply {
                     action = LocationForegroundService.ACTION_START
+                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
                 context.startService(startIntent)
                 model.createMeMarker() // маркер юзера создаем

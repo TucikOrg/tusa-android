@@ -59,13 +59,16 @@ class MapView(
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        //NativeLibrary.surfaceDestroyed()
+        // похоже очень что чистит сам GLSurfaceView
+        // и не нужно читстить самому open gl сущности
         super.surfaceDestroyed(holder)
-
     }
 
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
     }
+
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {

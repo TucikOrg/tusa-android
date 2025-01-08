@@ -5,7 +5,6 @@ import com.artem.tusaandroid.dto.AllUsersRequest
 import com.artem.tusaandroid.dto.ChangeNameOther
 import com.artem.tusaandroid.dto.FakeLocation
 import com.artem.tusaandroid.dto.RequestChats
-import com.artem.tusaandroid.dto.RequestLastMessages
 import com.artem.tusaandroid.dto.RequestMessages
 import com.artem.tusaandroid.dto.SendMessage
 import kotlinx.serialization.ExperimentalSerializationApi
