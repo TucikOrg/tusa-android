@@ -103,7 +103,6 @@ class MapView(
             distanceX: Float,
             distanceY: Float
         ): Boolean {
-
             val x = e2.x
             val y = e2.y
             val wb = width - width / 4.0f

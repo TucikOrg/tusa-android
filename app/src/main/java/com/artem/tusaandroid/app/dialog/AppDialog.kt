@@ -3,20 +3,26 @@ package com.artem.tusaandroid.app.dialog
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import com.artem.tusaandroid.location.GpsDisabledDialog
 
 @Composable
 fun AppDialog(model: AppDialogViewModel) {
     val state = model.getAppDialogState()
-    if (state.opened.value) {
+    for (dialog in state.dialogs.value) {
+        if (dialog.gpsDisabledDialog != null) {
+            GpsDisabledDialog(dialog.gpsDisabledDialog!!)
+            continue
+        }
+
         AlertDialog(
             title = {
-                Text(state.title.value)
+                Text(dialog.title.value)
             },
             text = {
-                Text(state.message.value)
+                Text(dialog.message.value)
             },
             onDismissRequest = {
-                state.opened.value = false
+                model.close(dialog)
             },
             dismissButton = {},
             confirmButton = {},

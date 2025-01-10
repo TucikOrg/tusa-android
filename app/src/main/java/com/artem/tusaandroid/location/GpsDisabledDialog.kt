@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.location.LocationManager
 import android.provider.Settings
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -24,7 +26,7 @@ fun GpsDisabledDialog(model: LocationSetupCardViewModel) {
         dismissButton = {
             TextButton(
                 onClick = {
-                    model.gpsDisabledAlert.value = false
+                    model.closeGPSDisabledAlert()
                 }
             ) {
                 Text("Закрыть")
@@ -40,14 +42,15 @@ fun GpsDisabledDialog(model: LocationSetupCardViewModel) {
                         }
                         context.startActivity(intent)
                     }
-                    model.gpsDisabledAlert.value = false
+                    model.closeGPSDisabledAlert()
                 }
             ) {
                 Text("Включить GPS")
             }
         },
         onDismissRequest = {
-            model.gpsDisabledAlert.value = false
+            model.closeGPSDisabledAlert()
         },
     )
+
 }

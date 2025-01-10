@@ -38,10 +38,10 @@ fun AdminFab(modifier: Modifier, model: AdminFabViewModel) {
             onDismissRequest = {
                 model.showModal = false
             },
-            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing),
             properties = ModalBottomSheetProperties(
                 isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
+            modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
         ) {
             AdminActionsInModal(model)
         }

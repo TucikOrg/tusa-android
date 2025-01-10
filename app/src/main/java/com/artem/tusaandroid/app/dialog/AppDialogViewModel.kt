@@ -9,4 +9,7 @@ open class AppDialogViewModel @Inject constructor(
     private val appDialogState: AppDialogState
 ): ViewModel() {
     fun getAppDialogState() = appDialogState
+    fun close(dialog: AppDialog) {
+        appDialogState.close(dialog)
+    }
 }

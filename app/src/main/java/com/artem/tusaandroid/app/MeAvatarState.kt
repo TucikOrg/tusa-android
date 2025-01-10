@@ -17,6 +17,10 @@ class MeAvatarState(
         return profileState?.getUserId()!!
     }
 
+    fun hasAvatar(): Boolean {
+        return avatarState?.getAvatarBitmap(profileState!!.getUserId())?.value != null
+    }
+
     fun getAvatar(): MutableState<Bitmap?>? {
         return avatarState?.getAvatarBitmap(profileState!!.getUserId())
     }

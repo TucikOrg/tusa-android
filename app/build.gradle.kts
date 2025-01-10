@@ -87,6 +87,7 @@ dependencies {
     implementation(libs.core)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.accompanist.systemuicontroller)
+    implementation(libs.play.services.fitness)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.exifinterface)

@@ -6,6 +6,7 @@ import android.location.LocationManager
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.notification.NotificationsService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -14,10 +15,18 @@ import javax.inject.Inject
 open class LocationSetupCardViewModel @Inject constructor(
     private val lastLocationState: LastLocationState?,
     private val meAvatarState: MeAvatarState?,
-    private val notificationsService: NotificationsService?
+    private val notificationsService: NotificationsService?,
+    private val appDialogState: AppDialogState?
 ): ViewModel() {
-    var locationServiceStarted = mutableStateOf(lastLocationState?.getLocationForegroundServiceStarted())
-    val gpsDisabledAlert = mutableStateOf(false)
+    var locationServiceStarted = lastLocationState?.getLocationForegroundServiceStartedState() ?: mutableStateOf(false)
+
+    fun showGpsDisabledAlert() {
+        appDialogState?.showGpsDisabledAlert(this)
+    }
+
+    fun closeGPSDisabledAlert() {
+        appDialogState?.closeGpsDisabledAlert()
+    }
 
     fun determineInitState(context: Context) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -30,7 +39,7 @@ open class LocationSetupCardViewModel @Inject constructor(
         if (locationServiceStarted.value == false) {
             val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
             if (!gpsEnabled) {
-                gpsDisabledAlert.value = true
+                showGpsDisabledAlert()
                 return
             }
             if (notificationsService?.check(context) == true) {
@@ -41,7 +50,7 @@ open class LocationSetupCardViewModel @Inject constructor(
                 action = LocationForegroundService.ACTION_START
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            context.startService(startIntent)
+            context.startForegroundService(startIntent)
             locationServiceStarted.value = true
             meAvatarState?.updateMeMarkerInRender()
         } else {
@@ -49,7 +58,7 @@ open class LocationSetupCardViewModel @Inject constructor(
                 action = LocationForegroundService.ACTION_STOP
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
-            context.startService(stopIntent)
+            context.stopService(stopIntent)
             locationServiceStarted.value = false
             meAvatarState?.hideMe()
         }

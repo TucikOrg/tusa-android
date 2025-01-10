@@ -25,7 +25,7 @@ class Renderer(
     private val executor = Executors.newSingleThreadExecutor()
 
     init {
-        _assetManager.open("images/user.png").use { asset ->
+        _assetManager.open("images/default_user.png").use { asset ->
             defaultAvatar = asset.readBytes()
         }
 

@@ -2,15 +2,37 @@ package com.artem.tusaandroid.app.dialog
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import com.artem.tusaandroid.location.LocationSetupCardViewModel
+
+data class AppDialog(
+    var message: MutableState<String>,
+    var title: MutableState<String>,
+    var gpsDisabledDialog: LocationSetupCardViewModel? = null
+)
 
 class AppDialogState {
-    var opened: MutableState<Boolean> = mutableStateOf(false)
-    var message: MutableState<String> = mutableStateOf("")
-    var title: MutableState<String> = mutableStateOf("")
+    val dialogs = mutableStateOf<List<AppDialog>>(emptyList())
 
     fun open(title: String, message: String, ) {
-        this.title.value = title
-        this.message.value = message
-        opened.value = true
+        dialogs.value = dialogs.value + AppDialog(
+            title = mutableStateOf(title),
+            message = mutableStateOf(message)
+        )
+    }
+
+    fun close(dialog: AppDialog) {
+        dialogs.value = dialogs.value.filter { it != dialog }
+    }
+
+    fun closeGpsDisabledAlert() {
+        dialogs.value = dialogs.value.filter { it.gpsDisabledDialog == null }
+    }
+
+    fun showGpsDisabledAlert(locationSetupCardViewModel: LocationSetupCardViewModel) {
+        dialogs.value = dialogs.value + AppDialog(
+            title = mutableStateOf(""),
+            message = mutableStateOf(""),
+            gpsDisabledDialog = locationSetupCardViewModel
+        )
     }
 }

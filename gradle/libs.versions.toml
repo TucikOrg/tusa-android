@@ -21,6 +21,7 @@ composeBom = "2024.12.01"
 moshiAdapters = "1.15.1"
 moshiKotlin = "1.15.1"
 okhttp = "4.11.0"
+playServicesFitness="21.2.0"
 roomKtx = "2.6.1"
 playServicesLocation = "21.3.0"
 workRuntimeKtx = "2.10.0"
@@ -64,6 +65,7 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshiAdapters" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshiKotlin" }
 okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+play-services-fitness = { module = "com.google.android.gms:play-services-fitness", version.ref = "playServicesFitness" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterface", version.ref = "exifinterface" }
 

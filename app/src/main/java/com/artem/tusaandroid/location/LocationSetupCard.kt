@@ -23,6 +23,7 @@ import com.google.accompanist.permissions.rememberPermissionState
 import kotlinx.coroutines.launch
 import android.location.LocationManager
 import android.provider.Settings
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
@@ -40,13 +41,11 @@ fun LocationSetupCard(model: LocationSetupCardViewModel) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
     val permissionState = rememberPermissionState(permission = android.Manifest.permission.ACCESS_FINE_LOCATION)
-    if (permissionState.status.isGranted) {
+    val permissionStateFitness = rememberPermissionState(permission = android.Manifest.permission.ACTIVITY_RECOGNITION)
+
+    if (permissionState.status.isGranted && permissionStateFitness.status.isGranted) {
         LaunchedEffect(Unit) {
             model.determineInitState(context)
-        }
-
-        if (model.gpsDisabledAlert.value) {
-            GpsDisabledDialog(model)
         }
 
         ElevatedButton(
@@ -57,34 +56,97 @@ fun LocationSetupCard(model: LocationSetupCardViewModel) {
             }
         ) {
             if (model.locationServiceStarted.value == true) {
-                Text("Спрятать меня на карте")
+                HideMeInner()
             } else {
-                Text("Показывать меня на карте")
+                ShowMeInner()
             }
         }
 
         return
     }
 
-    ElevatedButton(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        onClick = {
-            coroutineScope.launch {
-                permissionState.launchPermissionRequest()
+    Column {
+        ElevatedButton(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            onClick = {
+                model.switchMyLocationState(context)
+            },
+            enabled = model.locationServiceStarted.value == true
+        ) {
+            if (model.locationServiceStarted.value == true) {
+                HideMeInner()
+            } else {
+                ShowMeInner()
             }
         }
-    ) {
-        Text(
-            text = "Дать разрешение на геолокацию",
-            fontWeight = FontWeight.Bold,
-            fontSize = MaterialTheme.typography.bodyMedium.fontSize
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(
-            painter = painterResource(id = R.drawable.location_on),
-            contentDescription = "Искать меня на карте",
-            modifier = Modifier.size(30.dp)
-        )
+
+        if (permissionState.status.isGranted == false) {
+            ElevatedButton(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                onClick = {
+                    coroutineScope.launch {
+                        permissionState.launchPermissionRequest()
+                    }
+                }
+            ) {
+                Text(
+                    text = "Дать разрешение на геолокацию",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.location_on),
+                    contentDescription = "Искать меня на карте",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        } else if (permissionStateFitness.status.isGranted == false) {
+            ElevatedButton(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                onClick = {
+                    coroutineScope.launch {
+                        permissionStateFitness.launchPermissionRequest()
+                    }
+                }
+            ) {
+                Text(
+                    text = "Дать разрешение на доступ к шагам",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = MaterialTheme.typography.bodyMedium.fontSize
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    painter = painterResource(id = R.drawable.sprint),
+                    contentDescription = "Доступ к активности",
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
     }
+}
+
+@Composable
+fun HideMeInner() {
+    Text("Спрятать меня на карте")
+    Spacer(modifier = Modifier.width(8.dp))
+    Icon(
+        painter = painterResource(id = R.drawable.location_off),
+        contentDescription = "Искать меня на карте",
+        modifier = Modifier.size(30.dp)
+    )
+}
+
+@Composable
+fun ShowMeInner() {
+    Text("Показывать меня на карте")
+    Spacer(modifier = Modifier.width(8.dp))
+    Icon(
+        painter = painterResource(id = R.drawable.globe_marker),
+        contentDescription = "Искать меня на карте",
+        modifier = Modifier.size(30.dp)
+    )
 }

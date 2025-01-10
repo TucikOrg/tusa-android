@@ -83,7 +83,7 @@ fun MainActionInModal(model: MainActionFabViewModel) {
             model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewProfileCardViewModel()),
             mainModel = model
         )
-        Spacer(modifier = Modifier.height(5.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         LocationSetupCard(
             model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewLocationSetupCardViewModel())
         )

@@ -1,5 +1,6 @@
 package com.artem.tusaandroid
 
+import android.content.Context
 import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
@@ -7,22 +8,26 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.ChatsState
 import com.artem.tusaandroid.app.dialog.AppDialogState
+import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.location.LastLocationState
+import com.artem.tusaandroid.location.LocationUpdatingState
 import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.notification.NotificationsService
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketListener
+import com.google.android.gms.location.LocationServices
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
@@ -30,6 +35,33 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+
+    @Provides
+    @Singleton
+    fun provideAppLogsState(): AppLogsState {
+        return AppLogsState()
+    }
+
+    @Provides
+    @Singleton
+    fun provideLocationUpdatingState(
+        @ApplicationContext appContext: Context,
+        lastLocationState: LastLocationState,
+        customTucikEndpoints: CustomTucikEndpoints,
+        moshi: Moshi,
+        okHttpClient: OkHttpClient,
+        appLogsState: AppLogsState
+    ): LocationUpdatingState {
+        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(appContext)
+        return LocationUpdatingState(
+            fusedLocationClient = fusedLocationClient,
+            lastLocationState = lastLocationState,
+            customTucikEndpoints = customTucikEndpoints,
+            moshi = moshi,
+            okHttpClient = okHttpClient,
+            appLogsState = appLogsState
+        )
+    }
 
     @Provides
     @Singleton
