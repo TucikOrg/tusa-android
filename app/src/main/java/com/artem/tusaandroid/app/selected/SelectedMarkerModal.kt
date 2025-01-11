@@ -115,7 +115,7 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
                         onClick = {
                             val location = model.locationsState?.getLocation(selectedMarker.value)
                             if (location != null) {
-                                NativeLibrary.setCameraPos(location.latitude, location.longitude, 15.0f)
+                                model.cameraState?.moveTo(location.latitude, location.longitude, 15.1f)
                             }
                         }
                     ) {

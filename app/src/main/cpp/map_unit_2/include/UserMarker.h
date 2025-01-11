@@ -37,6 +37,14 @@ public:
         cos_lon = cos(longitude);
     }
 
+    float getAnimationType(UserMarker* selectedMarker) {
+        if (selectedMarker != nullptr && markerId == selectedMarker->markerId) {
+            return  1.0;
+        } else {
+            return 0.0;
+        }
+    }
+
     unsigned char* getPixels() { return pixels; }
     void setPosition(float lat, float lon, MapFpsCounter* mapFpsCounter, float animationTime) {
         this->latitudePrevious = this->latitude;

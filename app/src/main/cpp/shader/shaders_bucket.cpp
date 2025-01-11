@@ -83,6 +83,9 @@ void ShadersBucket::compileAllShaders(AAssetManager* assetManager) {
             assetManager, "shaders/avatar_on_map_new.vert", "shaders/avatar_on_map_new.frag"
     ));
     error = CommonUtils::getGLErrorString();
+    avatarOnMapNewBigZoomShader = std::shared_ptr<AvatarsOnMapBigZoomShader>(new AvatarsOnMapBigZoomShader(
+            assetManager, "shaders/avatars_on_map_big_zoom.vert", "shaders/avatars_on_map_big_zoom.frag"
+    ));
 }
 
 void ShadersBucket::destroy() {
@@ -103,11 +106,12 @@ void ShadersBucket::destroy() {
     glDeleteProgram(pathTextShader->program);
     glDeleteProgram(avatarRayShader->program);
     glDeleteProgram(avatarOnMapNewShader->program);
+    glDeleteProgram(avatarOnMapNewBigZoomShader->program);
 }
 
-ShadersBucket::~ShadersBucket() {
+ShadersBucket::~ShadersBucket() {   }
 
-}
+
 
 
 

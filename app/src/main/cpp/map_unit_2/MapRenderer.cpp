@@ -135,12 +135,14 @@ void MapRenderer::renderFrame() {
                         canRefreshTitles
     );
 
-//    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
-//    auto zoomText = Utils::floatToWString(mn.zoom, 1);
-//    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
-//                            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
-//                            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
-//    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
+    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
+    auto zoomText = Utils::floatToWString(mn.zoom, 1);
+    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
+                            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
+                            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
+    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
+
+
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTileRender.getMapTexture(), 2, 2);
     //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);

@@ -532,120 +532,297 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         }
 
 
+
+        Eigen::Vector3f axisLon = fromLatLonToSphereDoublePos.axisLongitude.cast<float>();
+        Eigen::Vector3f axisLat = fromLatLonToSphereDoublePos.axisLatitude.cast<float>();
+        Eigen::Vector3f pointOnSphere = fromLatLonToSphereDoublePos.pointOnSphere.cast<float>();
+        auto color = MapColors::getAvatarsBorderColor();
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
-        float elapsedTime = mapFpsCounter->getTimeElapsed();
-        bool refreshAll = refreshAvatarsKey != renderMarkers.size() || manualRefreshAllAvatars;
-        bool refreshSelectedGroups = refreshGroup.size() > 0;
-        if (refreshAll || refreshSelectedGroups) {
-            refreshAvatarsKey = renderMarkers.size();
-            manualRefreshAllAvatars = false;
 
-            size_t avatarsResultToDrawCount = 0;
-            std::vector<float> avatarsRayData = {};
+        Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
+        Eigen::Matrix4f viewScreen = mapCamera.createView();
+        Eigen::Matrix4f pvScreen = projectionScreen * viewScreen;
 
-            // cобираем маркера в зависимости от атласов в которых они находятся
-            for (auto& pair : avatarsGroups) {
-                // если нужно пересобрать только определенные группы
-                if (refreshSelectedGroups && refreshGroup.count(pair.first) == 0) {
-                    continue;
+        // при больших зумах нужно каждый маркер рисовать отдельно так как не хватает точности float
+        // и считать точку нахождения в CPU
+        if (mapNumbers.zoom <= 15.0) {
+            // рисование маркеров пачками при маленьких зумах
+            // для масштаба планеты
+            float elapsedTime = mapFpsCounter->getTimeElapsed();
+            bool refreshAll = refreshAvatarsKey != renderMarkers.size() || manualRefreshAllAvatars;
+            bool refreshSelectedGroups = refreshGroup.size() > 0;
+            if (refreshAll || refreshSelectedGroups) {
+                refreshAvatarsKey = renderMarkers.size();
+                manualRefreshAllAvatars = false;
+
+                size_t avatarsResultToDrawCount = 0;
+                std::vector<float> avatarsRayData = {};
+
+                // cобираем маркера в зависимости от атласов в которых они находятся
+                for (auto& pair : avatarsGroups) {
+                    // если нужно пересобрать только определенные группы
+                    if (refreshSelectedGroups && refreshGroup.count(pair.first) == 0) {
+                        continue;
+                    }
+                    refreshGroup.erase(pair.first);
+
+                    auto& currentGroup = avatarsGroups[pair.first];
+                    auto markersOfGroup = pair.second.userMarkers;
+                    std::vector<float> avatarsData = {};
+                    std::vector<float> avatarsTargetMarkersSizeUniform(64);
+                    unsigned int avatarsTargetMarkersSizeUniformIndex = 0;
+
+                    std::vector<float> movementStartAnimationUniform(64);
+                    unsigned int movementStartAnimationUniformIndex = 0;
+
+                    std::vector<float> movementTargetLocationUniform(128);
+                    unsigned int movementTargetLocationUniformIndex = 0;
+
+                    std::vector<float> movementLocationUniform(128);
+                    unsigned int movementLocationUniformIndex = 0;
+
+                    std::vector<float> invertAnimationUnitUniform(64);
+                    unsigned int invertAnimationUnitUniformIndex = 0;
+
+                    std::vector<float> latitudeLongitudeUniform(128);
+                    unsigned int latitudeLongitudeUniformIndex = 0;
+
+                    std::vector<float> latitudeLongitudePreviousUniform(128);
+                    unsigned int latitudeLongitudePreviousUniformIndex = 0;
+
+                    std::vector<float> startAnimationElapsedTimeUniform(64);
+                    unsigned int startAnimationElapsedTimeUniformIndex = 0;
+
+                    std::vector<float> startMarkerSizeAnimationTimeUniform(64);
+                    unsigned int startMarkerSizeAnimationTimeUniformIndex = 0;
+
+                    std::vector<float> startAnimationLatLonTimeUniform(64);
+                    unsigned int startAnimationLatLonTimeUniformIndex = 0;
+
+                    std::vector<float> animationTypeUniform(64);
+                    unsigned int animationTypeUniformIndex = 0;
+
+                    float positionInUniforms = 0;
+                    size_t avatarsToDrawCount = 0;
+                    for (auto& markerInGroup : markersOfGroup) {
+                        auto& marker = markerInGroup;
+
+                        // если маркер не должен быть на экране, но встретился в атласе то игнорируем его
+                        if (renderMarkersMap.count(marker->markerId) == 0) {
+                            continue;
+                        }
+                        avatarsToDrawCount++;
+                        avatarsResultToDrawCount++;
+
+                        auto& atlasPointer = marker->atlasPointer;
+                        auto& markerSize = marker->markerSize;
+
+                        auto& startMarkerSizeAnimationTime = marker->startMarkerSizeAnimationTime;
+                        startMarkerSizeAnimationTimeUniform[startMarkerSizeAnimationTimeUniformIndex++] = startMarkerSizeAnimationTime;
+
+                        auto& startAnimationLatLonTime = marker->startAnimationLatLonTime;
+                        startAnimationLatLonTimeUniform[startAnimationLatLonTimeUniformIndex++] = startAnimationLatLonTime;
+
+                        auto& latitude = marker->latitude;
+                        auto& longitude = marker->longitude;
+                        latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -latitude;
+                        latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -longitude;
+
+                        auto& latitudePrevious = marker->latitudePrevious;
+                        auto& longitudePrevious = marker->longitudePrevious;
+                        latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -latitudePrevious;
+                        latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -longitudePrevious;
+
+                        auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
+                        startAnimationElapsedTimeUniform[startAnimationElapsedTimeUniformIndex++] = startAnimationElapsedTime;
+
+                        float invertAnimationUnit = marker->invertAnimationUnit;
+                        invertAnimationUnitUniform[invertAnimationUnitUniformIndex++] = invertAnimationUnit;
+
+                        float movementX = marker->movementX;
+                        float movementY = marker->movementY;
+                        movementLocationUniform[movementLocationUniformIndex++] = movementX;
+                        movementLocationUniform[movementLocationUniformIndex++] = movementY;
+
+                        float movementTargetX = marker->movementTargetX;
+                        float movementTargetY = marker->movementTargetY;
+                        movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetX;
+                        movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetY;
+
+                        float movementStartAnimation = marker->startMovementAnimation;
+                        movementStartAnimationUniform[movementStartAnimationUniformIndex++] = movementStartAnimation;
+
+                        float targetMarkerSize = marker->targetMarkerSize;
+                        avatarsTargetMarkersSizeUniform[avatarsTargetMarkersSizeUniformIndex++] = targetMarkerSize;
+
+                        animationTypeUniform[animationTypeUniformIndex++] = marker->getAnimationType(selectedMarker);
+
+
+                        float startU = FLOAT(atlasPointer.x) / atlasAvatarSize;
+                        float endU = FLOAT(atlasPointer.x + avatarSize) / atlasAvatarSize;
+                        float startV = FLOAT(atlasPointer.y) / atlasAvatarSize;
+                        float endV =  FLOAT(atlasPointer.y + avatarSize) / atlasAvatarSize;
+
+                        float data[] = {
+                                startU, startV,  -markerSize, -markerSize,  positionInUniforms,
+                                endU, startV,    markerSize, -markerSize,  positionInUniforms,
+                                endU, endV,      markerSize, markerSize,   positionInUniforms,
+                                startU, endV,    -markerSize, markerSize,   positionInUniforms,
+                        };
+                        positionInUniforms++;
+
+                        for (auto item : data) {
+                            avatarsData.push_back(item);
+                        }
+                    }
+
+                    std::vector<unsigned int> indices(avatarsToDrawCount * 6);
+                    currentGroup.avatarsIboSize = indices.size();
+                    unsigned int currentPoint = 0;
+                    for (int i = 0; i < avatarsToDrawCount; i++) {
+                        unsigned int skip = i * 6;
+                        indices[skip + 0] = currentPoint + 0;
+                        indices[skip + 1] = currentPoint + 1;
+                        indices[skip + 2] = currentPoint + 2;
+                        indices[skip + 3] = currentPoint + 0;
+                        indices[skip + 4] = currentPoint + 2;
+                        indices[skip + 5] = currentPoint + 3;
+                        currentPoint += 4;
+                    }
+
+                    {
+                        glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsVBO);
+                        auto data = avatarsData.data();
+                        auto size = avatarsData.size() * sizeof(float);
+                        glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+                    }
+
+                    currentGroup.avatarsTargetMarkerSize = std::move(avatarsTargetMarkersSizeUniform);
+                    currentGroup.movementStartAnimation = std::move(movementStartAnimationUniform);
+                    currentGroup.movementTargetLocation = std::move(movementTargetLocationUniform);
+                    currentGroup.movementLocation = std::move(movementLocationUniform);
+                    currentGroup.invertAnimationUnit = std::move(invertAnimationUnitUniform);
+                    currentGroup.startAnimationElapsedTime = std::move(startAnimationElapsedTimeUniform);
+                    currentGroup.latitudeLongitude = std::move(latitudeLongitudeUniform);
+                    currentGroup.latitudeLongitudePrevious = std::move(latitudeLongitudePreviousUniform);
+                    currentGroup.startMarkerSizeAnimation = std::move(startMarkerSizeAnimationTimeUniform);
+                    currentGroup.animationType = std::move(animationTypeUniform);
+                    currentGroup.startAnimationLatLonTime = std::move(startAnimationLatLonTimeUniform);
+
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
                 }
-                refreshGroup.erase(pair.first);
 
-                auto& currentGroup = avatarsGroups[pair.first];
-                auto markersOfGroup = pair.second.userMarkers;
-                std::vector<float> avatarsData = {};
-                std::vector<float> avatarsTargetMarkersSizeUniform(64);
-                unsigned int avatarsTargetMarkersSizeUniformIndex = 0;
+                glBindBuffer(GL_ARRAY_BUFFER, 0);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+            }
 
-                std::vector<float> movementStartAnimationUniform(64);
-                unsigned int movementStartAnimationUniformIndex = 0;
 
-                std::vector<float> movementTargetLocationUniform(128);
-                unsigned int movementTargetLocationUniformIndex = 0;
+            auto avatarsOnMap = shadersBucket.avatarOnMapNewShader;
+            glUseProgram(avatarsOnMap->program);
+            glUniform3f(avatarsOnMap->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+            glUniform3f(avatarsOnMap->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+            glUniform3f(avatarsOnMap->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+            glUniform1f(avatarsOnMap->getRadiusLocation(), mapNumbers.radius);
+            glUniform1f(avatarsOnMap->getScaleLocation(), scale);
+            glUniformMatrix4fv(avatarsOnMap->getMatrixLocation(), 1, GL_FALSE, pv.data());
+            glUniformMatrix4fv(avatarsOnMap->getPvScreenLocation(), 1, GL_FALSE, pvScreen.data());
+            glUniform2f(avatarsOnMap->getScreenSizeLocation(), screenWidth, screenHeight);
+            glUniform1i(avatarsOnMap->getTextureLocation(), 0);
+            glUniform1f(avatarsOnMap->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
+            glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
+            glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
+            glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
+            glUniform1f(avatarsOnMap->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
+            glUniform1f(avatarsOnMap->getStartSelectionAnimationTime(), markerWasSelectedTime);
+            glUniform1f(avatarsOnMap->getAnimationLatLonTime(), markerLatLonAnimationTime);
 
-                std::vector<float> movementLocationUniform(128);
-                unsigned int movementLocationUniformIndex = 0;
+            // рисуем маркера по группам
+            for (auto& pair : avatarsGroups) {
+                auto& group = pair.second;
+                // сколько компонентов в data для рендринга аватара
+                size_t stride = 5 * sizeof(float);
+                glBindTexture(GL_TEXTURE_2D, pair.first);
+                glUniform1fv(avatarsOnMap->getTargetMarkerSizeArrayLocation(), 64, group.avatarsTargetMarkerSize.data());
+                glUniform1fv(avatarsOnMap->getMovementStartAnimationTimeLocation(), 64, group.movementStartAnimation.data());
+                glUniform2fv(avatarsOnMap->getMovementTargetMarkerLocation(), 64, group.movementTargetLocation.data());
+                glUniform2fv(avatarsOnMap->getMovementMarkerLocation(), 64, group.movementLocation.data());
+                glUniform1fv(avatarsOnMap->getInvertAnimationUnitLocation(), 64, group.invertAnimationUnit.data());
+                glUniform1fv(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 64, group.startAnimationElapsedTime.data());
+                glUniform2fv(avatarsOnMap->getLatLonLocation(), 64, group.latitudeLongitude.data());
+                glUniform1fv(avatarsOnMap->getStartMarkerSizeAnimation(), 64, group.startMarkerSizeAnimation.data());
+                glUniform1fv(avatarsOnMap->getMarkerAnimationType(), 64, group.animationType.data());
+                glUniform1fv(avatarsOnMap->getStartAnimationLatLonTime(), 64, group.startAnimationLatLonTime.data());
+                glUniform2fv(avatarsOnMap->getLatLonPreviousLocation(), 64, group.latitudeLongitudePrevious.data());
 
-                std::vector<float> invertAnimationUnitUniform(64);
-                unsigned int invertAnimationUnitUniformIndex = 0;
+                glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
+                glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
+                glEnableVertexAttribArray(avatarsOnMap->getTextureCord());
+                glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
+                glEnableVertexAttribArray(avatarsOnMap->getBorderDirection());
+                glVertexAttribPointer(avatarsOnMap->getPositionInUniformsLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
+                glEnableVertexAttribArray(avatarsOnMap->getPositionInUniformsLocation());
+                glUniform1f(avatarsOnMap->getMovementAnimationTimeLocation(), movementAnimationTime);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, group.avatarsIBO);
+                glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 1.0);
+                glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
+                glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 0.0);
+                glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
+            }
+        } else {
+            auto avatarsOnMapBigZoom = shadersBucket.avatarOnMapNewBigZoomShader;
+            glUseProgram(avatarsOnMapBigZoom->program);
+            glUniform3f(avatarsOnMapBigZoom->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
+            glUniform3f(avatarsOnMapBigZoom->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
+            glUniform3f(avatarsOnMapBigZoom->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
+            glUniform1f(avatarsOnMapBigZoom->getRadiusLocation(), mapNumbers.radius);
+            glUniform1f(avatarsOnMapBigZoom->getScaleLocation(), scale);
+            glUniformMatrix4fv(avatarsOnMapBigZoom->getMatrixLocation(), 1, GL_FALSE, pv.data());
+            glUniformMatrix4fv(avatarsOnMapBigZoom->getPvScreenLocation(), 1, GL_FALSE, pvScreen.data());
+            glUniform2f(avatarsOnMapBigZoom->getScreenSizeLocation(), screenWidth, screenHeight);
+            glUniform1i(avatarsOnMapBigZoom->getTextureLocation(), 0);
+            glUniform1f(avatarsOnMapBigZoom->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
+            glUniform1f(avatarsOnMapBigZoom->getAnimationTimeLocation(), animationTime);
+            glUniform3fv(avatarsOnMapBigZoom->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
+            glUniform1f(avatarsOnMapBigZoom->getBorderWidthLocation(), borderWidth);
+            glUniform1f(avatarsOnMapBigZoom->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
+            glUniform1f(avatarsOnMapBigZoom->getStartSelectionAnimationTime(), markerWasSelectedTime);
+            glUniform1f(avatarsOnMapBigZoom->getAnimationLatLonTime(), markerLatLonAnimationTime);
 
-                std::vector<float> latitudeLongitudeUniform(128);
-                unsigned int latitudeLongitudeUniformIndex = 0;
-
-                std::vector<float> latitudeLongitudePreviousUniform(128);
-                unsigned int latitudeLongitudePreviousUniformIndex = 0;
-
-                std::vector<float> startAnimationElapsedTimeUniform(64);
-                unsigned int startAnimationElapsedTimeUniformIndex = 0;
-
-                std::vector<float> startMarkerSizeAnimationTimeUniform(64);
-                unsigned int startMarkerSizeAnimationTimeUniformIndex = 0;
-
-                std::vector<float> startAnimationLatLonTimeUniform(64);
-                unsigned int startAnimationLatLonTimeUniformIndex = 0;
-
-                std::vector<float> animationTypeUniform(64);
-                unsigned int animationTypeUniformIndex = 0;
-
-                float positionInUniforms = 0;
-                size_t avatarsToDrawCount = 0;
-                for (auto& markerInGroup : markersOfGroup) {
+            for (auto& pair : avatarsGroups) {
+                auto& group = pair.second;
+                auto markersOfGroup = group.userMarkers;
+                for (auto markerInGroup : markersOfGroup) {
                     auto& marker = markerInGroup;
-
-                    // если маркер не должен быть на экране, но встретился в атласе то игнорируем его
                     if (renderMarkersMap.count(marker->markerId) == 0) {
                         continue;
                     }
-                    avatarsToDrawCount++;
-                    avatarsResultToDrawCount++;
 
                     auto& atlasPointer = marker->atlasPointer;
                     auto& markerSize = marker->markerSize;
-
-                    auto& startMarkerSizeAnimationTime = marker->startMarkerSizeAnimationTime;
-                    startMarkerSizeAnimationTimeUniform[startMarkerSizeAnimationTimeUniformIndex++] = startMarkerSizeAnimationTime;
-
-                    auto& startAnimationLatLonTime = marker->startAnimationLatLonTime;
-                    startAnimationLatLonTimeUniform[startAnimationLatLonTimeUniformIndex++] = startAnimationLatLonTime;
-
                     auto& latitude = marker->latitude;
                     auto& longitude = marker->longitude;
-                    latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -latitude;
-                    latitudeLongitudeUniform[latitudeLongitudeUniformIndex++] = -longitude;
-
                     auto& latitudePrevious = marker->latitudePrevious;
                     auto& longitudePrevious = marker->longitudePrevious;
-                    latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -latitudePrevious;
-                    latitudeLongitudePreviousUniform[latitudeLongitudePreviousUniformIndex++] = -longitudePrevious;
+                    Eigen::Vector3f currentLocation = fromLatLonToSphereDoublePos.getPoint(mapNumbers.radius, latitude, longitude).cast<float>();
+                    Eigen::Vector3f previousLocation = fromLatLonToSphereDoublePos.getPoint(mapNumbers.radius, latitudePrevious, longitudePrevious).cast<float>();
 
-                    auto& startAnimationElapsedTime = marker->startAnimationElapsedTime;
-                    startAnimationElapsedTimeUniform[startAnimationElapsedTimeUniformIndex++] = startAnimationElapsedTime;
 
-                    float invertAnimationUnit = marker->invertAnimationUnit;
-                    invertAnimationUnitUniform[invertAnimationUnitUniformIndex++] = invertAnimationUnit;
-
-                    float movementX = marker->movementX;
-                    float movementY = marker->movementY;
-                    movementLocationUniform[movementLocationUniformIndex++] = movementX;
-                    movementLocationUniform[movementLocationUniformIndex++] = movementY;
-
-                    float movementTargetX = marker->movementTargetX;
-                    float movementTargetY = marker->movementTargetY;
-                    movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetX;
-                    movementTargetLocationUniform[movementTargetLocationUniformIndex++] = movementTargetY;
-
-                    float movementStartAnimation = marker->startMovementAnimation;
-                    movementStartAnimationUniform[movementStartAnimationUniformIndex++] = movementStartAnimation;
-
-                    float targetMarkerSize = marker->targetMarkerSize;
-                    avatarsTargetMarkersSizeUniform[avatarsTargetMarkersSizeUniformIndex++] = targetMarkerSize;
-
-                    if (selectedMarker != nullptr && marker->markerId == selectedMarker->markerId) {
-                        animationTypeUniform[animationTypeUniformIndex++] = 1.0;
-                    } else {
-                        animationTypeUniform[animationTypeUniformIndex++] = 0.0;
-                    }
-
+                    size_t stride = 4 * sizeof(float);
+                    glBindTexture(GL_TEXTURE_2D, pair.first);
+                    glUniform1f(avatarsOnMapBigZoom->getTargetMarkerSizeArrayLocation(), marker->targetMarkerSize);
+                    glUniform1f(avatarsOnMapBigZoom->getMovementStartAnimationTimeLocation(), marker->startMovementAnimation);
+                    glUniform2f(avatarsOnMapBigZoom->getMovementTargetMarkerLocation(), marker->movementTargetX, marker->movementTargetY);
+                    glUniform2f(avatarsOnMapBigZoom->getMovementMarkerLocation(), marker->movementX, marker->movementY);
+                    glUniform1f(avatarsOnMapBigZoom->getInvertAnimationUnitLocation(), marker->invertAnimationUnit);
+                    glUniform1f(avatarsOnMapBigZoom->getStartAnimationElapsedTimeLocation(), marker->startAnimationElapsedTime);
+                    glUniform2f(avatarsOnMapBigZoom->getLatLonLocation(), marker->latitude, marker->longitude);
+                    glUniform1f(avatarsOnMapBigZoom->getStartMarkerSizeAnimation(), marker->startMarkerSizeAnimationTime);
+                    glUniform1f(avatarsOnMapBigZoom->getMarkerAnimationType(), marker->getAnimationType(selectedMarker));
+                    glUniform1f(avatarsOnMapBigZoom->getStartAnimationLatLonTime(), marker->startAnimationLatLonTime);
+                    glUniform2f(avatarsOnMapBigZoom->getLatLonPreviousLocation(), marker->latitudePrevious, marker->longitudePrevious);
+                    glUniform3f(avatarsOnMapBigZoom->getPointOnMap(), currentLocation.x(), currentLocation.y(), currentLocation.z());
+                    glUniform3f(avatarsOnMapBigZoom->getPointOnMapPrevious(), previousLocation.x(), previousLocation.y(), previousLocation.z());
 
                     float startU = FLOAT(atlasPointer.x) / atlasAvatarSize;
                     float endU = FLOAT(atlasPointer.x + avatarSize) / atlasAvatarSize;
@@ -653,180 +830,40 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                     float endV =  FLOAT(atlasPointer.y + avatarSize) / atlasAvatarSize;
 
                     float data[] = {
-                            startU, startV,  -markerSize, -markerSize,  positionInUniforms,
-                            endU, startV,    markerSize, -markerSize,  positionInUniforms,
-                            endU, endV,      markerSize, markerSize,   positionInUniforms,
-                            startU, endV,    -markerSize, markerSize,   positionInUniforms,
+                            startU, startV,  -markerSize, -markerSize,
+                            endU, startV,    markerSize, -markerSize,
+                            endU, endV,      markerSize, markerSize,
+                            startU, endV,    -markerSize, markerSize,
                     };
-                    positionInUniforms++;
 
-                    for (auto item : data) {
-                        avatarsData.push_back(item);
+                    int avatarsToDrawCount = 1.0;
+                    std::vector<unsigned int> indices(avatarsToDrawCount * 6);
+                    int avatarsIboSize = indices.size();
+                    unsigned int currentPoint = 0;
+                    for (int i = 0; i < avatarsToDrawCount; i++) {
+                        unsigned int skip = i * 6;
+                        indices[skip + 0] = currentPoint + 0;
+                        indices[skip + 1] = currentPoint + 1;
+                        indices[skip + 2] = currentPoint + 2;
+                        indices[skip + 3] = currentPoint + 0;
+                        indices[skip + 4] = currentPoint + 2;
+                        indices[skip + 5] = currentPoint + 3;
+                        currentPoint += 4;
                     }
 
-                    float avatarsRayRaw[] = {
-                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, 0, 0, 0, markerSize,
-                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, -1, markerSize,
-                            -latitude, -longitude, startAnimationElapsedTime, marker->invertAnimationUnit, movementX, movementY, 1, markerSize,
-                    };
-                    for (auto item : avatarsRayRaw) {
-                        avatarsRayData.push_back(item);
-                    }
+                    glVertexAttribPointer(avatarsOnMapBigZoom->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, data);
+                    glEnableVertexAttribArray(avatarsOnMapBigZoom->getTextureCord());
+                    glVertexAttribPointer(avatarsOnMapBigZoom->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, data + 2);
+                    glEnableVertexAttribArray(avatarsOnMapBigZoom->getBorderDirection());
+                    glUniform1f(avatarsOnMapBigZoom->getMovementAnimationTimeLocation(), movementAnimationTime);
+                    glUniform1f(avatarsOnMapBigZoom->getDrawColorMixLocation(), 1.0);
+                    glDrawElements(GL_TRIANGLES, avatarsIboSize, GL_UNSIGNED_INT, indices.data());
+                    glUniform1f(avatarsOnMapBigZoom->getDrawColorMixLocation(), 0.0);
+                    glDrawElements(GL_TRIANGLES, avatarsIboSize, GL_UNSIGNED_INT, indices.data());
                 }
-
-                std::vector<unsigned int> indices(avatarsToDrawCount * 6);
-                currentGroup.avatarsIboSize = indices.size();
-                unsigned int currentPoint = 0;
-                for (int i = 0; i < avatarsToDrawCount; i++) {
-                    unsigned int skip = i * 6;
-                    indices[skip + 0] = currentPoint + 0;
-                    indices[skip + 1] = currentPoint + 1;
-                    indices[skip + 2] = currentPoint + 2;
-                    indices[skip + 3] = currentPoint + 0;
-                    indices[skip + 4] = currentPoint + 2;
-                    indices[skip + 5] = currentPoint + 3;
-                    currentPoint += 4;
-                }
-
-                {
-                    glBindBuffer(GL_ARRAY_BUFFER, currentGroup.avatarsVBO);
-                    auto data = avatarsData.data();
-                    auto size = avatarsData.size() * sizeof(float);
-                    glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-                }
-
-                currentGroup.avatarsTargetMarkerSize = std::move(avatarsTargetMarkersSizeUniform);
-                currentGroup.movementStartAnimation = std::move(movementStartAnimationUniform);
-                currentGroup.movementTargetLocation = std::move(movementTargetLocationUniform);
-                currentGroup.movementLocation = std::move(movementLocationUniform);
-                currentGroup.invertAnimationUnit = std::move(invertAnimationUnitUniform);
-                currentGroup.startAnimationElapsedTime = std::move(startAnimationElapsedTimeUniform);
-                currentGroup.latitudeLongitude = std::move(latitudeLongitudeUniform);
-                currentGroup.latitudeLongitudePrevious = std::move(latitudeLongitudePreviousUniform);
-                currentGroup.startMarkerSizeAnimation = std::move(startMarkerSizeAnimationTimeUniform);
-                currentGroup.animationType = std::move(animationTypeUniform);
-                currentGroup.startAnimationLatLonTime = std::move(startAnimationLatLonTimeUniform);
-
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, currentGroup.avatarsIBO);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
             }
-
-            // cобираем лучи
-            std::vector<unsigned int> indices(avatarsResultToDrawCount * 3);
-            avatarsRayIBOSize = indices.size();
-            unsigned int currentPoint = 0;
-            for (int i = 0; i < avatarsResultToDrawCount; i++) {
-                unsigned int skip = i * 3;
-                indices[skip + 0] = currentPoint + 0;
-                indices[skip + 1] = currentPoint + 1;
-                indices[skip + 2] = currentPoint + 2;
-                currentPoint += 3;
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, avatarRaysVBO);
-            auto data = avatarsRayData.data();
-            auto size = avatarsRayData.size() * sizeof(float);
-            glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsRayIBO);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-            glBindBuffer(GL_ARRAY_BUFFER, 0);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         }
 
-
-        Eigen::Vector3f axisLon = fromLatLonToSphereDoublePos.axisLongitude.cast<float>();
-        Eigen::Vector3f axisLat = fromLatLonToSphereDoublePos.axisLatitude.cast<float>();
-        Eigen::Vector3f pointOnSphere = fromLatLonToSphereDoublePos.pointOnSphere.cast<float>();
-        auto color = MapColors::getAvatarsBorderColor();
-
-//        if (avatarsRayIBOSize > 0) {
-//            // рендрим лучи
-//            size_t stride = 8 * sizeof(float);
-//
-//            auto avatarsRays = shadersBucket.avatarRayShader;
-//            glUseProgram(avatarsRays->program);
-//            glUniform3f(avatarsRays->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
-//            glUniform3f(avatarsRays->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
-//            glUniform3f(avatarsRays->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
-//            glUniform1f(avatarsRays->getRadiusLocation(), mapNumbers.radius);
-//            glUniform1f(avatarsRays->getScaleLocation(), scale);
-//            glUniformMatrix4fv(avatarsRays->getMatrixLocation(), 1, GL_FALSE, pv.data());
-//            glUniform1f(avatarsRays->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
-//            glUniform1f(avatarsRays->getAnimationTimeLocation(), animationTime);
-//            glUniform3fv(avatarsRays->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
-//
-//            glBindBuffer(GL_ARRAY_BUFFER, avatarRaysVBO);
-//            glVertexAttribPointer(avatarsRays->getLatLonLocation(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(0 * sizeof(float)));
-//            glEnableVertexAttribArray(avatarsRays->getLatLonLocation());
-//            glVertexAttribPointer(avatarsRays->getStartAnimationElapsedTimeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
-//            glEnableVertexAttribArray(avatarsRays->getStartAnimationElapsedTimeLocation());
-//            glVertexAttribPointer(avatarsRays->getInvertAnimationUnitLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(3 * sizeof(float)));
-//            glEnableVertexAttribArray(avatarsRays->getInvertAnimationUnitLocation());
-//            glVertexAttribPointer(avatarsRays->getMovementMarkerLocation(), 3, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
-//            glEnableVertexAttribArray(avatarsRays->getMovementMarkerLocation());
-//            glVertexAttribPointer(avatarsRays->getMarkerSizeLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(7 * sizeof(float)));
-//            glEnableVertexAttribArray(avatarsRays->getMarkerSizeLocation());
-//            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, avatarsRayIBO);
-//            glDrawElements(GL_TRIANGLES, avatarsRayIBOSize, GL_UNSIGNED_INT, 0);
-//        }
-
-        Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
-        Eigen::Matrix4f viewScreen = mapCamera.createView();
-        Eigen::Matrix4f pvScreen = projectionScreen * viewScreen;
-
-
-        auto avatarsOnMap = shadersBucket.avatarOnMapNewShader;
-        glUseProgram(avatarsOnMap->program);
-        glUniform3f(avatarsOnMap->getAxisLongitudeLocation(), axisLon.x(), axisLon.y(), axisLon.z());
-        glUniform3f(avatarsOnMap->getAxisLatitudeLocation(), axisLat.x(), axisLat.y(), axisLat.z());
-        glUniform3f(avatarsOnMap->getPointOnSphereLocation(), pointOnSphere.x(), pointOnSphere.y(), pointOnSphere.z());
-        glUniform1f(avatarsOnMap->getRadiusLocation(), mapNumbers.radius);
-        glUniform1f(avatarsOnMap->getScaleLocation(), scale);
-        glUniformMatrix4fv(avatarsOnMap->getMatrixLocation(), 1, GL_FALSE, pv.data());
-        glUniformMatrix4fv(avatarsOnMap->getPvScreenLocation(), 1, GL_FALSE, pvScreen.data());
-        glUniform2f(avatarsOnMap->getScreenSizeLocation(), screenWidth, screenHeight);
-        glUniform1i(avatarsOnMap->getTextureLocation(), 0);
-        glUniform1f(avatarsOnMap->getCurrentElapsedTimeLocation(), mapFpsCounter->getTimeElapsed());
-        glUniform1f(avatarsOnMap->getAnimationTimeLocation(), animationTime);
-        glUniform3fv(avatarsOnMap->getColorLocation(), 1, CommonUtils::toOpenGlColor(color).data());
-        glUniform1f(avatarsOnMap->getBorderWidthLocation(), borderWidth);
-        glUniform1f(avatarsOnMap->getMarkerSizeAnimationTime(), markerSizeAnimationTime);
-        glUniform1f(avatarsOnMap->getStartSelectionAnimationTime(), markerWasSelectedTime);
-        glUniform1f(avatarsOnMap->getAnimationLatLonTime(), markerLatLonAnimationTime);
-
-        // рисуем маркера по группам
-        for (auto& pair : avatarsGroups) {
-            auto& group = pair.second;
-            // сколько компонентов в data для рендринга аватара
-            size_t stride = 5 * sizeof(float);
-            glBindTexture(GL_TEXTURE_2D, pair.first);
-            glUniform1fv(avatarsOnMap->getTargetMarkerSizeArrayLocation(), 64, group.avatarsTargetMarkerSize.data());
-            glUniform1fv(avatarsOnMap->getMovementStartAnimationTimeLocation(), 64, group.movementStartAnimation.data());
-            glUniform2fv(avatarsOnMap->getMovementTargetMarkerLocation(), 64, group.movementTargetLocation.data());
-            glUniform2fv(avatarsOnMap->getMovementMarkerLocation(), 64, group.movementLocation.data());
-            glUniform1fv(avatarsOnMap->getInvertAnimationUnitLocation(), 64, group.invertAnimationUnit.data());
-            glUniform1fv(avatarsOnMap->getStartAnimationElapsedTimeLocation(), 64, group.startAnimationElapsedTime.data());
-            glUniform2fv(avatarsOnMap->getLatLonLocation(), 64, group.latitudeLongitude.data());
-            glUniform1fv(avatarsOnMap->getStartMarkerSizeAnimation(), 64, group.startMarkerSizeAnimation.data());
-            glUniform1fv(avatarsOnMap->getMarkerAnimationType(), 64, group.animationType.data());
-            glUniform1fv(avatarsOnMap->getStartAnimationLatLonTime(), 64, group.startAnimationLatLonTime.data());
-            glUniform2fv(avatarsOnMap->getLatLonPreviousLocation(), 64, group.latitudeLongitudePrevious.data());
-
-            glBindBuffer(GL_ARRAY_BUFFER, group.avatarsVBO);
-            glVertexAttribPointer(avatarsOnMap->getTextureCord(), 2, GL_FLOAT, GL_FALSE, stride, 0);
-            glEnableVertexAttribArray(avatarsOnMap->getTextureCord());
-            glVertexAttribPointer(avatarsOnMap->getBorderDirection(), 2, GL_FLOAT, GL_FALSE, stride, (void*)(2 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getBorderDirection());
-            glVertexAttribPointer(avatarsOnMap->getPositionInUniformsLocation(), 1, GL_FLOAT, GL_FALSE, stride, (void*)(4 * sizeof(float)));
-            glEnableVertexAttribArray(avatarsOnMap->getPositionInUniformsLocation());
-            glUniform1f(avatarsOnMap->getMovementAnimationTimeLocation(), movementAnimationTime);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, group.avatarsIBO);
-            glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 1.0);
-            glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
-            glUniform1f(avatarsOnMap->getDrawColorMixLocation(), 0.0);
-            glDrawElements(GL_TRIANGLES, group.avatarsIboSize, GL_UNSIGNED_INT, 0);
-        }
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);

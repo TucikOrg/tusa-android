@@ -26,6 +26,7 @@
 #include "path_text_shader.h"
 #include "avatar_on_map_new_shader.h"
 #include "avatar_ray_shader.h"
+#include "avatars_on_map_big_zoom_shader.h"
 #include <boost/shared_ptr.hpp>
 
 class ShadersBucket {
@@ -53,6 +54,7 @@ public:
     std::shared_ptr<PathTextShader> pathTextShader;
     std::shared_ptr<AvatarRayShader> avatarRayShader;
     std::shared_ptr<AvatarOnMapNewShader> avatarOnMapNewShader;
+    std::shared_ptr<AvatarsOnMapBigZoomShader> avatarOnMapNewBigZoomShader;
 };
 
 

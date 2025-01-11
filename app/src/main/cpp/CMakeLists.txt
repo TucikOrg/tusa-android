@@ -46,6 +46,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         shader/path_text_shader.cpp
         shader/avatar_ray_shader.cpp
         shader/avatar_on_map_new_shader.cpp
+        shader/avatars_on_map_big_zoom_shader.cpp
 
         util/timer.cpp
         util/eigen_gl.cpp

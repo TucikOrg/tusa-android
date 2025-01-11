@@ -38,6 +38,14 @@ class AppModule {
 
     @Provides
     @Singleton
+    fun provideCameraState(
+        systemUIState: SystemUIState
+    ): CameraState {
+        return CameraState(systemUIState)
+    }
+
+    @Provides
+    @Singleton
     fun provideAppLogsState(): AppLogsState {
         return AppLogsState()
     }
