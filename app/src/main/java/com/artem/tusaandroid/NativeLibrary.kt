@@ -29,6 +29,6 @@ object NativeLibrary {
     external fun removeMarker(key: Long)
     external fun updateMarkerAvatar(key: Long, avatarBuffer: ByteArray)
     external fun updateMarkerGeo(key: Long, latitude: Float, longitude: Float)
-    external fun addMarker(key: Long, latitude: Float, longitude: Float, avatarBuffer: ByteArray)
+    external fun addMarker(key: Long, latitude: Float, longitude: Float, avatarBuffer: ByteArray, updateAvatar: Boolean)
     external fun existMarker(key: Long): Boolean
 }

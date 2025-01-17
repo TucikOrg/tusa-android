@@ -12,9 +12,9 @@ class InputUniqueNameViewModel @Inject constructor(
 ): ViewModel() {
     val showModal = mutableStateOf(profileState?.getUniqueName()?.value?.isEmpty() == true)
 
-    fun getUniqueName() = profileState?.getUniqueName()?: mutableStateOf("")
+    fun getUniqueName() = profileState?.getUniqueName()?: mutableStateOf<String?>("")
 
-    fun changeUniqueName(uniqueName: String) {
+    fun changeUniqueName(uniqueName: String?) {
         profileState?.changeUniqueName(uniqueName)
         showModal.value = false
     }

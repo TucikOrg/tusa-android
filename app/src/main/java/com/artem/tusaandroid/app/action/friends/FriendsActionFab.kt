@@ -15,25 +15,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 
-@Preview
-@Composable
-fun PreviewFriendsActionFab() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(0.dp)
-    ) {
-        FriendsActionFab(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .width(80.dp)
-                .height(80.dp)
-                .padding(16.dp),
-            PreviewFriendViewModel()
-        )
-    }
-}
-
 @Composable
 fun FriendsActionFab(modifier: Modifier, model: FriendViewModel) {
     if (model.showModal.value) {

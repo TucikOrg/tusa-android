@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.dto
 
+import com.artem.tusaandroid.dto.messenger.ChatResponse
 import kotlinx.serialization.Serializable
 
 @Serializable

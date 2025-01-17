@@ -7,6 +7,6 @@ class CameraState(
 ) {
     fun moveTo(latitude: Float, longitude: Float, zoom: Float) {
         NativeLibrary.setCameraPos(latitude, longitude, zoom)
-        systemUIState?.setLight(zoom > 3.0f)
+        systemUIState?.setLight(zoom <= 3.0f)
     }
 }

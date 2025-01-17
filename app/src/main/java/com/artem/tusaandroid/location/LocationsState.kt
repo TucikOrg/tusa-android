@@ -1,22 +1,16 @@
 package com.artem.tusaandroid.location
 
-import com.artem.tusaandroid.socket.EventListener
-import com.artem.tusaandroid.socket.SocketListener
+import com.artem.tusaandroid.NativeLibrary
 
-class LocationsState(
-    private val socketListener: SocketListener
-) {
-    init {
-        socketListener.getReceiveMessage().locationsBus.addListener(object: EventListener<List<LocationDto>> {
-            override fun onEvent(event: List<LocationDto>) {
-                currentLocations = event
-            }
-        })
+class LocationsState() {
+    var friendLocations: MutableList<FriendLocation> = mutableListOf()
+
+    fun getLocation(markerId: Long): FriendLocation? {
+        return friendLocations.find { it.ownerId == markerId }
     }
 
-    var currentLocations: List<LocationDto> = listOf()
-
-    fun getLocation(markerId: Long): LocationDto? {
-        return currentLocations.find { it.ownerId == markerId }
+    fun removeLocation(markerId: kotlin.Long) {
+        friendLocations.removeIf { it.ownerId == markerId }
+        NativeLibrary.removeMarker(markerId)
     }
 }

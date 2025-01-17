@@ -12,19 +12,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
-import com.artem.tusaandroid.socket.SendMessage
-import com.artem.tusaandroid.socket.SocketBinaryMessage
+import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.cbor.Cbor
-import kotlinx.serialization.encodeToByteArray
 import javax.inject.Inject
 
 @HiltViewModel
 open class ProfileCardViewModel @Inject constructor(
     private val profileState: ProfileState?,
-    private val socketListener: SocketListener?
+    val connectionState: SocketConnectionState?
 ): ViewModel() {
     private var showModal = mutableStateOf(false)
 
@@ -32,7 +28,7 @@ open class ProfileCardViewModel @Inject constructor(
         return profileState?.getName()?: mutableStateOf("Name")
     }
 
-    fun getUniqueName(): MutableState<String> {
+    fun getUniqueName(): MutableState<String?> {
         return profileState?.getUniqueName()?: mutableStateOf("unique")
     }
 

@@ -17,8 +17,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,14 +26,10 @@ import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.isPreview
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import com.artem.tusaandroid.dto.FriendDto
 
 @Composable
 fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
-//    LaunchedEffect(Unit) {
-//        model.checkAlreadyFriend(friend.id!!)
-//    }
 
     val height = 90.dp
     Box(
@@ -56,7 +51,7 @@ fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
                         .size(70.dp)
                         .padding(0.dp),
                     model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendAvatarViewModel()),
-                    userId = friend.id!!
+                    userId = friend.id
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 Column(
@@ -77,26 +72,47 @@ fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
                     }
                 }
 
+                LaunchedEffect(Unit) {
+                    model.check(friend.id)
+                }
+                val friendRequestRowState = model.friendRequestRowState.value
 
-                var requestSent by remember { mutableStateOf(false) }
-                if (model.checkAlreadyFriend(friend.id)) {
-                    Text(
-                        text = "Уже в друзьях",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                } else if (requestSent == false) {
-                    IconButton(
-                        onClick = {
-                            requestSent = true
-                            model.addFriend(friend)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.person_add),
-                            contentDescription = "Добавить в друзья"
+                when(friendRequestRowState) {
+                    FriendRequestRowState.FRIENDS -> {
+                        Text(
+                            text = "Уже в друзьях",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
                         )
                     }
+                    FriendRequestRowState.REQUEST_SENT -> {
+                        Text(
+                            text = "Запрос отправлен",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    FriendRequestRowState.REQUEST_RECEIVED -> {
+                        Text(
+                            text = "Прими запрос",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    FriendRequestRowState.NOT_FRIENDS -> {
+                        IconButton(
+                            onClick = {
+                                model.friendRequestRowState.value = FriendRequestRowState.REQUEST_SENT
+                                model.addFriend(friend)
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.person_add),
+                                contentDescription = "Добавить в друзья"
+                            )
+                        }
+                    }
+                    null -> {}
                 }
             }
         }

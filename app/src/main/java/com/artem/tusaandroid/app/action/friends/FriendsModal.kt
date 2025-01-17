@@ -26,6 +26,7 @@ import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -33,11 +34,14 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.artem.tusaandroid.dto.FriendDto
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,8 +58,8 @@ fun FriendsModal(model: FriendViewModel) {
         ),
         modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        val friends = model.getFriends()
-        val requests = model.getRequests()
+        val requests by model.requests.collectAsState()
+        val friends by model.friends.collectAsState()
 
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -73,7 +77,7 @@ fun FriendsModal(model: FriendViewModel) {
                 modifier = Modifier.weight(1f)
             ) {
                 item {
-                    if (requests.value.isNotEmpty()) {
+                    if (requests.isNotEmpty()) {
                         Row {
                             Text(
                                 "Запросы в друзья",
@@ -85,7 +89,7 @@ fun FriendsModal(model: FriendViewModel) {
                             BadgedBox(
                                 badge = {
                                     Badge {
-                                        Text(requests.value.size.toString())
+                                        Text(requests.size.toString())
                                     }
                                 }
                             ) {
@@ -97,22 +101,22 @@ fun FriendsModal(model: FriendViewModel) {
                         }
                     }
                     Spacer(modifier = Modifier.height(10.dp))
-                    for (request in requests.value) {
+                    for (request in requests) {
                         RequestToFriends(
                             model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewRequestToFriendViewModel()),
                             friend = FriendDto(
-                                id = request.id,
-                                name = request.name,
-                                uniqueName = request.uniqueName,
+                                id = request.userId,
+                                name = request.userName,
+                                uniqueName = request.userUniqueName,
                             )
                         )
                         Spacer(modifier = Modifier.height(10.dp))
                     }
                     Spacer(modifier = Modifier.height(20.dp))
                 }
-                items(friends.value) { friend ->
+                items(friends) { friend ->
                     FriendRow(
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendRowViewModel()),
+                        model = hiltViewModel(),
                         friend = friend
                     )
                     Spacer(modifier = Modifier.height(10.dp))

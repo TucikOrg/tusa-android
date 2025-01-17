@@ -17,7 +17,7 @@ open class ProfileState(
     val timeLeftInit = 40
 
     private var name: MutableState<String> = mutableStateOf("")
-    private var uniqueName: MutableState<String> = mutableStateOf("")
+    private var uniqueName: MutableState<String?> = mutableStateOf(null)
     private var phone: MutableState<String> = mutableStateOf("")
     private var jwt: String? = null
     private var userId: Long? = null
@@ -55,7 +55,7 @@ open class ProfileState(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun changeUniqueName(uniqueName: String) {
+    fun changeUniqueName(uniqueName: String?) {
         socketListener?.getSendMessage()?.sendMessage(SocketBinaryMessage("change-unique-name", Cbor.encodeToByteArray(uniqueName)))
         this.uniqueName.value = uniqueName
         saveUniqueName(uniqueName)
@@ -95,7 +95,7 @@ open class ProfileState(
         sharedPreferences.edit().putString(getKey() + "name", name).apply()
     }
 
-    fun saveUniqueName(uniqueName: String) {
+    fun saveUniqueName(uniqueName: String?) {
         this.uniqueName.value = uniqueName
         sharedPreferences.edit().putString(getKey() + "uniqueName", uniqueName).apply()
     }
@@ -132,7 +132,7 @@ open class ProfileState(
         return getProfile(userId).name
     }
 
-    fun getUniqueName(): MutableState<String> {
+    fun getUniqueName(): MutableState<String?> {
         return uniqueName
     }
 
@@ -155,7 +155,7 @@ open class ProfileState(
     fun checkProfileState(user: User) {
         val profile = getProfile(user.id)
         if (user.uniqueName != null) profile.uniqueName.value = user.uniqueName
-        if (user.name != null) profile.name.value = user.name
-        if (user.gmail != null) profile.gmail.value = user.gmail
+        profile.name.value = user.name
+        profile.gmail.value = user.gmail
     }
 }

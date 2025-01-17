@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.app.profile
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -46,6 +47,8 @@ import com.artem.tusaandroid.app.avatar.MeAvatar
 import com.artem.tusaandroid.app.avatar.PreviewMeAvatarViewModel
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
+import com.artem.tusaandroid.socket.SocketConnectionStates
+import com.artem.tusaandroid.socket.isClosed
 
 @Preview
 @Composable
@@ -58,6 +61,7 @@ fun MyProfileModalPreview() {
 fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewModel) {
     val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val connectionState = model.connectionState?.getState()?.value
     ModalBottomSheet(
         sheetState = sheetState,
         shape = RoundedCornerShape(topEnd = 10.dp, topStart = 10.dp),
@@ -96,6 +100,19 @@ fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewMode
                 )
             }
             Spacer(modifier = Modifier.height(20.dp))
+            if (connectionState?.isClosed() == true) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Start
+                ) {
+                    Text(
+                        text = "Нету соединения",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.LightGray
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+            }
             val keyboard = LocalSoftwareKeyboardController.current
             OutlinedTextField(
                 value = model.getName().value,
@@ -110,14 +127,14 @@ fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewMode
                     }
                 ),
                 singleLine = true,
-                enabled = true,
+                enabled = connectionState == SocketConnectionStates.OPEN,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start),
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(20.dp))
             OutlinedTextField(
-                value = model.getUniqueName().value,
-                onValueChange = {
+                value = model.getUniqueName().value?: "",
+                onValueChange = { it ->
                     model.getUniqueName().value = it
                 },
                 label = { Text("Уникальный никнейм (логин)") },
@@ -135,7 +152,7 @@ fun MyProfileModal(model: ProfileCardViewModel, mainModel: MainActionFabViewMode
                     )
                 },
                 singleLine = true,
-                enabled = true,
+                enabled = connectionState == SocketConnectionStates.OPEN,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Start),
                 modifier = Modifier.fillMaxWidth()
             )

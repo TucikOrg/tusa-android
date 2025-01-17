@@ -1,6 +1,7 @@
 package com.artem.tusaandroid
 
 import android.content.Context
+import android.content.res.AssetManager
 import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
@@ -19,6 +20,9 @@ import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.notification.NotificationsService
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
+import com.artem.tusaandroid.room.AvatarDao
+import com.artem.tusaandroid.room.FriendDao
+import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketListener
 import com.google.android.gms.location.LocationServices
@@ -95,20 +99,21 @@ class AppModule {
     @Singleton
     fun provideChatState(
         socketListener: SocketListener,
-        profileState: ProfileState
+        profileState: ProfileState,
+        chatDao: ChatDao,
+        friendDao: FriendDao
     ): ChatState {
         return ChatState(
-            socketListener,
-            profileState
+            profileState,
+            chatDao,
+            friendDao
         )
     }
 
     @Provides
     @Singleton
-    fun providerLocationState(
-        socketListener: SocketListener
-    ): LocationsState {
-        return LocationsState(socketListener)
+    fun providerLocationState(): LocationsState {
+        return LocationsState()
     }
 
     @Provides
@@ -133,11 +138,13 @@ class AppModule {
     @Singleton
     fun provideMeAvatarState(
         profileState: ProfileState,
-        avatarState: AvatarState
+        avatarState: AvatarState,
+        avatarDao: AvatarDao
     ): MeAvatarState {
         return MeAvatarState(
             profileState,
-            avatarState
+            avatarState,
+            avatarDao
         )
     }
 
@@ -183,9 +190,10 @@ class AppModule {
     @Provides
     @Singleton
     fun provideFriendsState(
-        socketListener: SocketListener
+        socketListener: SocketListener,
+        locationsState: LocationsState
     ): FriendsState {
-        return FriendsState(socketListener)
+        return FriendsState(socketListener, locationsState)
     }
 
     @Provides
@@ -219,7 +227,19 @@ class AppModule {
 
     @Provides
     @Singleton
-    fun provideAvatarState(socketListener: SocketListener): AvatarState {
-        return AvatarState(socketListener)
+    fun provideAvatarState(
+        socketListener: SocketListener,
+        avatarDao: AvatarDao,
+        socketConnectionState: SocketConnectionState,
+        locationsState: LocationsState,
+        assetManager: AssetManager
+    ): AvatarState {
+        return AvatarState(socketListener, avatarDao, socketConnectionState, locationsState, assetManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideAssetManager(@ApplicationContext context: Context): AssetManager {
+        return context.assets
     }
 }

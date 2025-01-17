@@ -1,11 +1,8 @@
 package com.artem.tusaandroid
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.location.LocationManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
@@ -30,48 +27,40 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.app.ActivityCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.app.action.MainActionFab
 import com.artem.tusaandroid.app.MainActivityViewModel
-import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.TestInfoLine
 import com.artem.tusaandroid.app.action.AdminFab
 import com.artem.tusaandroid.app.action.auth.CredentialsManagerAuth
 import com.artem.tusaandroid.app.action.chats.ChatsActionFab
-import com.artem.tusaandroid.app.action.chats.ChatsViewModelPreview
 import com.artem.tusaandroid.app.action.friends.FriendsActionFab
-import com.artem.tusaandroid.app.action.friends.PreviewFriendViewModel
 import com.artem.tusaandroid.app.action.logs.LogsFab
 import com.artem.tusaandroid.app.action.logs.LogsFabViewModelPreview
-import com.artem.tusaandroid.app.avatar.AvatarDTO
+import com.artem.tusaandroid.app.avatar.RetrieveMyAvatar
 import com.artem.tusaandroid.app.chat.ChatModal
 import com.artem.tusaandroid.app.dialog.AppDialog
-import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.dialog.AppDialogViewModelPreview
 import com.artem.tusaandroid.app.login.InputUniqueName
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedMarkerModal
-import com.artem.tusaandroid.app.selected.SelectedMarkerViewModelPreview
+import com.artem.tusaandroid.app.state.RefreshStateListeners
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.location.LastLocationState
-import com.artem.tusaandroid.location.LocationForegroundService
+import com.artem.tusaandroid.location.ListenLocationsUpdates
+import com.artem.tusaandroid.location.LoadAllFriendsLocations
 import com.artem.tusaandroid.location.MoveToMyLocationFab
 import com.artem.tusaandroid.location.PreviewMoveToMyLocationViewModel
 import com.artem.tusaandroid.notification.NotificationsEnabledCheck
 import com.artem.tusaandroid.notification.NotificationsEnabledCheckViewModelPreview
 import com.artem.tusaandroid.socket.ConnectionStatus
-import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
 import com.artem.tusaandroid.socket.SocketListener
 import com.artem.tusaandroid.theme.TusaAndroidTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
-import com.google.android.gms.fitness.LocalRecordingClient
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -83,20 +72,6 @@ class MainActivity : ComponentActivity() {
     lateinit var lastLocationState: LastLocationState
     @Inject
     lateinit var socketListener: SocketListener
-    @Inject
-    lateinit var meAvatarState: MeAvatarState
-    @Inject
-    lateinit var appDialogState: AppDialogState
-
-    private val listener = object: EventListener<AvatarDTO> {
-        override fun onEvent(event: AvatarDTO) {
-            val myAvatar = profileState.getUserId() == event.ownerId
-            if (myAvatar) {
-                meAvatarState.updateMeMarkerInRender()
-                socketListener.getReceiveMessage().avatarBus.removeListener(this)
-            }
-        }
-    }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,7 +92,22 @@ class MainActivity : ComponentActivity() {
                     model = TucikViewModel(preview = false,
                         previewModel = NotificationsEnabledCheckViewModelPreview())
                 )
+                // когда мы получаем от сервера историю действий над сущностями то обновляем локальное состояние базы данных
+                // синхронизация локальной базы данных с сервером
+                // он это делает только если состояние уже есть в локальной базе данных
+                RefreshStateListeners(model = hiltViewModel())
+
+                // загружаем все локации друзей каждый раз когда соединение открывается
+                LoadAllFriendsLocations(model = hiltViewModel())
+
+                // слушаем обновления локации друзей
+                // загружаем аватрки этих друзей чтобы на карте их показать
+                ListenLocationsUpdates(model = hiltViewModel())
+
                 Tucik()
+
+                // события жизненного цикла кроме OnRestart
+                TucikLifecycleEvents(model = hiltViewModel())
             }
         }
     }
@@ -126,84 +116,12 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
     }
 
-    // вызывается при полном зактытии приложения
-    override fun onDestroy() {
-        NativeLibrary.cleanup()
-        super.onDestroy()
-    }
-
-    override fun onStart() {
-        super.onStart()
-        makeOnStart()
-    }
-
-    override fun onResume() {
-        super.onResume()
-    }
-
+    // в LIFE_CYCLE нету этого события
     override fun onRestart() {
         // вызывается только когда возвращается свернутое приложение
         // при возвращении в приложение включаем сокет Он снова нужен для общения
-        socketListener.connect(null)
+        socketListener.connect()
         super.onRestart()
-    }
-
-    override fun onStop() {
-        // чтобы интернет трафик поберечь отключаем сокет в ситуации сворачивания приложения
-        socketListener.disconnect()
-        super.onStop()
-    }
-
-
-    fun makeOnStart() {
-        // нету нужного гугл сервиса
-        val hasMinPlayServices = GoogleApiAvailability.getInstance()
-            .isGooglePlayServicesAvailable(this, LocalRecordingClient.LOCAL_RECORDING_CLIENT_MIN_VERSION_CODE)
-        if(hasMinPlayServices != ConnectionResult.SUCCESS) {
-            // Prompt user to update their device's Google Play services app and return
-            appDialogState.open("Google Play Servcies", "Для коректной работы приложения необходимо обновить Google Play Services")
-        }
-
-        val locationPermissionGranted = ActivityCompat.checkSelfPermission(
-            this,
-            android.Manifest.permission.ACCESS_FINE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        val activityRecognitionPermissionGranted = ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACTIVITY_RECOGNITION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        if ( locationPermissionGranted && activityRecognitionPermissionGranted ) {
-            // Если сервис был запущен и разрешение на геолокацию есть и он был запущен, то запускаем сервис
-            // это еще так же значит что пользователь желает отображать себя на карте
-            // + gps включен
-            val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val gpsEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            if (lastLocationState.getLocationForegroundServiceStarted() == true && gpsEnabled) {
-                val startIntent = Intent(this, LocationForegroundService::class.java).apply {
-                    action = LocationForegroundService.ACTION_START
-                    flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
-                }
-                startForegroundService(startIntent)
-
-
-                meAvatarState.updateMeMarkerInRender()
-                if (meAvatarState.hasAvatar() == false) {
-                    // грузим автар пользователя и потом добавляем маркер
-                    socketListener.getReceiveMessage().avatarBus.addListener(listener)
-                }
-            }
-        } else {
-            // Если сервис был запущен, но разрешение на геолокацию или фитнесс отозвали, то останавливаем сервис
-            lastLocationState.saveLocationForegroundServiceStarted(false)
-        }
-
-        if (profileState.getIsAuthenticated() == true) {
-            profileState.getUserId().let {
-                socketListener.connect(it)
-            }
-        }
     }
 }
 
@@ -279,6 +197,13 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
             )
 
             if (model.authenticationState.authenticated) {
+                // может достать аватар из room
+                // если нету то будет пробовать его загрузить
+                // после поставит флаг на обновление аватара в рендере
+                RetrieveMyAvatar(model = hiltViewModel())
+
+                // если у пользователя не введено уникальное имя
+                // то предлогаем ему его ввести
                 InputUniqueName(hiltViewModel())
 
                 MainActionFab(modifier = Modifier
@@ -301,7 +226,6 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                             hiltViewModel()
                         )
                     }
-
                 }
 
                 Column(
@@ -319,22 +243,18 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                     }
                     FriendsActionFab(
                         modifier = Modifier,
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
+                        model = hiltViewModel()
                     )
                     Spacer(modifier = Modifier.height(10.dp))
                     ChatsActionFab(
                         modifier = Modifier,
-                        model = TucikViewModel(preview = model.isPreview(), previewModel = ChatsViewModelPreview())
+                        model = hiltViewModel()
                     )
                 }
 
-                SelectedMarkerModal(
-                    model = TucikViewModel(preview = model.isPreview(), previewModel = SelectedMarkerViewModelPreview())
-                )
+                SelectedMarkerModal(model = hiltViewModel())
 
-                ChatModal(
-                    chatViewModel = TucikViewModel(preview = model.isPreview(), previewModel = ChatsViewModelPreview())
-                )
+                ChatModal(chatViewModel = hiltViewModel())
 
             } else {
                 // not authenticated

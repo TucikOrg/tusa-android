@@ -10,5 +10,5 @@ open class ConnectionStatusViewModel @Inject constructor(
     private val socketConnectionState: SocketConnectionState?
 ): ViewModel() {
 
-    fun getState() = socketConnectionState?.state?: mutableStateOf(SocketConnectionStates.OPEN)
+    fun getState() = socketConnectionState?.getState()?: mutableStateOf(SocketConnectionStates.OPEN)
 }

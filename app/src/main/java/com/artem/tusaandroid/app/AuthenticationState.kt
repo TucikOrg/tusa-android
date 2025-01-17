@@ -8,7 +8,6 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
-import com.artem.tusaandroid.app.login.LoginResponseDto
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.socket.SocketListener
@@ -23,6 +22,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.SecureRandom
 import java.util.Base64
 import com.artem.tusaandroid.R
+import com.artem.tusaandroid.dto.LoginResponseDto
 
 class AuthenticationState(
     private val okHttpClient: OkHttpClient,
@@ -91,7 +91,7 @@ class AuthenticationState(
                 profileState.saveName(loginResponse.name)
                 profileState.saveUniqueName(loginResponse.uniqueName)
                 profileState.savePhone(loginResponse.phone)
-                socketListener.connect(loginResponse.id)
+                socketListener.connect()
                 authenticated = true
             } else {
                 // The server couldn't validate the token.

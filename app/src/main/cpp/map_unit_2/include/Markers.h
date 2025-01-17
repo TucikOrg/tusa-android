@@ -33,7 +33,7 @@ public:
     Markers(MapFpsCounter* mapFpsCounter);
 
     void initGL();
-    void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize);
+    void addMarker(int64_t key, float latitude, float longitude, unsigned char *imageData, off_t fileSize, bool updateAvatar);
     void removeMarker(int64_t key);
     void updateMarkerGeo(int64_t key, float latitude, float longitude);
     void updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize);

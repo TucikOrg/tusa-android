@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.await
+import com.artem.tusaandroid.dto.AddLocationDto
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.google.android.gms.location.CurrentLocationRequest
 import com.google.android.gms.location.FusedLocationProviderClient

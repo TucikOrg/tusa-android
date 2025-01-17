@@ -128,14 +128,17 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_addMarker(JNIEnv *env, jobject thiz, jlong key,
                                                       jfloat latitude, jfloat longitude,
-                                                      jbyteArray avatar_buffer) {
-    int64_t keyLong = static_cast<int64_t>(key);
-    jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
-    auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
+                                                      jbyteArray avatar_buffer, jboolean update_avatar) {
     auto& markers = renderer->getMarkers();
-    markers.addMarker(keyLong, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer));
-
-    env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
+    int64_t keyLong = static_cast<int64_t>(key);
+    if (update_avatar) {
+        jbyte* buffer = env->GetByteArrayElements(avatar_buffer, nullptr);
+        auto* unsignedBuffer = reinterpret_cast<unsigned char*>(buffer);
+        markers.addMarker(keyLong, DEG2RAD(latitude), DEG2RAD(longitude), unsignedBuffer, env->GetArrayLength(avatar_buffer), true);
+        env->ReleaseByteArrayElements(avatar_buffer, buffer, 0);
+    } else {
+        markers.addMarker(keyLong, DEG2RAD(latitude), DEG2RAD(longitude), nullptr, 0, false);
+    }
 }
 
 extern "C"

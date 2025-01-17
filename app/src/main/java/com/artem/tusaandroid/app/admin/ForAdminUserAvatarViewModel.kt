@@ -7,6 +7,7 @@ import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -30,7 +31,7 @@ open class ForAdminUserAvatarViewModel @Inject constructor(
     fun getAvatarBitmap(userId: Long) = avatarState?.getAvatarBitmap(userId)
 
     fun loadAvatar(userId: Long) {
-        avatarState?.loadAvatar(userId)
+        avatarState?.retrieveAvatar(userId, viewModelScope) {  }
     }
 
     fun avatarUriSelected(uri: Uri, context: Context, userId: Long) {
@@ -62,7 +63,7 @@ open class ForAdminUserAvatarViewModel @Inject constructor(
         ByteArrayOutputStream().use {
             avatar.compress(Bitmap.CompressFormat.JPEG, 50, it)
             val bytesArray = it.toByteArray()
-            avatarState?.setAvatarBitmap(userId, avatar)
+            avatarState?.saveAvatarInMem(userId, avatar, bytesArray)
             val tempFile = File.createTempFile("avatar${userId}", null, context.cacheDir)
             FileOutputStream(tempFile).use { fos ->
                 fos.write(bytesArray)

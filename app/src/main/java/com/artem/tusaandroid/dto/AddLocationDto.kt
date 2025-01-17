@@ -1,4 +1,4 @@
-package com.artem.tusaandroid.location
+package com.artem.tusaandroid.dto
 
 data class AddLocationDto(
     val latitude: Float,

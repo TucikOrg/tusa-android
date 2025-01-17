@@ -1,4 +1,4 @@
-package com.artem.tusaandroid.app.login
+package com.artem.tusaandroid.dto
 
 data class LoginResponseDto(
     val id: Long,

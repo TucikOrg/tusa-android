@@ -27,12 +27,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import com.artem.tusaandroid.R
 
-@Preview
-@Composable
-fun ChatInputPreview() {
-    ChatInput(ChatViewModelPreview())
-}
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatInput(chatViewModel: ChatViewModel) {

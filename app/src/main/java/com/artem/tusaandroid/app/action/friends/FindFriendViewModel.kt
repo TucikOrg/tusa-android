@@ -3,6 +3,7 @@ package com.artem.tusaandroid.app.action.friends
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.ReceiveMessage
 import com.artem.tusaandroid.socket.SendMessage

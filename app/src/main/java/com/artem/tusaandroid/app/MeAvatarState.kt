@@ -4,11 +4,13 @@ import android.graphics.Bitmap
 import androidx.compose.runtime.MutableState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
-import com.artem.tusaandroid.socket.SocketListener
+import com.artem.tusaandroid.room.AvatarDao
+import com.artem.tusaandroid.room.AvatarRoomEntity
 
 class MeAvatarState(
     private val profileState: ProfileState?,
-    private val avatarState: AvatarState?
+    val avatarState: AvatarState?,
+    val avatarDao: AvatarDao?
 ) {
     private var needUpdateInRenderFlag = false
     private var hideMeFlag = false
@@ -54,8 +56,12 @@ class MeAvatarState(
     }
 
     fun setAvatar(avatar: Bitmap?, bytesArray: ByteArray?) {
-        avatarState?.setAvatarBitmap(profileState!!.getUserId(), avatar!!)
-        avatarState?.setAvatarBytes(profileState!!.getUserId(), bytesArray!!)
+        // Заменяем в локальной базе устройства мою аватарку
+        avatarDao?.insert(AvatarRoomEntity(
+            id = getMeId(),
+            avatar = bytesArray
+        ))
+        avatarState?.saveAvatarInMem(profileState!!.getUserId(), avatar!!, bytesArray!!)
         needUpdateInRenderFlag = true
     }
 

@@ -13,10 +13,9 @@ class SocketListener(
     private val socketConnectionState: SocketConnectionState,
 ) : WebSocketListener() {
     private val reconnectExecutor = Executors.newSingleThreadExecutor()
-    private lateinit var webSocket: WebSocket
+    private var webSocket: WebSocket? = null
     private var sendMessage: SendMessage? = null
     private var receiveMessage: ReceiveMessage = ReceiveMessage()
-    private var meUserId: Long = 0
 
     fun getReceiveMessage(): ReceiveMessage {
         return receiveMessage
@@ -27,27 +26,20 @@ class SocketListener(
     }
 
     fun disconnect() {
-        val result = webSocket.close(1000, "Goodbye")
+        val result = webSocket?.close(1000, "Goodbye")
     }
 
-    fun connect(meId: Long?) {
+    fun connect() {
         val request = Request.Builder()
             .url(socketUrl)
             .build()
         webSocket = client.newWebSocket(request, this)
         sendMessage = SendMessage(webSocket)
-
-        if (meId != null) {
-            meUserId = meId
-            sendMessage?.loadAvatar(meId)
-            sendMessage?.loadFriendsAndRequests()
-            sendMessage?.loadFriendsAvatars()
-        }
     }
 
     override fun onOpen(webSocket: WebSocket, response: okhttp3.Response) {
         super.onOpen(webSocket, response)
-        socketConnectionState.state.value = SocketConnectionStates.OPEN
+        socketConnectionState.opened()
     }
 
     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -87,7 +79,7 @@ class SocketListener(
                 Thread.sleep(2000)
                 // после попытки если не получиться то опять бросит onFailure()
                 // и так он будет в итоге каждые 2 секунды пытаться переподключиться
-                connect(meUserId)
+                connect()
             }
         }
     }

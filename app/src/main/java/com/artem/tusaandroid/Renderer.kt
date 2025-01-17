@@ -19,25 +19,7 @@ class Renderer(
     private val avatarState: AvatarState?,
     private val locationsState: LocationsState?
 ) : GLSurfaceView.Renderer {
-    private var defaultAvatar: ByteArray? = null
-
     private var meAvatarKey = meAvatarState?.getMeId()?: 0L
-    private val executor = Executors.newSingleThreadExecutor()
-
-    init {
-        _assetManager.open("images/default_user.png").use { asset ->
-            defaultAvatar = asset.readBytes()
-        }
-
-        // периодически загружаем геопозиции друзей
-        executor.execute {
-            Thread.sleep(1000)
-            while (true) {
-                socketListener?.getSendMessage()?.locations()
-                Thread.sleep(5000)
-            }
-        }
-    }
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         NativeLibrary.surfaceCreated(_assetManager)
@@ -53,14 +35,14 @@ class Renderer(
         if (meAvatarState?.getNeedUpdateInRenderFlag() == true && lastLocationState?.lastLocationExists() == true) {
             var useMeAvatar = meAvatarState.getAvatarBytes()
             if (useMeAvatar == null) {
-                useMeAvatar = defaultAvatar
+                useMeAvatar = avatarState?.getDefaultAvatar()?: byteArrayOf()
             }
 
             val latitude = lastLocationState.getLastLatitude()
             val longitude = lastLocationState.getLastLongitude()
             // если маркер есть уже то просто обновит аватар и сделает его видимым
             // если нету то создаст его
-            NativeLibrary.addMarker(meAvatarKey, latitude, longitude, useMeAvatar!!)
+            NativeLibrary.addMarker(meAvatarKey, latitude, longitude, useMeAvatar, true)
             meAvatarState.rendererUpdated()
         }
 
@@ -82,18 +64,17 @@ class Renderer(
 
         // добавляем маркера друзей
         // обновляем геопозицию маркеров друзей
-        val currentLocations = locationsState?.currentLocations ?: listOf()
-        for (location in currentLocations) {
+        val friendsLocations = locationsState?.friendLocations ?: listOf()
+        for (location in friendsLocations) {
+            if (location.updateMarkerFlag == false) continue
+
             val key = location.ownerId
-            val existMarker = NativeLibrary.existMarker(key)
-            if (!existMarker) {
-                val useImage = avatarState?.getAvatarBytes(location.ownerId)
-                if (useImage != null) {
-                    NativeLibrary.addMarker(key, location.latitude, location.longitude, useImage)
-                }
-            } else {
-                NativeLibrary.updateMarkerGeo(key, location.latitude, location.longitude)
+            val useImage = avatarState?.getAvatarBytes(location.ownerId)?: avatarState?.getDefaultAvatar()
+            if (useImage != null) {
+                NativeLibrary.addMarker(key, location.latitude, location.longitude, useImage, location.updateAvatar)
+                location.updateAvatar = false
             }
+            location.updateMarkerFlag = false
         }
 
         // Рендрим любимейшую мою планету

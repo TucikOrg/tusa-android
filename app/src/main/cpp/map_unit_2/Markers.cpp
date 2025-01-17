@@ -919,6 +919,15 @@ void Markers::removeMarker(int64_t key) {
     // больше его не рендрим но он все равно в памяти
     renderMarkersMap.erase(key);
     renderMarkers.erase(std::remove( renderMarkers.begin(),  renderMarkers.end(), key),  renderMarkers.end());
+
+    // если этот маркер вообще не добавлен то игнорируем его удаление
+    if (storageMarkers.count(key) == 0) {
+        return;
+    }
+
+    // пересобираем группу без этого маркера
+    auto markerGroup = storageMarkers[key].atlasPointer.atlasId;
+    refreshGroup[markerGroup] = nullptr;
 }
 
 void Markers::updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize) {
@@ -948,14 +957,25 @@ void Markers::addMarker(
         float latitude,
         float longitude,
         unsigned char *imageData,
-        off_t fileSize
+        off_t fileSize,
+        bool updateAvatar
 ) {
     auto find = storageMarkers.find(key);
     if (find != storageMarkers.end()) {
         // если маркер уже есть то обновляем его аватар и рендрим
-        updateMarkerAvatarInternal(key, imageData, fileSize);
-        renderMarkersMap[key] = nullptr;
-        renderMarkers.push_back(key);
+        if (updateAvatar) {
+            updateMarkerAvatarInternal(key, imageData, fileSize);
+        }
+
+        // рендрим маркер если он не рендерится
+        if (renderMarkersMap.count(key) == 0) {
+            renderMarkersMap[key] = nullptr;
+            renderMarkers.push_back(key);
+        }
+
+        // меняем местоположение маркера
+        updateMarkerGeo(key, latitude, longitude);
+
         return;
     }
 

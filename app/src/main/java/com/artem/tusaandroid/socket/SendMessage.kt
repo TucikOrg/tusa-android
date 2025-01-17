@@ -7,6 +7,8 @@ import com.artem.tusaandroid.dto.FakeLocation
 import com.artem.tusaandroid.dto.RequestChats
 import com.artem.tusaandroid.dto.RequestMessages
 import com.artem.tusaandroid.dto.SendMessage
+import com.artem.tusaandroid.dto.messenger.InitMessenger
+import com.artem.tusaandroid.room.StateTimePoint
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.encodeToByteArray
@@ -17,6 +19,11 @@ import okio.ByteString.Companion.toByteString
 class SendMessage(
     private val socket: WebSocket?
 ) {
+    @OptIn(ExperimentalSerializationApi::class)
+    fun removeFriend(id: Long) {
+        sendMessage(SocketBinaryMessage("delete-friend", Cbor.encodeToByteArray(id)))
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     fun getMessages(chatId: Long, page: Int, size: Int) {
         val data = SocketBinaryMessage("messages", Cbor.encodeToByteArray(RequestMessages(chatId, page, size)))
@@ -69,21 +76,11 @@ class SendMessage(
 
     @OptIn(ExperimentalSerializationApi::class)
     fun loadAvatar(id: Long) {
-        val data = SocketBinaryMessage("avatar", Cbor.encodeToByteArray(id))
-        socket?.send(Cbor.encodeToByteArray(data).toByteString())
+        sendMessage(SocketBinaryMessage("avatar", Cbor.encodeToByteArray(id)))
     }
 
-    fun loadFriendsAndRequests() {
+    fun loadFriends() {
         sendMessage(SocketBinaryMessage("my-friends", byteArrayOf()))
-        sendMessage(SocketBinaryMessage("friends-to-me-requests", byteArrayOf()))
-    }
-
-    fun locations() {
-        sendMessage(SocketBinaryMessage("locations", byteArrayOf()))
-    }
-
-    fun loadFriendsAvatars() {
-        sendMessage(SocketBinaryMessage("friends-avatars", byteArrayOf()))
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -102,5 +99,69 @@ class SendMessage(
             "chats",
             Cbor.encodeToByteArray(RequestChats(page, size))
         ))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun friendsActions(stateTimePoint: StateTimePoint) {
+        sendMessage(SocketBinaryMessage(
+            "friends-actions",
+            Cbor.encodeToByteArray(stateTimePoint.timePoint)
+        ))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun friendsRequestsActions(stateTimePoint: StateTimePoint) {
+        sendMessage(SocketBinaryMessage(
+            "friends-requests-actions",
+            Cbor.encodeToByteArray(stateTimePoint.timePoint)
+        ))
+    }
+
+    fun loadFriendsRequests() {
+        sendMessage(SocketBinaryMessage("friends-requests", byteArrayOf()))
+    }
+
+    fun locations() {
+        sendMessage(SocketBinaryMessage("locations", byteArrayOf()))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun messagesActions(point: StateTimePoint) {
+        sendMessage(SocketBinaryMessage("messages-actions", Cbor.encodeToByteArray(point.timePoint)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun chatsActions(point: StateTimePoint) {
+        sendMessage(SocketBinaryMessage("chats-actions", Cbor.encodeToByteArray(point.timePoint)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun initMessages(init: InitMessenger) {
+        sendMessage(SocketBinaryMessage("init-messages", Cbor.encodeToByteArray(init)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun initChats(init: InitMessenger) {
+        sendMessage(SocketBinaryMessage("init-chats", Cbor.encodeToByteArray(init)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun acceptFriend(id: Long) {
+        sendMessage(SocketBinaryMessage("accept-friend", Cbor.encodeToByteArray(id)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun addFriend(id: Long) {
+        sendMessage(SocketBinaryMessage("add-friend", Cbor.encodeToByteArray(id)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun removeRequestToFriend(id: Long) {
+        sendMessage(SocketBinaryMessage("delete-request", Cbor.encodeToByteArray(id)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun avatarsActions(point: StateTimePoint) {
+        sendMessage(SocketBinaryMessage("avatars-actions", Cbor.encodeToByteArray(point.timePoint)))
     }
 }

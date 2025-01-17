@@ -24,20 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.isPreview
-
-@Composable
-@Preview
-fun PreviewFriendRow() {
-    FriendRow(
-        model = PreviewFriendRowViewModel(),
-        friend = FriendDto(
-            id = 1,
-            name = "Name",
-            uniqueName = "ivanov"
-        )
-    )
-}
 
 @Composable
 fun FriendRow(
@@ -46,7 +34,7 @@ fun FriendRow(
 ) {
     val scope = rememberCoroutineScope()
     val leftSwipeFriendRow = LeftSwipeFriendRow(scope, R.drawable.person_remove) {
-        model.removeFriend(friend.id!!)
+        model.removeFriend(friend.id)
     }
 
     leftSwipeFriendRow.SwipeWrapper {
@@ -77,7 +65,7 @@ fun FriendRowCard(
                     .size(70.dp)
                     .padding(0.dp),
                 model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendAvatarViewModel()),
-                userId = friend.id!!
+                userId = friend.id
             )
             Spacer(modifier = Modifier.width(20.dp))
             Column(

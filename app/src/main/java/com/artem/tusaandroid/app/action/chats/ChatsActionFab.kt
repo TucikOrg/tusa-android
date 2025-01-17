@@ -1,5 +1,7 @@
 package com.artem.tusaandroid.app.action.chats
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -34,13 +37,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.R
-import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
-import com.artem.tusaandroid.app.action.friends.PreviewFriendViewModel
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
-import com.artem.tusaandroid.dto.ChatResponse
-import com.artem.tusaandroid.isPreview
+import com.artem.tusaandroid.dto.messenger.ChatResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,25 +59,15 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
                 isAppearanceLightStatusBars = !IsLightGlobal.isLight
             ),
         ) {
-
-            LaunchedEffect(Unit) {
-                model.loadChats()
-            }
-
-            val chats = model.getChats()
-            val listState = model.lazyListState
-            val isAtEnd = remember {
-                derivedStateOf {
-                    val visibleItems = listState.layoutInfo.visibleItemsInfo
-                    val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: -1
-                    lastVisibleItemIndex == chats.value.size - 1
-                }
-            }
-            LaunchedEffect(isAtEnd.value) {
-                if (isAtEnd.value) {
-                    model.loadChats()
-                }
-            }
+            val chats by model.chats.collectAsState()
+//            val listState = model.lazyListState
+//            val isAtEnd = remember {
+//                derivedStateOf {
+//                    val visibleItems = listState.layoutInfo.visibleItemsInfo
+//                    val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: -1
+//                    lastVisibleItemIndex == chats.value.size - 1
+//                }
+//            }
 
             LazyColumn(
                 modifier = modifier.fillMaxWidth(),
@@ -91,10 +82,10 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
                     )
                 }
                 items(
-                    count = chats.value.size,
-                    key = { index -> chats.value[index].chatId }
+                    count = chats.size,
+                    key = { index -> chats[index].id!! }
                 ) { index ->
-                    ChatItem(chats.value[index], model)
+                    ChatItem(chats[index], model)
                 }
                 item {
                     Spacer(modifier = Modifier.height(50.dp))
@@ -116,6 +107,8 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
 
 @Composable
 fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
+    val lastMessage by model.getLastMessageFlow(chat).collectAsState()
+
     ElevatedButton(
         modifier = Modifier.fillMaxSize(),
         shape = RoundedCornerShape(0.dp),
@@ -123,19 +116,19 @@ fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
             model.openChat(chat)
         }
     ) {
+        val name = if (model.getMeId() == chat.firstUserId) chat.secondUserName else chat.firsUserName
+
         Row(
             modifier = Modifier
                 .fillMaxSize(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            val friend = model.getChatFriend(chat)
-
             FriendAvatar(
                 modifier = Modifier
                     .size(70.dp)
                     .padding(0.dp),
-                userId = chat.toId,
-                model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendViewModel())
+                userId = if (model.getMeId() == chat.firstUserId) chat.secondUserId else chat.firstUserId,
+                model = hiltViewModel()
             )
 
             Spacer(modifier = Modifier.width(20.dp))
@@ -145,12 +138,12 @@ fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = friend?.name?: "",
+                    text = name,
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 Text(
-                    text = chat.lastMessage,
+                    text = lastMessage?.message ?: "",
                     style = MaterialTheme.typography.bodyLarge,
                     maxLines = 1,
                     color = Color.Gray

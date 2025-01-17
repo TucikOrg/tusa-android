@@ -23,7 +23,7 @@ fun FriendAvatar(
     model: FriendAvatarViewModel, userId: Long
 ) {
     LaunchedEffect(Unit) {
-        model.loadAvatar(userId)
+        model.retrieveAvatar(userId)
     }
 
     FloatingActionButton(

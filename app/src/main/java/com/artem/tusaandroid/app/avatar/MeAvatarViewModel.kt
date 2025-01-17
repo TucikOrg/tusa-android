@@ -13,9 +13,11 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.artem.tusaandroid.app.MeAvatarState
+import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.profile.JwtGlobal
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
+import com.artem.tusaandroid.socket.SocketConnectionState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -26,7 +28,9 @@ import javax.inject.Inject
 open class MeAvatarViewModel @Inject constructor(
     private val meAvatarState: MeAvatarState,
     private val customTucikEndpoints: CustomTucikEndpoints?,
-    private val cropperState: CropperState
+    private val cropperState: CropperState,
+    val appDialogState: AppDialogState?,
+    val connectionState: SocketConnectionState?
 ): ViewModel() {
     fun getAvatarBitmap() = meAvatarState.getAvatar()
 
@@ -77,4 +81,6 @@ open class MeAvatarViewModel @Inject constructor(
             WorkManager.getInstance(context).enqueue(uploadWorkRequest)
         }
     }
+
+    fun isAvatarLoading() = meAvatarState.avatarState?.isLoading(meAvatarState.getMeId())?: mutableStateOf(false)
 }
