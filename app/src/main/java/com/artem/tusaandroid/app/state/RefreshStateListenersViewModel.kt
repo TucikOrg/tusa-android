@@ -1,8 +1,12 @@
 package com.artem.tusaandroid.app.state
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.avatar.AvatarState
+import com.artem.tusaandroid.app.chat.ChatState
+import com.artem.tusaandroid.app.chat.MessagesConsts
 import com.artem.tusaandroid.dto.AvatarAction
 import com.artem.tusaandroid.dto.AvatarActionType
 import com.artem.tusaandroid.dto.FriendActionDto
@@ -10,6 +14,8 @@ import com.artem.tusaandroid.dto.FriendRequestActionDto
 import com.artem.tusaandroid.dto.FriendsActionType
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
+import com.artem.tusaandroid.dto.MessageResponse
+import com.artem.tusaandroid.dto.ResponseMessages
 import com.artem.tusaandroid.dto.messenger.ChatAction
 import com.artem.tusaandroid.dto.messenger.ChatsActionType
 import com.artem.tusaandroid.dto.messenger.InitChatsResponse
@@ -26,15 +32,15 @@ import com.artem.tusaandroid.room.StatesTimePointDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.MessageDao
 import com.artem.tusaandroid.socket.EventListener
+import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketConnectionStates
 import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.LocalDateTime
-import java.time.ZoneOffset
 import javax.inject.Inject
 
 @HiltViewModel
@@ -47,19 +53,26 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val messageDao: MessageDao,
     private val avatarState: AvatarState,
     private val socketConnectionState: SocketConnectionState,
-    private val locationState: LocationsState
+    private val locationState: LocationsState,
+    private val authenticationState: AuthenticationState,
+    private val socketConnect: SocketConnect,
+    private val chatState: ChatState,
+    @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
     // Аватарки
-    private val refreshAvatarsListener = object : EventListener<Unit> {
-        override fun onEvent(event: Unit) {
+    private val refreshAvatarsListener = object : EventListener<Long> {
+        override fun onEvent(serverTimePoint: Long) {
             viewModelScope.launch {
-                var state = statesTimePointsDao.getStateTimePointByType(StateTypes.AVATARS.ordinal)
-                if (state == null) {
-                    statesTimePointsDao.insert(StateTimePoint(StateTypes.AVATARS.ordinal, LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)))
-                    state = statesTimePointsDao.getStateTimePointByType(StateTypes.AVATARS.ordinal)
+                val state = statesTimePointsDao.getStateTimePointByType(StateTypes.AVATARS.ordinal)
+                if (state != null) {
+                    socketListener.getSendMessage()?.avatarsActions(state)
+                    return@launch
                 }
-                socketListener.getSendMessage()?.avatarsActions(state!!)
+
+                val stateTimePoint = StateTimePoint(StateTypes.AVATARS.ordinal, serverTimePoint)
+                statesTimePointsDao.insert(stateTimePoint)
+                socketListener.getSendMessage()?.avatarsActions(stateTimePoint)
             }
         }
     }
@@ -242,6 +255,15 @@ class RefreshStateListenersViewModel @Inject constructor(
             socketListener.getReceiveMessage().getReceiveMessenger().messagesInitBus.removeListener(this)
         }
     }
+    private val messagesListener = object: EventListener<ResponseMessages> {
+        override fun onEvent(event: ResponseMessages) {
+            viewModelScope.launch {
+                // добавляем дозагруженные сообщения в базу данных
+                // это сообщения более старые которые пользователь хочет посмотреть и которых нету в локальной базе
+                messageDao.insertAll(event.messages)
+            }
+        }
+    }
 
     // Чаты
     private val refreshChatsListener = object : EventListener<Unit> {
@@ -253,7 +275,7 @@ class RefreshStateListenersViewModel @Inject constructor(
                     socketListener.getSendMessage()?.chatsActions(state)
                 } else {
                     socketListener.getSendMessage()?.initChats(InitMessenger(
-                        size = 50
+                        size = MessagesConsts.batchSize
                     ))
                 }
             }
@@ -270,6 +292,12 @@ class RefreshStateListenersViewModel @Inject constructor(
                         when (action.actionType) {
                             ChatsActionType.ADD -> {
                                 chatDao.insert(action.chat)
+                            }
+                            ChatsActionType.DELETE -> {
+                                // если чат удаляем то удаляем и все сообщения
+                                val chat = action.chat
+                                chatDao.deleteById(chat.id!!)
+                                messageDao.deleteByFirstUserIdAndSecondUserId(chat.firstUserId, chat.secondUserId)
                             }
                         }
                     }
@@ -292,19 +320,56 @@ class RefreshStateListenersViewModel @Inject constructor(
         }
     }
 
+
+    private val connectionClosedListener = object : EventListener<String> {
+        override fun onEvent(event: String) {
+            socketConnect.disconnect(event)
+        }
+    }
+
     init {
         // Если соединение с сервером установлено то запрашиваем данные обновления состояния
         socketConnectionState.socketStateBus.addListener(object: EventListener<SocketConnectionStates> {
             override fun onEvent(event: SocketConnectionStates) {
-                // запрашиваем у сервера историю для синхронизации
-                if (event == SocketConnectionStates.OPEN) {
-                    refreshFriendsListener.onEvent(Unit)
-                    refreshFriendsRequestsListener.onEvent(Unit)
-                    refreshChatsListener.onEvent(Unit)
-                    refreshMessagesListener.onEvent(Unit)
+
+                when (event) {
+                    SocketConnectionStates.OPEN -> {
+                        // запрашиваем у сервера историю для синхронизации
+                        refreshFriendsListener.onEvent(Unit)
+                        refreshFriendsRequestsListener.onEvent(Unit)
+                        refreshChatsListener.onEvent(Unit)
+                        refreshMessagesListener.onEvent(Unit)
+
+                        // отправляем сообщения которые не были отправлены
+                        // и не получили подтверждения
+                        viewModelScope.launch {
+                            val unsentMessages = messageDao.getUnsentMessages()
+                            for (message in unsentMessages) {
+                                chatState.resendMessage(viewModelScope, message)
+                            }
+                        }
+                    }
+                    SocketConnectionStates.CLOSED -> {
+                        // Если соединение было закрыто по причине нарушения политики безопасности
+                        // Неправильный или невалидный токен
+                        val closedStatus = socketConnectionState.getCloseStatus()
+                        if (closedStatus == 1008) {
+                            // разлогиниваем пользователя
+                            viewModelScope.launch {
+                                authenticationState.logout(applicationContext)
+                            }
+                        }
+                    }
+                    SocketConnectionStates.FAILED -> {}
+                    SocketConnectionStates.WAIT_TO_RECONNECT -> {}
+                    SocketConnectionStates.CONNECTING -> {}
                 }
             }
         })
+
+        // Слушаем закрытие соединения
+        socketListener.getReceiveMessage().connectionClosedBus.addListener(connectionClosedListener)
+
 
         // Друзья Следим за состояними
         socketListener.getReceiveMessage().refreshFriendsBus.addListener(refreshFriendsListener)
@@ -320,6 +385,7 @@ class RefreshStateListenersViewModel @Inject constructor(
         socketListener.getReceiveMessage().getReceiveMessenger().refreshMessages.addListener(refreshMessagesListener)
         socketListener.getReceiveMessage().getReceiveMessenger().messagesActionsBus.addListener(actionsMessagesListener)
         socketListener.getReceiveMessage().getReceiveMessenger().messagesInitBus.addListener(initMessagesListener)
+        socketListener.getReceiveMessage().getReceiveMessenger().messagesBus.addListener(messagesListener)
 
         // Чаты
         socketListener.getReceiveMessage().getReceiveMessenger().refreshChats.addListener(refreshChatsListener)

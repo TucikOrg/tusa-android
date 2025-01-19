@@ -13,6 +13,7 @@ class CustomTucikEndpoints(
     private val addLocation = "api/v1/location/add"
     private val sendCode = "api/v1/auth/send-code"
     private val logout = "api/v1/logout"
+    private val sendLogs = "api/v1/logs"
 
     private fun makeEndpoint(path: String): String {
         return "$basePath/$path"
@@ -60,6 +61,11 @@ class CustomTucikEndpoints(
 
     fun makeGoogleSignIn(): String {
         val uri = Uri.parse(makeEndpoint(googleSignIN)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeSendLogs(): String {
+        val uri = Uri.parse(makeEndpoint(sendLogs)).buildUpon().build()
         return uri.toString()
     }
 }

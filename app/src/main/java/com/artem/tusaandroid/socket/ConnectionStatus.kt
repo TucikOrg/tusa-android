@@ -39,6 +39,11 @@ fun ConnectionStatus(connectionStatusViewModel: ConnectionStatusViewModel, modif
     val state = connectionStatusViewModel.getState()
     Box(modifier = modifier) {
         when (state.value) {
+            SocketConnectionStates.CONNECTING -> {
+                Text("подключаюсь",
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
             SocketConnectionStates.OPEN -> {
                 Text("соединен",
                     color = MaterialTheme.colorScheme.primary

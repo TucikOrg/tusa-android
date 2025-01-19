@@ -25,9 +25,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import com.artem.tusaandroid.app.action.MainActionFab
 import com.artem.tusaandroid.app.MainActivityViewModel
 import com.artem.tusaandroid.app.TestInfoLine
@@ -42,13 +46,16 @@ import com.artem.tusaandroid.app.chat.ChatModal
 import com.artem.tusaandroid.app.dialog.AppDialog
 import com.artem.tusaandroid.app.dialog.AppDialogViewModelPreview
 import com.artem.tusaandroid.app.login.InputUniqueName
+import com.artem.tusaandroid.app.logs.CrashLogUploadWorker
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedMarkerModal
 import com.artem.tusaandroid.app.state.RefreshStateListeners
+import com.artem.tusaandroid.app.state.RefreshStateListenersViewModel
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
+import com.artem.tusaandroid.dto.CrashData
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.ListenLocationsUpdates
 import com.artem.tusaandroid.location.LoadAllFriendsLocations
@@ -56,11 +63,14 @@ import com.artem.tusaandroid.location.MoveToMyLocationFab
 import com.artem.tusaandroid.location.PreviewMoveToMyLocationViewModel
 import com.artem.tusaandroid.notification.NotificationsEnabledCheck
 import com.artem.tusaandroid.notification.NotificationsEnabledCheckViewModelPreview
+import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.socket.ConnectionStatus
 import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
-import com.artem.tusaandroid.socket.SocketListener
+import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.theme.TusaAndroidTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -71,9 +81,14 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var lastLocationState: LastLocationState
     @Inject
-    lateinit var socketListener: SocketListener
+    lateinit var socketConnect: SocketConnect
+    @Inject
+    lateinit var moshi: Moshi
+    @Inject
+    lateinit var customTucikEndpoints: CustomTucikEndpoints
 
 
+    @OptIn(ExperimentalStdlibApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -95,7 +110,7 @@ class MainActivity : ComponentActivity() {
                 // когда мы получаем от сервера историю действий над сущностями то обновляем локальное состояние базы данных
                 // синхронизация локальной базы данных с сервером
                 // он это делает только если состояние уже есть в локальной базе данных
-                RefreshStateListeners(model = hiltViewModel())
+                RefreshStateListeners(model = hiltViewModel<RefreshStateListenersViewModel>())
 
                 // загружаем все локации друзей каждый раз когда соединение открывается
                 LoadAllFriendsLocations(model = hiltViewModel())
@@ -108,20 +123,13 @@ class MainActivity : ComponentActivity() {
 
                 // события жизненного цикла кроме OnRestart
                 TucikLifecycleEvents(model = hiltViewModel())
+
             }
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-    }
-
-    // в LIFE_CYCLE нету этого события
-    override fun onRestart() {
-        // вызывается только когда возвращается свернутое приложение
-        // при возвращении в приложение включаем сокет Он снова нужен для общения
-        socketListener.connect()
-        super.onRestart()
     }
 }
 

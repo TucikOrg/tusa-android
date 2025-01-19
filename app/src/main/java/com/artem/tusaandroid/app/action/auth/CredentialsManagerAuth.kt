@@ -133,7 +133,7 @@ fun EnterButton(context: Context, model: CredentialsManagerAuthViewModel, isChec
         onClick = {
             model.enter(context)
         },
-        enabled = isChecked,
+        enabled = isChecked && model.enabledLoginButton.value,
         modifier = Modifier.fillMaxWidth(),
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.primary,

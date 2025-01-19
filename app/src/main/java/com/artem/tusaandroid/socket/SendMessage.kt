@@ -25,8 +25,12 @@ class SendMessage(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
-    fun getMessages(chatId: Long, page: Int, size: Int) {
-        val data = SocketBinaryMessage("messages", Cbor.encodeToByteArray(RequestMessages(chatId, page, size)))
+    fun messages(withUserId: Long, page: Int, size: Int) {
+        val data = SocketBinaryMessage("messages", Cbor.encodeToByteArray(RequestMessages(
+            withUserId = withUserId,
+            page = page,
+            size = size
+        )))
         sendMessage(data)
     }
 

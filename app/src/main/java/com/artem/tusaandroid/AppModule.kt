@@ -23,6 +23,8 @@ import com.artem.tusaandroid.requests.auth.AuthorizationInterceptor
 import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.ChatDao
+import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketListener
 import com.google.android.gms.location.LocationServices
@@ -39,6 +41,14 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideSocketConnect(
+        profileState: ProfileState,
+        socketListener: SocketListener
+    ): SocketConnect {
+        return SocketConnect(profileState, socketListener)
+    }
 
     @Provides
     @Singleton
@@ -98,15 +108,18 @@ class AppModule {
     @Provides
     @Singleton
     fun provideChatState(
-        socketListener: SocketListener,
         profileState: ProfileState,
         chatDao: ChatDao,
-        friendDao: FriendDao
+        friendDao: FriendDao,
+        socketListener: SocketListener,
+        messagesDao: MessageDao
     ): ChatState {
         return ChatState(
             profileState,
             chatDao,
-            friendDao
+            friendDao,
+            socketListener,
+            messagesDao
         )
     }
 
@@ -204,10 +217,12 @@ class AppModule {
         profileState: ProfileState,
         meAvatarState: MeAvatarState,
         moshi: Moshi,
-        socketListener: SocketListener
+        socketConnect: SocketConnect,
+        appDialogState: AppDialogState
     ): AuthenticationState {
-        return AuthenticationState(client, customTucikEndpoints, profileState,
-            meAvatarState, moshi, socketListener
+        return AuthenticationState(
+            client, customTucikEndpoints, profileState,
+            meAvatarState, moshi, socketConnect, appDialogState
         )
     }
 

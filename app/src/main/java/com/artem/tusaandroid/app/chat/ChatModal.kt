@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.app.chat
 
+import android.util.Log
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -30,12 +32,14 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.tooling.preview.Preview
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
 import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
@@ -43,6 +47,9 @@ import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.isPreview
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 
@@ -142,22 +149,27 @@ fun MessagesArea(
     val mutableIndicationSource = remember { MutableInteractionSource()}
     val messages by chatViewModel.getMessages().collectAsState()
 
-//    val isAtEnd = remember {
-//        derivedStateOf {
-//            val visibleItems = chatViewModel.lazyListState.layoutInfo.visibleItemsInfo
-//            val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: -Int.MAX_VALUE
-//            lastVisibleItemIndex > messages.value.size - 10
-//        }
-//    }
+    val lazyListState = rememberLazyListState()
+    val isAtEnd = remember {
+        derivedStateOf {
+            val visibleItems = lazyListState.layoutInfo.visibleItemsInfo
+            val lastVisibleItemIndex = visibleItems.lastOrNull()?.index
+            if (lastVisibleItemIndex == null) {
+                return@derivedStateOf false
+            }
+
+            lastVisibleItemIndex > messages.size - 4
+        }
+    }
 
     // Load more items when reaching the end
-//    LaunchedEffect(isAtEnd.value) {
-//        if (isAtEnd.value) {
-//            chatViewModel.loadMoreItems()
-//        }
-//    }
+    LaunchedEffect(isAtEnd.value) {
+        if (isAtEnd.value) {
+            chatViewModel.loadMoreItems()
+        }
+    }
 
-    val lazyListState = rememberLazyListState()
+
     LaunchedEffect(messages) {
         if (messages.isNotEmpty()) {
             val visibleItems = lazyListState.layoutInfo.visibleItemsInfo
@@ -184,7 +196,7 @@ fun MessagesArea(
     ) {
         items(
             count = messages.size,
-            key = { index -> messages[index].creation }
+            key = { index -> messages[index].temporaryId }
         ) { messageIndex ->
             val message = messages[messageIndex]
             MessageItem(message, chatViewModel.chatsState.getUserId())
@@ -195,8 +207,7 @@ fun MessagesArea(
 @Composable
 fun MessageItem(message: MessageResponse, userId: Long) {
     val isMyMessage = message.senderId == userId
-    val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val time = sdf.format(message.creation)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -206,7 +217,7 @@ fun MessageItem(message: MessageResponse, userId: Long) {
         Box(
             modifier = Modifier
                 .background(
-                    color = if (isMyMessage) MaterialTheme.colorScheme.primary else Color.LightGray,
+                    color = if (isMyMessage) MaterialTheme.colorScheme.surface else Color.LightGray,
                     shape = RoundedCornerShape(8.dp)
                 )
                 .padding(8.dp),
@@ -215,16 +226,49 @@ fun MessageItem(message: MessageResponse, userId: Long) {
                 modifier = Modifier.padding(bottom = 20.dp, end = 15.dp),
                 text = message.message,
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (isMyMessage) Color.White else Color.Black
+                color = if (isMyMessage) Color.Black else Color.Black
             )
-            Text(
+
+            val time = DateTimeFormatter.ofPattern("HH:mm").format(LocalDateTime.ofEpochSecond(message.creation, 0, ZoneOffset.UTC))
+            Row (
                 modifier = Modifier.align(Alignment.BottomEnd),
-                text = time,
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray
-            )
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val serverUploaded = message.isServerUploaded()
+                if (serverUploaded == false) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(10.dp),
+                        strokeWidth = 2.dp,
+                    )
+                    Spacer(modifier = Modifier.width(2.dp))
+                }
+
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray
+                )
+            }
         }
     }
+}
+
+
+@Composable
+@Preview
+fun MessagesPreview() {
+    MessageItem(
+        message = MessageResponse(
+            id = null,
+            temporaryId = "1",
+            firstUserId = 1,
+            secondUserId = 2,
+            senderId = 1,
+            message = "Hello",
+            creation = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+        ),
+        userId = 1
+    )
 }
 
 

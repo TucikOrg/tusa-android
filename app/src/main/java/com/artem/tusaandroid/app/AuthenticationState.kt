@@ -8,9 +8,9 @@ import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
+import androidx.credentials.exceptions.GetCredentialCustomException
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
-import com.artem.tusaandroid.socket.SocketListener
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.squareup.moshi.Moshi
@@ -22,7 +22,9 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.security.SecureRandom
 import java.util.Base64
 import com.artem.tusaandroid.R
+import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.dto.LoginResponseDto
+import com.artem.tusaandroid.socket.SocketConnect
 
 class AuthenticationState(
     private val okHttpClient: OkHttpClient,
@@ -30,12 +32,13 @@ class AuthenticationState(
     private val profileState: ProfileState,
     private val meAvatarState: MeAvatarState,
     private val moshi: Moshi,
-    private val socketListener: SocketListener
+    private val socketConnect: SocketConnect,
+    private val appDialogState: AppDialogState
 ) {
     var authenticated by mutableStateOf(profileState.getIsAuthenticated())
 
-    suspend fun login(activityContext: Context) {
-
+    @OptIn(ExperimentalStdlibApi::class)
+    suspend fun login(activityContext: Context, handler: (result: LoginFuncResult) -> Unit) {
         val credentialManager = CredentialManager.create(activityContext)
 
         val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
@@ -53,21 +56,14 @@ class AuthenticationState(
                 request = request,
                 context = activityContext,
             )
-            handleSignIn(result)
-        } catch (exception: Exception) {
-            // всплыввет если например пользователь закрыл окошко с гугл авторизацией
-            exception.printStackTrace()
-        }
-    }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    suspend fun handleSignIn(result: GetCredentialResponse) {
-        val credential = result.credential
-        if (credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
-            return
-        }
+            val credential = result.credential
+            if (credential.type != GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                handler(LoginFuncResult.Error)
+                appDialogState.open("Проблема с входом", "Не вышло авторизоваться через Google")
+                return
+            }
 
-        try {
             // Use googleIdTokenCredential and extract the ID to validate and
             // authenticate on your server.
             val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
@@ -91,16 +87,26 @@ class AuthenticationState(
                 profileState.saveName(loginResponse.name)
                 profileState.saveUniqueName(loginResponse.uniqueName)
                 profileState.savePhone(loginResponse.phone)
-                socketListener.connect()
+                socketConnect.safeConnectCall("AUTHENTICATION")
                 authenticated = true
+                handler(LoginFuncResult.Success)
             } else {
                 // The server couldn't validate the token.
                 // Show an error message to the user.
+                handler(LoginFuncResult.Error)
+                appDialogState.open("Сервер не доступен", "Возможно нету интернета или сервер Тусика сломан :( Попробуйте позже. Извините.")
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
+
+        } catch (getCredentialCustomException: GetCredentialCustomException) {
+            appDialogState.open("Проблема с входом", "Не вышло авторизоваться через Google. Возможно нету сети.")
+            handler(LoginFuncResult.Error)
+        } catch (exception: Exception) {
+            // всплыввет если например пользователь закрыл окошко с гугл авторизацией
+            exception.printStackTrace()
+            handler(LoginFuncResult.Error)
         }
     }
+
 
     suspend fun logout(activityContext: Context) {
         val credentialManager = CredentialManager.create(activityContext)
@@ -108,7 +114,7 @@ class AuthenticationState(
 
         profileState.saveJwt("")
         authenticated = false
-        socketListener.disconnect()
+        socketConnect.disconnect("logout")
         profileState.clear()
         meAvatarState.hideMe()
         meAvatarState.clearAvatar()

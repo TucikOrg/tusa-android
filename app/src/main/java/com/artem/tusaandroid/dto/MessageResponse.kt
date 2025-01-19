@@ -7,10 +7,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Entity(tableName = "message")
 data class MessageResponse(
-    @PrimaryKey() val id: Long?,
+    val id: Long?,
+    @PrimaryKey() var temporaryId: String,
     var firstUserId: Long,
     var secondUserId: Long,
     var senderId: Long,
     val message: String,
-    val creation: Long,
-)
+    var creation: Long,
+) {
+    fun isServerUploaded() = id != null
+}

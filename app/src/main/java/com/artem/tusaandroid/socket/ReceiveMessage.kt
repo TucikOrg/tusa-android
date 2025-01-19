@@ -33,10 +33,11 @@ class ReceiveMessage() {
     val allUsers: EventBus<UsersPage> = EventBus()
     val refreshFriendsBus: EventBus<Unit> = EventBus()
     val refreshFriendsRequestsBus: EventBus<Unit> = EventBus()
-    val refreshAvatarsBus: EventBus<Unit> = EventBus()
+    val refreshAvatarsBus: EventBus<Long> = EventBus()
     val friendsActionsBus: EventBus<List<FriendActionDto>> = EventBus()
     val friendsRequestsActionsBus: EventBus<List<FriendRequestActionDto>> = EventBus()
     val avatarsActionsBus: EventBus<List<AvatarAction>> = EventBus()
+    val connectionClosedBus: EventBus<String> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
@@ -46,6 +47,10 @@ class ReceiveMessage() {
         receiveMessenger.handleMessage(socketBinaryMessage)
 
         when (socketBinaryMessage.type) {
+            "closed" -> {
+                val reason = Cbor.decodeFromByteArray<String>(socketBinaryMessage.data)
+                connectionClosedBus.pushEvent(reason)
+            }
             "locations" -> {
                 val locations = Cbor.decodeFromByteArray<List<LocationDto>>(socketBinaryMessage.data)
                 locationsBus.pushEvent(locations)
@@ -73,7 +78,8 @@ class ReceiveMessage() {
                 refreshFriendsBus.pushEvent(Unit)
             }
             "refresh-avatars" -> {
-                refreshAvatarsBus.pushEvent(Unit)
+                val timePoint = Cbor.decodeFromByteArray<Long>(socketBinaryMessage.data)
+                refreshAvatarsBus.pushEvent(timePoint)
             }
 
             // admins

@@ -4,5 +4,6 @@ enum class SocketConnectionStates {
     OPEN,
     CLOSED,
     FAILED,
-    WAIT_TO_RECONNECT
+    WAIT_TO_RECONNECT,
+    CONNECTING
 }

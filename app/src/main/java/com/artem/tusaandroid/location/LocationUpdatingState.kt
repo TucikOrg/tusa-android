@@ -29,8 +29,8 @@ class LocationUpdatingState(
     private var okHttpClient: OkHttpClient,
     private var appLogsState: AppLogsState
 ) {
-    private val highUpdateTime = "10s"
-    private val mediumUpdateTime = "2m"
+    private val highUpdateTime = "1m"
+    private val mediumUpdateTime = "3m"
     private val lowUpdateTime = "4m"
 
     private var updateLocationInterval = mediumUpdateTime

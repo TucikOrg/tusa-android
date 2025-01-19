@@ -11,7 +11,7 @@ import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationForegroundService
-import com.artem.tusaandroid.socket.SocketListener
+import com.artem.tusaandroid.socket.SocketConnect
 import com.google.android.gms.common.ConnectionResult
 import com.google.android.gms.common.GoogleApiAvailability
 import com.google.android.gms.fitness.LocalRecordingClient
@@ -20,12 +20,12 @@ import javax.inject.Inject
 
 @HiltViewModel
 open class TucikLifecycleEventsViewModel @Inject constructor(
-    val socketListener: SocketListener,
     private val appDialogState: AppDialogState,
     private val lastLocationState: LastLocationState,
-    private val profileState: ProfileState
+    private val profileState: ProfileState,
+    private val socketConnect: SocketConnect
 ) : ViewModel() {
-    fun makeOnStart(context: Context) {
+    fun makeOnCreate(context: Context) {
         // нету нужного гугл сервиса
         val hasMinPlayServices = GoogleApiAvailability.getInstance()
             .isGooglePlayServicesAvailable(context, LocalRecordingClient.LOCAL_RECORDING_CLIENT_MIN_VERSION_CODE)
@@ -61,9 +61,14 @@ open class TucikLifecycleEventsViewModel @Inject constructor(
             // Если сервис был запущен, но разрешение на геолокацию или фитнесс отозвали, то останавливаем сервис
             lastLocationState.saveLocationForegroundServiceStarted(false)
         }
+    }
 
-        if (profileState.getIsAuthenticated() == true) {
-            socketListener.connect()
-        }
+    fun makeOnStart(context: Context) {
+        socketConnect.safeConnectCall("ON_START makeOnStart()")
+    }
+
+    fun onStop() {
+        // чтобы интернет трафик поберечь отключаем сокет в ситуации сворачивания приложения
+        socketConnect.disconnect("APP_STOP")
     }
 }

@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.socket
 
+import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.WebSocket
@@ -25,11 +26,17 @@ class SocketListener(
         return sendMessage
     }
 
-    fun disconnect() {
-        val result = webSocket?.close(1000, "Goodbye")
+    fun disconnect(reason: String) {
+        var code = 1000
+        if (reason == "Token invalid!") {
+            code = 1008
+        }
+        webSocket?.close(code, reason)
     }
 
-    fun connect() {
+    fun connect(reason: String) {
+        Log.i("SocketListener", "Connect reason: $reason")
+        socketConnectionState.connecting()
         val request = Request.Builder()
             .url(socketUrl)
             .build()
@@ -53,7 +60,7 @@ class SocketListener(
 
     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) {
         super.onClosed(webSocket, code, reason)
-        socketConnectionState.closed()
+        socketConnectionState.closed(code)
     }
 
     override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
@@ -61,25 +68,27 @@ class SocketListener(
         println("Closing: $code / $reason")
     }
 
-
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?) {
         super.onFailure(webSocket, t, response)
         socketConnectionState.failed()
         println("Error: ${t.message}")
+        Log.e("SocketListener", "Error: ${t.message}")
 
         val connectionLoosed =
                 t is java.net.SocketException ||
                 t is java.net.SocketTimeoutException ||
-                t is java.io.EOFException
+                t is java.io.EOFException ||
+                t is java.io.IOException // при любой ошыбке пытаемся переподключиться
 
-        if (connectionLoosed) {
+        val isWaitToReconnect = socketConnectionState.isWaitToReconnect()
+        if (connectionLoosed && isWaitToReconnect.not()) {
             // Пробуем восстановить соединение через время
             socketConnectionState.waitToReconnect()
             reconnectExecutor.submit {
                 Thread.sleep(2000)
                 // после попытки если не получиться то опять бросит onFailure()
                 // и так он будет в итоге каждые 2 секунды пытаться переподключиться
-                connect()
+                connect("FAILURE, RECONNECT")
             }
         }
     }

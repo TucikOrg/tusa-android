@@ -19,6 +19,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.util.UUID
 import javax.inject.Inject
 
 @HiltViewModel
@@ -30,10 +33,9 @@ open class ChatViewModel @Inject constructor(
     val profileState: ProfileState,
     val messagesDao: MessageDao
 ): ViewModel() {
-    var loading = mutableStateOf(false)
-    var page = 0
-    var totalPages = 1
+    var page = 1
     private var messagesStatesMap: MutableMap<Pair<Long, Long>, StateFlow<List<MessageResponse>>> = mutableMapOf()
+
 
     fun getMessages(): StateFlow<List<MessageResponse>> {
         val chat = chatsState.chat.value!!
@@ -77,12 +79,39 @@ open class ChatViewModel @Inject constructor(
 
     fun sendMessage(message: String) {
         val currentChat = chatsState.chat.value!!
-        val toId = if (currentChat.firstUserId == profileState.getUserId()) currentChat.secondUserId else currentChat.firstUserId
+        val toId = if (currentChat.firstUserId == profileState.getUserId())
+            currentChat.secondUserId else currentChat.firstUserId
         val sendMessage = SendMessage(
             toId = toId,
             message = message,
-            payload = listOf()
+            payload = listOf(),
+            temporaryId = UUID.randomUUID().toString()
         )
         socketListener.getSendMessage()?.sendChatMessage(sendMessage)
+
+        viewModelScope.launch {
+            messagesDao.insert(MessageResponse(
+                id = null,
+                temporaryId = sendMessage.temporaryId,
+                firstUserId = currentChat.firstUserId,
+                secondUserId = currentChat.secondUserId,
+                senderId = profileState.getUserId(),
+                message = message,
+                creation = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+            ))
+        }
+    }
+
+    fun loadMoreItems() {
+        val currentChat = chatsState.chat.value!!
+        val withUserId = if (currentChat.firstUserId == profileState.getUserId())
+            currentChat.secondUserId else currentChat.firstUserId
+
+        val page = getMessages().value.size / MessagesConsts.batchSize
+        socketListener.getSendMessage()?.messages(
+            withUserId = withUserId,
+            page = page,
+            size = MessagesConsts.batchSize
+        )
     }
 }

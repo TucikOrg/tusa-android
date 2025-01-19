@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MessageDao {
+    @Query("DELETE FROM message WHERE firstUserId = :firstUserId AND secondUserId = :secondUserId")
+    fun deleteByFirstUserIdAndSecondUserId(firstUserId: Long, secondUserId: Long)
+
     @Query("SELECT * FROM message ORDER BY creation DESC")
     fun getAllFlow(): Flow<List<MessageResponse>>
 
@@ -17,6 +20,9 @@ interface MessageDao {
 
     @Query("SELECT * FROM message where firstUserId = :firstUserId AND secondUserId = :secondUserId ORDER BY creation DESC limit 1")
     fun getLastMessageFlow(firstUserId: Long, secondUserId: Long): Flow<MessageResponse?>
+
+    @Query("SELECT * FROM message where id is null")
+    suspend fun getUnsentMessages(): List<MessageResponse>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(message: MessageResponse)

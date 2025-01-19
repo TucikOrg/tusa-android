@@ -52,8 +52,6 @@ class LocationForegroundService: Service() {
     @Inject
     lateinit var lastLocationState: LastLocationState
     @Inject
-    lateinit var okHttpClient: OkHttpClient
-    @Inject
     lateinit var moshi: Moshi
     @Inject
     lateinit var customTucikEndpoints: CustomTucikEndpoints

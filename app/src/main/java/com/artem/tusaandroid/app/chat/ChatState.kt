@@ -2,19 +2,29 @@ package com.artem.tusaandroid.app.chat
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.app.AlineTwoLongsIds
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.dto.MessageResponse
+import com.artem.tusaandroid.dto.SendMessage
 import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.ChatDao
+import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.util.UUID
 import kotlin.Long
 
 class ChatState(
     private val profileState: ProfileState,
     private val chatDao: ChatDao,
-    private val friendDao: FriendDao
+    private val friendDao: FriendDao,
+    private val socketListener: SocketListener,
+    private val messagesDao: MessageDao
 ) {
     var chat: MutableState<ChatResponse?> = mutableStateOf(null)
     val modalOpened = mutableStateOf(false)
@@ -69,6 +79,17 @@ class ChatState(
 
             openChat(useChat)
         }
+    }
+
+    fun resendMessage(viewModelScope: CoroutineScope, message: MessageResponse) {
+        val toId = if (message.firstUserId == profileState.getUserId()) message.secondUserId else message.firstUserId
+        val sendMessage = SendMessage(
+            toId = toId,
+            message = message.message,
+            payload = listOf(),
+            temporaryId = message.temporaryId
+        )
+        socketListener.getSendMessage()?.sendChatMessage(sendMessage)
     }
 
     fun openChat(chat: ChatResponse) {
