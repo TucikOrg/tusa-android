@@ -45,6 +45,17 @@ public:
         return fmod(epsg3857LonNormInf * M_PI + M_PI, 2 * M_PI) - M_PI;
     }
 
+    float getCamLongitudeNormalized() {
+        float longitude = getCamLongitude();
+        if (longitude >= M_PI) {
+            longitude -= 2 * M_PI;
+        }
+        if (longitude <= -M_PI) {
+            longitude += 2 * M_PI;
+        }
+        return longitude;
+    }
+
     short getMaxTilesZoom() { return maxTilesZoom; }
     short getTilesZoom() { return getZoomFloor() > maxTilesZoom ? maxTilesZoom : getZoomFloor(); }
     short getZoomFloor() { return (short) scaleFactorZoom; }
@@ -109,8 +120,8 @@ public:
 
     float getCamDistDistortionImpact() {
         float impact1 = 1.0f;
-        float from = 2.0f;
-        float to = 2.5f;
+        float from = 3.0f;
+        float to = 3.5f;
 
         float zoom = getZoom();
         if (zoom <= from) {
@@ -129,8 +140,8 @@ public:
 
     float getTransition() {
         float transition = 1.0f;
-        float from = 6.5f;
-        float to = 7.0f;
+        float from = 4.0f;
+        float to = 6.0f;
         if (getZoom() > from && getZoom() < to) {
             transition = (to - getZoom()) / (to - from);
         }

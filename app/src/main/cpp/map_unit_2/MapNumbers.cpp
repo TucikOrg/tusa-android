@@ -14,9 +14,8 @@ MapNumbers::MapNumbers(
     this->mapControls = &mapControls;
     this->planeSize = planeSize;
     radius = planeSize / (2.0f * M_PI);
-    tileZ = mapControls.getTilesZoom();
-    zoom = mapControls.getZoom();
-    n = pow(2, tileZ);
+
+
     EPSG3857LonNormInf = mapControls.getEPSG3857LongitudeNormInf();
     EPSG3857CamLatNorm = mapControls.getEPSG3857LatitudeNorm();
     EPSG3857CamLat = mapControls.getEPSG3857Latitude();
@@ -27,13 +26,16 @@ MapNumbers::MapNumbers(
 
     camLatitude = mapControls.getCamLatitude();
     camLongitude = mapControls.getCamLongitude();
-    camLongitudeNormalized = camLongitude;
-    if (camLongitudeNormalized >= M_PI) {
-        camLongitudeNormalized -= 2 * M_PI;
+    camLongitudeNormalized = mapControls.getCamLongitudeNormalized();
+
+    tileZ = mapControls.getTilesZoom();
+    zoom = mapControls.getZoom();
+    // меняем зум при определенных условиях для оптимизации
+    if(zoom >= 3 && zoom <= 3.5f) {
+        tileZ = 2;
     }
-    if (camLongitudeNormalized <= -M_PI) {
-        camLongitudeNormalized += 2 * M_PI;
-    }
+
+    n = pow(2, tileZ);
 
     scale = mapControls.getScale();
     float impact = mapControls.getCamDistDistortionImpact();
@@ -74,6 +76,9 @@ MapNumbers::MapNumbers(
         visYTilesDelta = 2.0;
         textureTileSize = textureTileSizeUnit / 2;
     }
+
+
+
     if (tileZ >= 14) {
         visXTilesDelta = 1.0;
         visYTilesDelta = 1.0;

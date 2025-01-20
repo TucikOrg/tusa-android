@@ -235,7 +235,10 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             auto camLongitudeNormalized = mapNumbers.camLongitudeNormalized;
             double tooFarDeltaLatitude = M_PI / pow(2, currentZoom);
             double tooFarDeltaLongitude = tooFarDeltaLatitude;
-            if (currentZoom < 2.5 && abs(camLatitude) > M_PI / 3) {
+            if (currentZoom < 3.5) {
+                tooFarDeltaLatitude = M_PI / 3;
+            }
+            if (currentZoom < 3.5 && abs(camLatitude) > M_PI / 3) {
                 tooFarDeltaLongitude = 2 * M_PI;
                 tooFarDeltaLatitude = M_PI / 3;
             }

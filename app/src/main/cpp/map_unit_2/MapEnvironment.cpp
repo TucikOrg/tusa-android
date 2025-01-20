@@ -155,8 +155,8 @@ void MapEnvironment::drawTopCap(Eigen::Matrix4f pv, Eigen::Matrix4f sphereModelM
     Eigen::Matrix4f pvm = pv * translateSphere * sphereModelMatrix;
     auto waterColorCSS = MapColors::getWaterColor();
     auto waterColor = CommonUtils::toOpenGlColor(waterColorCSS);
-    auto alphaFrom = 3.0f;
-    auto alphaTo = 4.0f;
+    float alphaFrom = 4.0f;
+    float alphaTo = 5.0f;
     float alpha = 1.0;
     if (zoom > alphaFrom && zoom < alphaTo) {
         alpha = (alphaTo - zoom) / (alphaTo - alphaFrom);
@@ -188,8 +188,8 @@ void MapEnvironment::drawBottomCap(
 ) {
     Eigen::Matrix4f pvm = pv * translateSphere * sphereModelMatrix;
     auto poleColor = MapColors::getPoleColor();
-    auto alphaFrom = 3.0f;
-    auto alphaTo = 4.0f;
+    auto alphaFrom = 4.0f;
+    auto alphaTo = 5.0f;
     float alpha = 1.0;
     if (zoom > alphaFrom && zoom < alphaTo) {
         alpha = (alphaTo - zoom) / (alphaTo - alphaFrom);
