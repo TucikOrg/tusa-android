@@ -30,11 +30,16 @@ MapNumbers::MapNumbers(
 
     tileZ = mapControls.getTilesZoom();
     zoom = mapControls.getZoom();
-    // меняем зум при определенных условиях для оптимизации
-    if(zoom >= 3 && zoom <= 3.5f) {
-        tileZ = 2;
-    }
 
+
+//    if (zoom >= 2 && zoom <= 3.0) {
+//        float latMaxDelta = M_PI / 2.0;
+//        float zoom3Process = zoom - 3.0f;
+//        float moveDelta = latMaxDelta * (1.0 - zoom3Process);
+//        if (abs(camLatitude) > latMaxDelta - moveDelta) {
+//            tileZ = 1;
+//        }
+//    }
     n = pow(2, tileZ);
 
     scale = mapControls.getScale();
@@ -70,13 +75,13 @@ MapNumbers::MapNumbers(
     if (n == 1) {
         visYTilesDelta = 0.5;
         visXTilesDelta = 0.5;
+        textureTileSize = 1024;
     }
     if (n == 4) {
-        visXTilesDelta = 2.0;
-        visYTilesDelta = 2.0;
-        textureTileSize = textureTileSizeUnit / 2;
+        visXTilesDelta = 1.0;
+        visYTilesDelta = 1.0;
+        textureTileSize = 1024;
     }
-
 
 
     if (tileZ >= 14) {
@@ -119,7 +124,7 @@ MapNumbers::MapNumbers(
 
     planetVStart = visTileYStartInv * tileP;
     planetVEnd = visTileYEndInv * tileP;
-    segments = zoom > 7 ? 1 : 40;
+    segments = zoom > 7 ? 1 : 60;
     planetVDelta = (planetVEnd - planetVStart) / segments;
     verticesShift = planeSize / 2.0;
 

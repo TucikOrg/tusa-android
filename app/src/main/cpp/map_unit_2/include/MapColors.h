@@ -35,7 +35,7 @@ public:
         float Cd_b = backgroundColor.b / 255.0f;
         float Cd_a = backgroundColor.a;
 
-        auto landCoverColor = getLandCoverColor();
+        auto landCoverColor = getBackground();
         float Cs_r = landCoverColor.r / 255.0f;
         float Cs_g = landCoverColor.g / 255.0f;
         float Cs_b = landCoverColor.b / 255.0f;

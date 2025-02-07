@@ -15,16 +15,13 @@
 
 class MarkerMapTitle: public IGetPointData {
 public:
-    MarkerMapTitle() {
-
-    }
+    MarkerMapTitle() {}
     MarkerMapTitle(
         std::wstring wname,
         float latitude,
         float longitude,
         float fontSize,
         std::unordered_map<short, void*> visibleZoom,
-        uint64_t featureId,
         uint64_t placeLabelId,
         float textWidth,
         float textHeight,
@@ -36,13 +33,12 @@ public:
         longitude(longitude),
         fontSize(fontSize),
         visibleZoom(visibleZoom),
-        featureId(featureId),
         placeLabelId(placeLabelId),
         textWidth(textWidth),
         textHeight(textHeight),
         forRender(forRender),
-        maxTop(maxTop) {
-
+        maxTop(maxTop)
+    {
         cos_minus_lat = cos(-latitude);
         sin_minus_lat = sin(-latitude);
         sin_lon = sin(longitude);
@@ -55,7 +51,6 @@ public:
     float longitude;
     float fontSize;
     std::unordered_map<short, void*> visibleZoom;
-    uint64_t featureId;
     float invertAnimationUnit = 0;
     float startAnimationElapsedTime = 0;
     uint64_t placeLabelId;

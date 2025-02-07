@@ -186,10 +186,11 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    //mapControls.setCamPos(DEG2RAD(54.1930), DEG2RAD(38.5193));
     //mapControls.setCamPos(moscowLat, moscowLon);
     //mapControls.setZoom(16.5);
-    mapControls.setZoom(3.0);
+
+    //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
+    //mapControls.setZoom(11.4);
 
     transferTilesToGpu.createdSurfaceCount++;
 }

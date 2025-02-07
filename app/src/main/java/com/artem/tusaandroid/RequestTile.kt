@@ -7,6 +7,15 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class RequestTile(private val context: Context) {
+
+    var testPbf = byteArrayOf()
+
+    init {
+        context.assets.open("mvt/test.pbf").use { inputStream ->
+            testPbf = inputStream.readBytes()
+        }
+    }
+
     private fun saveByteArrayToCache(fileName: String, byteArray: ByteArray) {
         val cacheFile = File(context.cacheDir, fileName)
         cacheFile.outputStream().use { it.write(byteArray) }
@@ -23,14 +32,13 @@ class RequestTile(private val context: Context) {
     fun request(zoom: Int, x: Int, y: Int): ByteArray {
         val fileName = "$zoom-$x-$y.mvt"
         // это чтение кеша из файлов системы
-        readByteArrayFromCache(fileName)?.let {
-            return it
-        }
+//        readByteArrayFromCache(fileName)?.let {
+//            return it
+//        }
 
         try {
-            val base = "https://api.mapbox.com/v4/mapbox.mapbox-streets-v8,mapbox.mapbox-terrain-v2/"
-            val token = "pk.eyJ1IjoiaW52ZWN0eXMiLCJhIjoiY2w0emRzYWx5MG1iMzNlbW91eWRwZzdldCJ9.EAByLTrB_zc7-ytI6GDGBw"
-            val url = URL("$base$zoom/$x/$y.mvt?access_token=$token")
+            val base = "http://192.168.0.103:8080/api/v1/tile/"
+            val url = URL("$base$zoom/$x/$y.mvt")
             val result = ByteArrayOutputStream()
             val urlConnection = url.openConnection() as HttpURLConnection
             urlConnection.inputStream.use { inputStream ->
@@ -44,10 +52,13 @@ class RequestTile(private val context: Context) {
             // это запись кеша в файловую систему
             val bytesResult = result.toByteArray()
             saveByteArrayToCache(fileName, bytesResult)
+            return bytesResult
         } catch (e: Exception) {
             // нету интернета и не могу загрузить тайл
+            val t = 0
         }
 
-        return ByteArray(0)
+        return ByteArray(1) // 1 означает что произошла ошибка при загрузке
+        // в C++ проверяю размер массива и если он равен 1 то это ошибка
     }
 }

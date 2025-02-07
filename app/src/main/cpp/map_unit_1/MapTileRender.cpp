@@ -364,8 +364,8 @@ void MapTileRender::drawLayer(
     auto visibleZoom = style.getVisibleZoom(styleIndex);
     auto forwardRenderingOnly = style.getForwardRenderingOnly(styleIndex);
     bool exitByFR = forwardRenderingOnly && !isForwardRendering;
-    bool exByVisZoom = visibleZoom.find(floor(zoom)) == visibleZoom.end();
-    if (exByVisZoom || exitByFR) {
+    bool exitByVisZoom = visibleZoom.find(floor(zoom)) == visibleZoom.end();
+    if (exitByVisZoom || exitByFR) {
         return;
     }
 
@@ -385,8 +385,15 @@ void MapTileRender::drawLayer(
 
     glUseProgram(plainShader->program);
     glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+    if (lineWidth != 0)  {
+        // делаем линии тоньше на маленьких зумах и темнее
+        if (zoom <= 5) {
+            lineWidth *= 0.5;
+        }
+        glLineWidth(lineWidth);
+    }
     glUniform4fv(plainShader->getColorLocation(), 1, colorData);
-    if (lineWidth != 0)  glLineWidth(lineWidth);
+
 
     if (polygons.canBeDraw()) {
         glBindBuffer(GL_ARRAY_BUFFER, polygons.vbo);

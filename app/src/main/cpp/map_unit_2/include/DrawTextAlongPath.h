@@ -20,7 +20,6 @@ public:
     float textHeight = 0;
     float maxTop = 0;
     float legthOfPath;
-    uint64_t featureId;
     uint64_t tileId;
     std::vector<vtzero::point> points;
     short type;

@@ -80,7 +80,7 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
         return true;
     } else currentIndex++;
 
-    if (layerName == "landuse" && className == "agriculture") {
+    if (layerName == "landuse" && (className == "agriculture" || className == "farm")) {
         color[currentIndex] = CSSColorParser::parse("rgba(243, 252, 238, 0.6)");
         visibleZoom[currentIndex] = zooms;
         alphaInterpolateFrom[currentIndex] = 14.0f;
@@ -206,12 +206,12 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
         return true;
     } else currentIndex++;
 
-//    if (layerName == "landuse") {
-//        color[currentIndex] = CSSColorParser::parse("rgb(242, 242, 242)");
-//        visibleZoom[currentIndex] = zooms;
-//        addStyle(currentIndex);
-//        return true;
-//    } else currentIndex++;
+    if (layerName == "landuse") {
+        color[currentIndex] = CSSColorParser::parse("rgba(243, 252, 238, 0.6)");
+        visibleZoom[currentIndex] = zooms;
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
 
     return false;
 }
@@ -268,7 +268,9 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && className == "service" ) {
+    if (layerName == "road" && (className == "service" || className == "services"
+        || className == "sidewalk" || className == "steps" || className == "living_street" || className == "pedestrian"
+    )) {
         forwardRenderingOnly[currentIndex] = false;
         renderWideAfterZoom[currentIndex] = 15.0f;
         isWideLine[currentIndex] = true;
@@ -318,93 +320,87 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         return true;
     } else currentIndex++;
 
+    if (layerName == "road" && (className == "track" || className == "unclassified")) {
+        forwardRenderingOnly[currentIndex] = true;
+        isWideLine[currentIndex] = false;
+        lineWidth[currentIndex] = 2.0f;
+        renderWideAfterZoom[currentIndex] = 15.0f;
+        borderFactor[currentIndex] = 0.00f;
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
+        color[currentIndex] = CSSColorParser::parse("rgb(200, 200, 200)");
+        visibleZoom[currentIndex] = allZoomsVisible({});
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if (layerName == "road") {
+        forwardRenderingOnly[currentIndex] = false;
+        isWideLine[currentIndex] = true;
+        renderWideAfterZoom[currentIndex] = 15.0f;
+        lineWidth[currentIndex] = 2.0f;
+        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
+        visibleZoom[currentIndex] = fromToZoomsVisible(13, 22);
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
+
     return false;
 }
 
 bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, int& currentIndex) {
-    uint64_t symbolRank = 0;
-    uint64_t filterrank = 0;
-    uint64_t worldview = 0;
     std::string type = "";
     std::string name = "";
     if (layerName == "place_label") {
-        symbolRank = boost::get<uint64_t>(props["symbolrank"]);
-        filterrank = boost::get<uint64_t>(props["filterrank"]);
         type = boost::get<std::string>(props["type"]);
-
-        // Пытаемся получить имя на русском
-        if (props.find("name_ru") != props.end()) {
-            auto nameProperty = props["name_ru"];
-            name = boost::get<std::string>(nameProperty);
-        }
-
-        // Если не получилось, то получаем имя на английском
+        name = boost::get<std::string>(props["name_ru"]);
         if (name == "") {
-            auto nameProperty = props["name_en"];
-            name = boost::get<std::string>(nameProperty);
+            name = boost::get<std::string>(props["name_en"]);
+        }
+        if (name == "") {
+            auto nameTest = boost::get<std::string>(props["name"]);
+            if (CommonUtils::isEnglish(nameTest) || CommonUtils::isRussian(nameTest)) {
+                name = nameTest;
+            }
         }
     }
 
-    if (layerName == "place_label" && (type == "country") && symbolRank <= 3) {
+    if (layerName == "place_label" && (type == "ocean" || type == "continent")) {
         fontSize[currentIndex] = 0.020f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(1, 6);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "country") && symbolRank <= 10) {
+    if (layerName == "place_label" && (type == "country" || type == "ocean" || type == "continent")) {
         fontSize[currentIndex] = 0.020f;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(2, 6);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "country") && symbolRank <= 20) {
-        fontSize[currentIndex] = 0.020;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(3, 6);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && (type == "city") && symbolRank <= 6) {
+    if (layerName == "place_label" && (type == "city" || type == "region" || type == "province")) {
         fontSize[currentIndex] = 0.017;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(3, 9);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "city") && symbolRank <= 9) {
-        fontSize[currentIndex] = 0.015;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(6, 10);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "city") && symbolRank <= 20) {
-        fontSize[currentIndex] = 0.014;
-        names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(8, 11);
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "place_label" && (type == "town") && symbolRank <= 100) {
+    if (layerName == "place_label" && (type == "town")) {
         fontSize[currentIndex] = 0.013;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(9, 11);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && type == "village") {
+    if (layerName == "place_label" && (type == "village" || type == "square" || type == "island")) {
         fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(11, 15);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -412,7 +408,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "hamlet") {
         fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(12, 15);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -420,7 +416,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "neighbourhood") {
         fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(12, 14);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -428,7 +424,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "quarter") {
         fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(13, 14);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -436,7 +432,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "suburb") {
         fontSize[currentIndex] = 0.012;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(10, 14);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -444,7 +440,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     if (layerName == "place_label" && type == "state") {
         fontSize[currentIndex] = 0.015;
         names[currentIndex] = name;
-        visibleZoom[currentIndex] = fromToZoomsVisible(4, 7);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -509,10 +505,10 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         auto adminIso = props["iso_3166_1"];
         auto adminLevelVariant = props["admin_level"];
         std::string iso3166Admin = boost::apply_visitor(StringExtractor(), adminIso);
-        adminLevel = boost::get<uint64_t>(adminLevelVariant);
+        adminLevel = std::stoi(boost::get<std::string>(adminLevelVariant));
     }
 
-    if (layerName == "landcover") {
+    if (layerName == "landcover" || layerName == "landcover_big_zoom") {
         color[currentIndex] = MapColors::getLandCoverColor();
         visibleZoom[currentIndex] = allZoomsVisible({});
         addStyle(currentIndex);
@@ -530,16 +526,16 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         return currentIndex;
     }
 
-    if (layerName == "building") {
+    if (layerName == "building" || layerName == "buildings") {
         color[currentIndex] = CSSColorParser::parse("rgb(237, 237, 237)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(13, 22);
-        alphaInterpolateFrom[currentIndex] = 13.0f;
-        alphaInterpolateTo[currentIndex] = 13.4f;
+        visibleZoom[currentIndex] = fromToZoomsVisible(12, 22);
+        alphaInterpolateFrom[currentIndex] = 12.0f;
+        alphaInterpolateTo[currentIndex] = 12.4f;
         addStyle(currentIndex);
         return currentIndex;
     } else currentIndex++;
 
-    if (layerName == "water") {
+    if (layerName == "water" || layerName == "river" || layerName == "water_inner") {
         color[currentIndex] = MapColors::getWaterColor();
         visibleZoom[currentIndex] = allZoomsVisible({});
         addStyle(currentIndex);
@@ -558,7 +554,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         return currentIndex;
     }
 
-    LOGI("Unknown style for layer %s class %s", layerName.c_str(), className.c_str());
+    LOGI("Unknown style for layer = %s class = %s", layerName.c_str(), className.c_str());
     return 0;
 }
 

@@ -49,7 +49,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
         extent = layer.extent();
         while (auto feature = layer.next_feature()) {
             auto props = create_properties_map<layer_map_type>(feature);
-            uint64_t featureId = feature.id();
             auto geomType = feature.geometry_type();
 
             if (layerName == "road") {
@@ -92,16 +91,16 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 if (isWideLine) {
                     // широкая линия
                     std::vector<MapWideLine> wideLines(geomSize);
-                    auto nameScript = boost::get<std::string>(props["name_script"]);
                     auto name = boost::get<std::string>(props["name_ru"]);
-                    if (nameScript == "Cyrillic") {
-                        name = boost::get<std::string>(props["name"]);
-                    }
-
                     if (name == "") {
                         name = boost::get<std::string>(props["name_en"]);
                     }
-                    auto oneway = boost::get<std::string>(props["oneway"]);
+                    if (name == "") {
+                        auto nameTest = boost::get<std::string>(props["name"]);
+                        if (CommonUtils::isEnglish(nameTest) || CommonUtils::isRussian(nameTest)) {
+                            name = nameTest;
+                        }
+                    }
                     auto wName = Utils::stringToWstring(name);
 
                     std::vector<vtzero::point> sumPoints = {};
@@ -110,7 +109,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                         //sumPoints.insert(sumPoints.begin(), point_array.begin(), point_array.end());
                         if (name != "") {
                             // Добавить названия на улицы
-                            parseRoadTitleText(wName, name, point_array, mapSymbols, featureId);
+                            parseRoadTitleText(wName, name, point_array, mapSymbols);
                         }
 
 
@@ -296,39 +295,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 auto fontSize = style.getFontSize(styleIndex);
                 auto visibleZoom = style.getVisibleZoom(styleIndex);
                 if (pointHandler.points.size() == 1 && !name.empty()) {
-//                    if (name.find("Россия") != std::string::npos) {
-//                        auto fid = featureId;
-//                        std::string className = "";
-//                        std::string type = "";
-//                        std::string worldview = "";
-//                        uint64_t symbolRank;
-//                        uint64_t filterRank;
-//                        for (auto prop : props) {
-//                            if (prop.first == "class") {
-//                                className = boost::get<std::string>(prop.second);
-//                            }
-//                            if (prop.first == "type") {
-//                                type = boost::get<std::string>(prop.second);
-//                            }
-//                            if (prop.first == "symbolrank") {
-//                                symbolRank = boost::get<uint64_t>(prop.second);
-//                            }
-//                            if (prop.first == "filterrank") {
-//                                filterRank = boost::get<uint64_t>(prop.second);
-//                            }
-//                            if (prop.first == "worldview") {
-//                                worldview = boost::get<std::string>(prop.second);
-//                            }
-//                        }
-//                        int x = getX();
-//                        int y = getY();
-//                        int z = getZ();
-//                        auto point = pointHandler.points[0];
-//                        float longitude;
-//                        float latitude;
-//                        latAndLonFromTilePoint(point, latitude, longitude);
-//                        latAndLonFromTilePoint(point, latitude, longitude);
-//                    }
                     auto point = pointHandler.points[0];
                     float longitude;
                     float latitude;
@@ -362,13 +328,12 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     memcpy(&latBits, &latitude, sizeof(float));
                     memcpy(&lonBits, &longitude, sizeof(float));
                     uint64_t placeLabelKey = (static_cast<uint64_t>(latBits) << 32) | lonBits;
-                    resultMarkerTitles[featureId] = MarkerMapTitle(
+                    resultMarkerTitles[placeLabelKey] = MarkerMapTitle(
                             wName,
                             latitude,
                             longitude,
                             fontSize,
                             visibleZoom,
-                            featureId,
                             placeLabelKey,
                             textureWidth,
                             textureHeight,
@@ -598,8 +563,7 @@ void MapTile::parseRoadTitleText(
         std::wstring useStreetName,
         std::string name,
         std::vector<vtzero::point>& pointsRaw,
-        MapSymbols& mapSymbols,
-        uint64_t featureId
+        MapSymbols& mapSymbols
 ) {
     // временно символ заменяем Надо потом как-то ё научится рендрить
     wchar_t old_char = L'ё';
@@ -741,7 +705,7 @@ void MapTile::parseRoadTitleText(
         auto randomColor = CommonUtils::toOpenGlColor(CSSColorParser::parse(Utils::generateRandomColor()));
         resultDrawTextAlongPath.push_back(DrawTextAlongPath {
                 useStreetName, path, randomColor, forRender,
-                textureWidth, textureHeight, maxTop, sumLength, featureId,
+                textureWidth, textureHeight, maxTop, sumLength,
                 MapTile::makeKey(getX(), getY(), getZ()), regionPoints, region.type
         });
     }

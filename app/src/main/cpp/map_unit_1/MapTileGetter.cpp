@@ -83,26 +83,34 @@ MapTile* MapTileGetter::load(int x, int y, int z, JNIEnv *parallelThreadEnv) {
     jbyteArray byteArray = (jbyteArray) parallelThreadEnv->CallObjectMethod(requestTileGlobal, makeTileRequest, z, x, y);
     jsize length = parallelThreadEnv->GetArrayLength(byteArray);
 
-    if (length != 0) {
-        jbyte* bytes = parallelThreadEnv->GetByteArrayElements(byteArray, nullptr);
-        std::string tileData((char*) bytes, length);
-        parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
-        vtzero::vector_tile vectorTile(tileData);
-        // тяжелая операция
-        // здесь происходит распознование данных вектора и подготовка их к отрисовке
-        MapTile* mapTile = new MapTile(x, y, z, vectorTile, mapSymbols);
+    // значит произошла ошибка
+    if (length == 1)
+    {
+        // нету интернета скорее всего
+        // тайл не смогли загрузить
         cacheMutex2.lock();
-        cacheTiles.insert({key, mapTile});
+        pushedToNetwork.erase(key); // удаляем чтобы он повторно запросился
         cacheMutex2.unlock();
-        return mapTile;
+        return nullptr;
     }
 
-    // нету интернета скорее всего
-    // тайл не смогли загрузить
+    jbyte* bytes = parallelThreadEnv->GetByteArrayElements(byteArray, nullptr);
+    std::string tileData((char*) bytes, length);
+    parallelThreadEnv->ReleaseByteArrayElements(byteArray, bytes, 0);
+    vtzero::vector_tile vectorTile(tileData);
+    // тяжелая операция
+    // здесь происходит распознование данных вектора и подготовка их к отрисовке
+    MapTile* mapTile;
+    if (length > 0) {
+        mapTile = new MapTile(x, y, z, vectorTile, mapSymbols);
+    } else {
+        mapTile = new MapTile(x, y, z); // Это пустой тайл без информации. Заглушка потому что сервер вернул пустой массив
+    }
+
     cacheMutex2.lock();
-    pushedToNetwork.erase(key);
+    cacheTiles.insert({key, mapTile}); // pushedToNetwork сам удалиться в getOrRequest
     cacheMutex2.unlock();
-    return nullptr;
+    return mapTile;
 }
 
 MapTile* MapTileGetter::getOrRequest(int x, int y, int z, bool forceMem) {
