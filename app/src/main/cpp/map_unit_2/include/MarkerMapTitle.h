@@ -26,7 +26,8 @@ public:
         float textWidth,
         float textHeight,
         std::vector<std::tuple<Symbol, float, float, float>> forRender,
-        float maxTop
+        float maxTop,
+        uint64_t filterNumber
     ):
         wname(wname),
         latitude(latitude),
@@ -37,7 +38,8 @@ public:
         textWidth(textWidth),
         textHeight(textHeight),
         forRender(forRender),
-        maxTop(maxTop)
+        maxTop(maxTop),
+        filterNumber(filterNumber)
     {
         cos_minus_lat = cos(-latitude);
         sin_minus_lat = sin(-latitude);
@@ -58,6 +60,7 @@ public:
     float textHeight;
     std::vector<std::tuple<Symbol, float, float, float>> forRender;
     float maxTop;
+    uint64_t filterNumber;
 };
 
 

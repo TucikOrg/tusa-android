@@ -25,6 +25,12 @@
 
 class Utils {
 public:
+    static std::string floatToString(float value, int precision) {
+        std::ostringstream out;
+        out << std::fixed << std::setprecision(precision) << value;
+        return out.str();
+    }
+
     static std::wstring stringToWstring(const std::string& str) {
         std::setlocale(LC_ALL, "en_US.UTF-8"); // Set locale for UTF-8
         size_t size = mbstowcs(nullptr, str.c_str(), 0) + 1;
@@ -45,12 +51,6 @@ public:
 
     static float normalizeXTile(float infTile, int n) {
         return infTile < 0 ? fmod(fmod(infTile, n) + n, n) : fmod(infTile, n);
-    }
-
-    static std::string floatToString(float value, int precision) {
-        std::ostringstream out;
-        out << std::fixed << std::setprecision(precision) << value;
-        return out.str();
     }
 
     static std::wstring floatToWString(float value, int precision) {

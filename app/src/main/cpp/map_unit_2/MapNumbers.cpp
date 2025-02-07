@@ -32,14 +32,14 @@ MapNumbers::MapNumbers(
     zoom = mapControls.getZoom();
 
 
-//    if (zoom >= 2 && zoom <= 3.0) {
-//        float latMaxDelta = M_PI / 2.0;
-//        float zoom3Process = zoom - 3.0f;
-//        float moveDelta = latMaxDelta * (1.0 - zoom3Process);
-//        if (abs(camLatitude) > latMaxDelta - moveDelta) {
-//            tileZ = 1;
-//        }
-//    }
+    if (zoom >= 2 && zoom <= 3.0) {
+        float latMaxDelta = M_PI / 2.0;
+        float zoom3Process = zoom - 2.0f;
+        float moveDelta = latMaxDelta * (1.0 - zoom3Process + 0.15);
+        if (abs(camLatitude) > latMaxDelta - moveDelta) {
+            tileZ = 1;
+        }
+    }
     n = pow(2, tileZ);
 
     scale = mapControls.getScale();
@@ -75,22 +75,6 @@ MapNumbers::MapNumbers(
     if (n == 1) {
         visYTilesDelta = 0.5;
         visXTilesDelta = 0.5;
-        textureTileSize = 1024;
-    }
-    if (n == 4) {
-        visXTilesDelta = 1.0;
-        visYTilesDelta = 1.0;
-        textureTileSize = 1024;
-    }
-
-
-    if (tileZ >= 14) {
-        visXTilesDelta = 1.0;
-        visYTilesDelta = 1.0;
-    }
-    if (tileZ >= 15) {
-        visYTilesDelta = 1.0;
-        visXTilesDelta = 1.0;
     }
 
 

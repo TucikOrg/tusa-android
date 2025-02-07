@@ -328,6 +328,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     memcpy(&latBits, &latitude, sizeof(float));
                     memcpy(&lonBits, &longitude, sizeof(float));
                     uint64_t placeLabelKey = (static_cast<uint64_t>(latBits) << 32) | lonBits;
+                    auto filterNumber = boost::get<uint64_t>(props["population"]);
                     resultMarkerTitles[placeLabelKey] = MarkerMapTitle(
                             wName,
                             latitude,
@@ -338,12 +339,17 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                             textureWidth,
                             textureHeight,
                             forRender,
-                            maxTop
+                            maxTop,
+                            filterNumber
                     );
+                    // сортируем позже по значению filter
+                    resultOrderedMarkerTitles.push_back(&resultMarkerTitles[placeLabelKey]);
                 }
             }
         }
     }
+
+
 
     // Теперь агрегируем всю геометрию по стилям чтобы потом ее рисовать
     // агрегирование по стилю так как от стиля зависит как рисовать
@@ -490,6 +496,13 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
             std::move(wideLinesUVs)
         };
     }
+
+    // сортируем
+    std::sort(resultOrderedMarkerTitles.begin(), resultOrderedMarkerTitles.end(),
+              [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
+                  return a->filterNumber > b->filterNumber; // сортируем по убыванию
+              }
+    );
 
     regionsShowed.clear();
     style.createStylesVec();

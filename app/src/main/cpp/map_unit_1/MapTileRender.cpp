@@ -389,6 +389,8 @@ void MapTileRender::drawLayer(
         // делаем линии тоньше на маленьких зумах и темнее
         if (zoom <= 5) {
             lineWidth *= 0.5;
+        } else if (zoom < 8) {
+            lineWidth *= 0.8;
         }
         glLineWidth(lineWidth);
     }

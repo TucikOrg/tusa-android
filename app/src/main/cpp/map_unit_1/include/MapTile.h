@@ -69,6 +69,8 @@ public:
     std::unordered_map<unsigned short, MapSquarePoints> resultSquarePointsAggregatedByStyles;
     std::unordered_map<unsigned short, MapWideLine> resultWideLineAggregatedByStyles;
     std::unordered_map<uint64_t, MarkerMapTitle> resultMarkerTitles;
+    std::vector<MarkerMapTitle*> resultOrderedMarkerTitles;
+
     std::vector<DrawTextAlongPath> resultDrawTextAlongPath;
 
     std::vector<float> lastPointsTest = {};

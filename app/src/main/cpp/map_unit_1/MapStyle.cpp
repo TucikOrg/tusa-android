@@ -226,7 +226,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         renderWideAfterZoom[currentIndex] = 15.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(10, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -239,7 +239,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         renderWideAfterZoom[currentIndex] = 15.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(10, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -250,7 +250,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         renderWideAfterZoom[currentIndex] = 15.0f;
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(13, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -263,7 +263,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
         borderFactor[currentIndex] = 0.05f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(14, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -276,7 +276,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 1.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(14, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -289,7 +289,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         renderWideAfterZoom[currentIndex] = 15.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(7, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -339,7 +339,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         renderWideAfterZoom[currentIndex] = 15.0f;
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = fromToZoomsVisible(13, 22);
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -365,7 +365,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     }
 
     if (layerName == "place_label" && (type == "ocean" || type == "continent")) {
-        fontSize[currentIndex] = 0.020f;
+        fontSize[currentIndex] = 0.017f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);

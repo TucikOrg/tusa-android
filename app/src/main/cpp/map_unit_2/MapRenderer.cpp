@@ -5,6 +5,8 @@
 #include "MapRenderer.h"
 #include <cmath>
 #include "MapColors.h"
+#include <format>
+#include <iostream>
 
 void MapRenderer::renderFrame() {
     mapFpsCounter.newFrame();
@@ -127,12 +129,34 @@ void MapRenderer::renderFrame() {
     }
 
 
+    std::string newUpdateSumTitleKey = std::to_string(mn.visTileYStart) +
+                                       std::to_string(mn.visTileYEnd) +
+                                       std::to_string(mn.visTileXStartInf) +
+                                       std::to_string(mn.visTileXEndInf) +
+                                       std::to_string(mn.tileZ) +
+                                       std::to_string(existTiles);
+
+    if (newUpdateSumTitleKey != sumAllTilesTitlesKey) {
+        sumAllTilesTitlesKey = newUpdateSumTitleKey;
+        sumAllTilesTitles.clear();
+
+        for (auto& tile: tiles) {
+            for (auto marker : tile.second->resultOrderedMarkerTitles) {
+                sumAllTilesTitles.push_back(marker);
+            }
+        }
+        std::sort(sumAllTilesTitles.begin(), sumAllTilesTitles.end(),
+                  [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
+                      return a->filterNumber > b->filterNumber;
+                  });
+    }
+
 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
     markers.drawMarkers(shadersBucket, mn.pv,
                         mn, tiles, mapSymbols, mapCamera,
-                        canRefreshTitles
+                        canRefreshTitles, sumAllTilesTitles
     );
 
     auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
@@ -186,8 +210,8 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     float moscowLon = DEG2RAD(37.6176);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    //mapControls.setCamPos(moscowLat, moscowLon);
-    //mapControls.setZoom(16.5);
+    mapControls.setCamPos(moscowLat, moscowLon);
+    mapControls.setZoom(5.1);
 
     //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
     //mapControls.setZoom(11.4);

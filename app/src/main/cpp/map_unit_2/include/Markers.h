@@ -43,7 +43,8 @@ public:
                      std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
                      MapCamera& mapCamera,
-                     bool canRefreshMarkers
+                     bool canRefreshMarkers,
+                     std::vector<MarkerMapTitle*> sumAllTilesTitles
     );
     bool hasMarker(int64_t key);
     void doubleTap();

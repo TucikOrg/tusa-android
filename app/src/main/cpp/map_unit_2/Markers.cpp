@@ -214,7 +214,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                           std::unordered_map<uint64_t, MapTile*> tiles,
                           MapSymbols& mapSymbols,
                           MapCamera& mapCamera,
-                          bool canRefreshMarkers
+                          bool canRefreshMarkers,
+                          std::vector<MarkerMapTitle*> sumAllTilesTitles
 ) {
     Eigen::Matrix4f pv = pvD.cast<float>();
     FromLatLonToSphereDoublePos fromLatLonToSphereDoublePos = FromLatLonToSphereDoublePos();
@@ -248,65 +249,62 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
             // отфильтрованные тайтлы которые нужно показать
             std::unordered_map<uint64_t , MarkerMapTitle*> titlesToRender = {};
             std::unordered_map<uint64_t, void*> handledTitles = {};
-            for (auto& tile: tiles) {
-                auto tileData = tile.second;
-                for (auto& markerTile : tileData->resultMarkerTitles) {
-                    auto& marker = markerTile.second;
-                    if (handledTitles.count(marker.placeLabelId)) {
-                        continue;
-                    }
-                    handledTitles[marker.placeLabelId] = nullptr;
 
-                    auto& visibleZoom = marker.visibleZoom;
-                    auto& latitude = marker.latitude;
-                    auto& longitude = marker.longitude;
-
-                    bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
-                    bool tooFarSkip = abs(camLatitude - latitude) > tooFarDeltaLatitude || abs(camLongitudeNormalized - longitude) > tooFarDeltaLongitude;
-                    if (visibleZoomSkip || tooFarSkip) {
-                        continue;
-                    }
-
-                    float scaleCurrentText = scale * marker.fontSize;
-                    float halfWidth = marker.textWidth / 2.0 * scaleCurrentText;
-                    float halfHeight = marker.textHeight / 2.0 * scaleCurrentText;
-                    Eigen::Vector3f markerPoint = fromLatLonToSphereDoublePos.getPoint(mapNumbers.radius, marker.latitude, marker.longitude).cast<float>();
-                    float markerX = markerPoint.x();
-                    float markerY = markerPoint.y();
-                    float markerZ = markerPoint.z();
-
-
-                    Eigen::Vector4f leftBottomTextPoint = Eigen::Vector4f { markerX - halfWidth, markerY - halfHeight, markerZ, 1.0 };
-                    Eigen::Vector4f rightTopTextPoint = Eigen::Vector4f { markerX + halfWidth, markerY + halfHeight, markerZ, 1.0 };
-                    Eigen::Vector4f PClipLeftBottom = pv * leftBottomTextPoint;
-                    Eigen::Vector4f PClipRightTop = pv * rightTopTextPoint;
-                    Eigen::Vector3f PNdcLeftBottom;
-                    PNdcLeftBottom.x() = PClipLeftBottom.x() / PClipLeftBottom.w();
-                    PNdcLeftBottom.y() = PClipLeftBottom.y() / PClipLeftBottom.w();
-                    PNdcLeftBottom.z() = PClipLeftBottom.z() / PClipLeftBottom.w();
-                    Eigen::Vector3f PNdcRightTop;
-                    PNdcRightTop.x() = PClipRightTop.x() / PClipRightTop.w();
-                    PNdcRightTop.y() = PClipRightTop.y() / PClipRightTop.w();
-                    PNdcRightTop.z() = PClipRightTop.z() / PClipRightTop.w();
-                    float leftBottomScreenX = (PNdcLeftBottom.x() + 1.0f) * 0.5f * screenWidth;
-                    float leftBottomScreenY = (1.0f - PNdcLeftBottom.y()) * 0.5f * screenHeight;
-                    float rightTopScreenX = (PNdcRightTop.x() + 1.0f) * 0.5f * screenWidth;
-                    float rightTopScreenY = (1.0f - PNdcRightTop.y()) * 0.5f * screenHeight;
-
-
-                    auto box = Box (
-                            static_cast<int>(leftBottomScreenX), static_cast<int>(leftBottomScreenY),
-                            static_cast<int>(rightTopScreenX), static_cast<int>(rightTopScreenY),
-                            marker.placeLabelId
-                    );
-
-                    bool inserted = grid.insert(box, checks);
-                    if (inserted == false) {
-                        continue;
-                    }
-
-                    titlesToRender[marker.placeLabelId] = &marker;
+            for (auto marker : sumAllTilesTitles) {
+                if (handledTitles.count(marker->placeLabelId)) {
+                    continue;
                 }
+                handledTitles[marker->placeLabelId] = nullptr;
+
+                auto& visibleZoom = marker->visibleZoom;
+                auto& latitude = marker->latitude;
+                auto& longitude = marker->longitude;
+
+                bool visibleZoomSkip = visibleZoom.find(mapNumbers.tileZ) == visibleZoom.end();
+                bool tooFarSkip = abs(camLatitude - latitude) > tooFarDeltaLatitude || abs(camLongitudeNormalized - longitude) > tooFarDeltaLongitude;
+                if (visibleZoomSkip || tooFarSkip) {
+                    continue;
+                }
+
+                float scaleCurrentText = scale * marker->fontSize;
+                float halfWidth = marker->textWidth / 2.0 * scaleCurrentText;
+                float halfHeight = marker->textHeight / 2.0 * scaleCurrentText;
+                Eigen::Vector3f markerPoint = fromLatLonToSphereDoublePos.getPoint(mapNumbers.radius, marker->latitude, marker->longitude).cast<float>();
+                float markerX = markerPoint.x();
+                float markerY = markerPoint.y();
+                float markerZ = markerPoint.z();
+
+
+                Eigen::Vector4f leftBottomTextPoint = Eigen::Vector4f { markerX - halfWidth, markerY - halfHeight, markerZ, 1.0 };
+                Eigen::Vector4f rightTopTextPoint = Eigen::Vector4f { markerX + halfWidth, markerY + halfHeight, markerZ, 1.0 };
+                Eigen::Vector4f PClipLeftBottom = pv * leftBottomTextPoint;
+                Eigen::Vector4f PClipRightTop = pv * rightTopTextPoint;
+                Eigen::Vector3f PNdcLeftBottom;
+                PNdcLeftBottom.x() = PClipLeftBottom.x() / PClipLeftBottom.w();
+                PNdcLeftBottom.y() = PClipLeftBottom.y() / PClipLeftBottom.w();
+                PNdcLeftBottom.z() = PClipLeftBottom.z() / PClipLeftBottom.w();
+                Eigen::Vector3f PNdcRightTop;
+                PNdcRightTop.x() = PClipRightTop.x() / PClipRightTop.w();
+                PNdcRightTop.y() = PClipRightTop.y() / PClipRightTop.w();
+                PNdcRightTop.z() = PClipRightTop.z() / PClipRightTop.w();
+                float leftBottomScreenX = (PNdcLeftBottom.x() + 1.0f) * 0.5f * screenWidth;
+                float leftBottomScreenY = (1.0f - PNdcLeftBottom.y()) * 0.5f * screenHeight;
+                float rightTopScreenX = (PNdcRightTop.x() + 1.0f) * 0.5f * screenWidth;
+                float rightTopScreenY = (1.0f - PNdcRightTop.y()) * 0.5f * screenHeight;
+
+
+                auto box = Box (
+                        static_cast<int>(leftBottomScreenX), static_cast<int>(leftBottomScreenY),
+                        static_cast<int>(rightTopScreenX), static_cast<int>(rightTopScreenY),
+                        marker->placeLabelId
+                );
+
+                bool inserted = grid.insert(box, checks);
+                if (inserted == false) {
+                    continue;
+                }
+
+                titlesToRender[marker->placeLabelId] = marker;
             }
             grid.clean();
 

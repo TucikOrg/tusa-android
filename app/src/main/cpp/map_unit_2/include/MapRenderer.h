@@ -56,10 +56,13 @@ private:
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
 
-    float forwardRenderingToWorldZoom = 7.0f;
+    float forwardRenderingToWorldZoom = 6.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    int textureTileSizeUnit = 2048;
     std::string textureKey;
+
+    std::vector<MarkerMapTitle*> sumAllTilesTitles;
+    std::string sumAllTilesTitlesKey;
 
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);

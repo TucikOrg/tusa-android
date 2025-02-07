@@ -119,11 +119,9 @@ public:
     float getAnimatedTransition(float time) { return abs(cos(time * 0.1)); }
 
     float getCamDistDistortionImpact() {
-        return 0.0f;
-
         float impact1 = 1.0f;
-        float from = 3.0f;
-        float to = 4.0f;
+        float from = 2.5f;
+        float to = 3.0f;
 
         float zoom = getZoom();
         if (zoom <= from) {
@@ -142,8 +140,8 @@ public:
 
     float getTransition() {
         float transition = 1.0f;
-        float from = 6.5f;
-        float to = 7.0f;
+        float from = 5.0f;
+        float to = 6.0f;
         if (getZoom() > from && getZoom() < to) {
             transition = (to - getZoom()) / (to - from);
         }
@@ -162,7 +160,7 @@ public:
     }
 
     void initCamUnit(float planeSize) {
-        camOneUnitScale = planeSize / 400000.0f;
+        camOneUnitScale = planeSize / 540000.0f;
     }
 
 private:
