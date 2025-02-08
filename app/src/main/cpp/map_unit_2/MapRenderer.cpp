@@ -190,15 +190,10 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     auto error = CommonUtils::getGLErrorString();
     shadersBucket.compileAllShaders(assetManager);
-    error = CommonUtils::getGLErrorString();
     mapSymbols.initGl(assetManager, mapCamera, shadersBucket);
-    error = CommonUtils::getGLErrorString();
     mapTileRender.initTilesTexture();
-    error = CommonUtils::getGLErrorString();
     mapEnvironment.init(planeSize);
-    error = CommonUtils::getGLErrorString();
     markers.initGL();
-    error = CommonUtils::getGLErrorString();
     surfaceCreated = true;
 
     int maxTextureSize;
@@ -206,12 +201,12 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     error = CommonUtils::getGLErrorString();
 
-    float moscowLat = DEG2RAD(55.7558);
-    float moscowLon = DEG2RAD(37.6176);
+    float lat = DEG2RAD(55.7566);
+    float lon = DEG2RAD(37.6391);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
-    mapControls.setCamPos(moscowLat, moscowLon);
-    mapControls.setZoom(5.1);
+    mapControls.setCamPos(lat, lon);
+    mapControls.setZoom(8.1);
 
     //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
     //mapControls.setZoom(11.4);

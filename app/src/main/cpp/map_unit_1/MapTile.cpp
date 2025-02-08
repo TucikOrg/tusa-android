@@ -91,15 +91,14 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                 if (isWideLine) {
                     // широкая линия
                     std::vector<MapWideLine> wideLines(geomSize);
+                    auto nameTest = boost::get<std::string>(props["name"]);
+                    auto wNameTest = Utils::stringToWstring(nameTest);
                     auto name = boost::get<std::string>(props["name_ru"]);
                     if (name == "") {
                         name = boost::get<std::string>(props["name_en"]);
                     }
                     if (name == "") {
-                        auto nameTest = boost::get<std::string>(props["name"]);
-                        if (CommonUtils::isEnglish(nameTest) || CommonUtils::isRussian(nameTest)) {
-                            name = nameTest;
-                        }
+                        name = nameTest;
                     }
                     auto wName = Utils::stringToWstring(name);
 
@@ -504,7 +503,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
               }
     );
 
-    regionsShowed.clear();
     style.createStylesVec();
 }
 
@@ -675,29 +673,12 @@ void MapTile::parseRoadTitleText(
         }
     }
 
-    float delta = 200;
     // regions это участки одного пути Одного feature разделенные так чтобы текст правильно ложился
     for(auto& region : regions) {
         if (name != "Софийская набережная") {
             //continue;
         }
         auto& regionPoints = region.points;
-
-        // проверка точек на коллизии
-        bool ignore = false;
-        for (auto& otherRegion : regionsShowed) {
-            if (name == "Софийская набережная" && otherRegion.name == "улица Балчуг") {
-                int i = 1;
-            }
-
-            if (region.pathIndex == otherRegion.pathIndex) continue;
-            if (region.name != otherRegion.name) continue;
-
-            ignore = region.intersectsMe(otherRegion, delta);
-            if (ignore) break;
-        }
-        if (ignore) continue;
-        regionsShowed.push_back(region);
 
         // Calculate full length of path
         float sumLength = 0;

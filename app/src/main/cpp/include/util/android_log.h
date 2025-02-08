@@ -101,14 +101,6 @@ public:
         return !str.empty();
     }
 
-    static bool isRussian(const std::string& str) {
-        for (unsigned char ch : str) {
-            if (!(ch >= 0xC0 && ch <= 0xFF) && ch != 0xA8 && ch != 0xB8) // UTF-8 (Кириллица в Windows-1251)
-                return false;
-        }
-        return !str.empty();
-    }
-
     static std::vector<GLfloat> toOpenGlColor(CSSColorParser::Color color) {
         GLfloat red   = static_cast<GLfloat>(color.r) / 255;
         GLfloat green = static_cast<GLfloat>(color.g) / 255;

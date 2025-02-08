@@ -148,13 +148,17 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                                    Eigen::Matrix4f pvm
 ) {
     float scaleText = mapNumbers.scale * 0.1;
-    if (mapNumbers.tileZ == 15) {
-        scaleText *= 2.0;
+    float scaleUnit = 0.5;
+    float textCollisionDelta = 0;
+    if (mapNumbers.tileZ == 14) {
+        scaleText *= scaleUnit;
+    } else if (mapNumbers.tileZ == 15) {
+        scaleText *= scaleUnit * 3;
     } else if (mapNumbers.tileZ == 16) {
-        scaleText *= 4.0;
+        scaleText *= scaleUnit * 6;
     }
 
-    float textCollisionDelta = 100;
+
     auto atlasW = mapSymbols.atlasWidth;
     auto atlasH = mapSymbols.atlasHeight;
     auto& drawTextAlongPath= tile->resultDrawTextAlongPath;

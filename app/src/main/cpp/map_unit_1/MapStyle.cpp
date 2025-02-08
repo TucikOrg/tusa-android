@@ -223,7 +223,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 4.0f;
         borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -236,7 +236,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 2.0f;
         borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -247,7 +247,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
     if (layerName == "road" && className == "street" ) {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -258,7 +258,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
     if (layerName == "road" && className == "street_limited" ) {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         lineWidth[currentIndex] = 1.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
         borderFactor[currentIndex] = 0.05f;
@@ -268,11 +268,9 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && (className == "service" || className == "services"
-        || className == "sidewalk" || className == "steps" || className == "living_street" || className == "pedestrian"
-    )) {
+    if (layerName == "road" && (className == "service" || className == "services")) {
         forwardRenderingOnly[currentIndex] = false;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 1.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
@@ -286,7 +284,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 4.0f;
         borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -298,7 +296,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 8.0f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         borderFactor[currentIndex] = 0.00f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(249, 199, 128)");
@@ -311,7 +309,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 8.0f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         borderFactor[currentIndex] = 0.00f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(240, 227, 86)");
@@ -320,11 +318,11 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && (className == "track" || className == "unclassified")) {
+    if (layerName == "road" && (className == "track")) {
         forwardRenderingOnly[currentIndex] = true;
         isWideLine[currentIndex] = false;
         lineWidth[currentIndex] = 2.0f;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         borderFactor[currentIndex] = 0.00f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(200, 200, 200)");
@@ -336,7 +334,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
     if (layerName == "road") {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
-        renderWideAfterZoom[currentIndex] = 15.0f;
+        renderWideAfterZoom[currentIndex] = 14.0f;
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -358,9 +356,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         }
         if (name == "") {
             auto nameTest = boost::get<std::string>(props["name"]);
-            if (CommonUtils::isEnglish(nameTest) || CommonUtils::isRussian(nameTest)) {
-                name = nameTest;
-            }
+            name = nameTest;
         }
     }
 
@@ -529,8 +525,8 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
     if (layerName == "building" || layerName == "buildings") {
         color[currentIndex] = CSSColorParser::parse("rgb(237, 237, 237)");
         visibleZoom[currentIndex] = fromToZoomsVisible(12, 22);
-        alphaInterpolateFrom[currentIndex] = 12.0f;
-        alphaInterpolateTo[currentIndex] = 12.4f;
+        alphaInterpolateFrom[currentIndex] = 13.0f;
+        alphaInterpolateTo[currentIndex] = 13.3f;
         addStyle(currentIndex);
         return currentIndex;
     } else currentIndex++;

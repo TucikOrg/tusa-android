@@ -152,7 +152,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
     glDisable(GL_SCISSOR_TEST);
 
     // Рисуем текст поверх всех тайлов
-    if (zoom > 14) {
+    if (zoom >= 14) {
         for (OnTilePathText &drawTile: onTilePathText) {
             auto tile = drawTile.mapTile;
             auto &vTileMatrix = drawTile.vTileMatrix;

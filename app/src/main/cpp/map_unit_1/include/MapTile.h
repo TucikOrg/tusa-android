@@ -87,7 +87,6 @@ private:
     unsigned int maxStyleIndex = 0;
 
     uint64_t pathIndex = 0;
-    std::vector<Region> regionsShowed;
 
     void parseRoadTitleText(
         std::wstring useStreetName,
