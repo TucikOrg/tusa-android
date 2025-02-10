@@ -7,6 +7,122 @@
 #include "util/android_log.h"
 #include "util/eigen_gl.h"
 #include "MapColors.h"
+#include "RoadLettersPtr.h"
+
+float getScaleText(MapNumbers& mapNumbers) {
+    float scaleText = mapNumbers.scale * 0.1;
+    float scaleUnit = 0.5;
+
+    if (mapNumbers.tileZ == 14) {
+        scaleText *= scaleUnit;
+    } else if (mapNumbers.tileZ == 15) {
+        scaleText *= scaleUnit * 3;
+    } else if (mapNumbers.tileZ == 16) {
+        scaleText *= scaleUnit * 6;
+    }
+    return scaleText;
+}
+
+void MapTileRender::checkCollisionsRoadsNames(
+        MapNumbers& mapNumbers,
+        std::vector<MapTile*> tiles,
+        ShadersBucket& shadersBucket
+) {
+    // нужно вычислить коллизии
+    float textCollisionDelta = 0;
+    float scaleText = getScaleText(mapNumbers);
+
+    for (auto tile : tiles) {
+        auto& drawTextAlongPath= tile->resultDrawTextAlongPath;
+
+        for (int drIndex = 0; drIndex < drawTextAlongPath.size(); drIndex++) {
+            auto &drawTextItem = drawTextAlongPath[drIndex];
+            auto &points = drawTextItem.points;
+            auto &path = drawTextItem.path;
+            auto pathLen = drawTextItem.legthOfPath;
+            float textWidth = drawTextItem.textWidth * scaleText;
+            // текст гораздо боьше этого маленького отрезка пути
+            if (textWidth + textCollisionDelta > pathLen) continue;
+            float startShift = (pathLen - textWidth) / 2;
+            float yShift = drawTextItem.textHeight / 4.0;
+            auto forRender = drawTextItem.forRender;
+
+            short dataElementsCount = 8;
+            float currentShift = 0;
+            unsigned int symbolDataCurrentIndex = 0;
+
+            unsigned int symbolDataSize = forRender.size() * 4 * dataElementsCount;
+            std::vector<float> symbolData = std::vector<float>(symbolDataSize);
+            for (auto charRender: forRender) {
+                Symbol symbol = std::get<0>(charRender);
+                float w = std::get<1>(charRender);
+                float h = std::get<2>(charRender);
+                float pixelsShift = std::get<3>(charRender);
+                float bitmapLeft = symbol.bitmapLeft;
+                float rowsMinusTop = (symbol.rows - symbol.bitmapTop) + yShift;
+
+                float symbolArray[] = {
+                        0, 0, currentShift, pixelsShift, bitmapLeft, rowsMinusTop,
+                        w, 0, currentShift, pixelsShift, bitmapLeft, rowsMinusTop,
+                        w, h, currentShift, pixelsShift, bitmapLeft, rowsMinusTop,
+                        0, h, currentShift, pixelsShift, bitmapLeft, rowsMinusTop,
+                };
+
+                // здесь вычисляем позицию каждой буквы
+                size_t u_pointsSize = path.size();
+                float skipLen = currentShift * scaleText + startShift;
+                float pointX, pointY;
+                float nextPointX, nextPointY;
+                for (int i = 0; i < u_pointsSize - 1; i++) {
+                    pointX = path[i * 2];
+                    pointY = path[i * 2 + 1];
+                    nextPointX = path[i * 2 + 2];
+                    nextPointY = path[i * 2 + 2 + 1];
+                    float dist = sqrt( pow(nextPointX - pointX, 2.0) + pow(nextPointY - pointY, 2.0) );
+                    if (skipLen > dist) {
+                        skipLen -= dist;
+                    } else break;
+                }
+                float fromPointShift = skipLen - pixelsShift * scaleText / 2.0;
+
+                Eigen::Vector2f tangent = Eigen::Vector2f(nextPointX, nextPointY) - Eigen::Vector2f(pointX, pointY);
+                tangent.normalize();
+                Eigen::Vector2f orthogonal = Eigen::Vector2f(-tangent.y(), tangent.x());
+
+                Eigen::Vector2f point = Eigen::Vector2f(pointX, pointY);
+                Eigen::Vector2f vertexPosition = Eigen::Vector2f (0, 0);
+                Eigen::Vector2f a_symbolShift = Eigen::Vector2f (bitmapLeft, rowsMinusTop);
+                Eigen::Vector2f startLoc = (vertexPosition.x() + a_symbolShift.x()) * tangent + (vertexPosition.y() - a_symbolShift.y()) * orthogonal;
+                startLoc *= scaleText;
+                Eigen::Vector2f symbPos = startLoc + point + tangent * fromPointShift;
+                float symbPosX = symbPos.x();
+                float symbPosY = symbPos.y();
+
+
+                currentShift += pixelsShift;
+            }
+        }
+    }
+
+//    for (auto& tile : tiles) {
+//        auto pvm = matrixForRoadLetter[tile->makeKey(tile->getX(), tile->getY(), tile->getZ())];
+//        Eigen::Vector2f coords = textPoints[tile->makeKey(tile->getX(), tile->getY(), tile->getZ())];
+//        float data[] = {coords.x(), coords.y()};
+//        auto plainShader = shadersBucket.plainShader;
+//        glUseProgram(plainShader->program);
+//        glVertexAttribPointer(plainShader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, data);
+//        glEnableVertexAttribArray(plainShader->getPosLocation());
+//        glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvm.data());
+//        glUniform1f(plainShader->getPointSizeLocation(), 40.0f);
+//        glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+//        glDrawArrays(GL_POINTS, 0, textPoints.size() / 2);
+//    }
+}
+
+
+MapTileRender::MapTileRender() {
+
+};
 
 void MapTileRender::initTilesTexture() {
     glGenFramebuffers(1, &tilesFrameBuffer);
@@ -147,21 +263,13 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                                    float elapsedTime,
                                    Eigen::Matrix4f pvm
 ) {
-    float scaleText = mapNumbers.scale * 0.1;
-    float scaleUnit = 0.5;
     float textCollisionDelta = 0;
-    if (mapNumbers.tileZ == 14) {
-        scaleText *= scaleUnit;
-    } else if (mapNumbers.tileZ == 15) {
-        scaleText *= scaleUnit * 3;
-    } else if (mapNumbers.tileZ == 16) {
-        scaleText *= scaleUnit * 6;
-    }
-
+    float scaleText = getScaleText(mapNumbers);
 
     auto atlasW = mapSymbols.atlasWidth;
     auto atlasH = mapSymbols.atlasHeight;
     auto& drawTextAlongPath= tile->resultDrawTextAlongPath;
+
 
     // тестирование
     // рисуем точки по которым идет текст
@@ -195,22 +303,21 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
 //        glDrawArrays(GL_POINTS, 0, lines.size() / 2);
 //    }
 
-
     auto pathTextShader = shadersBucket.pathTextShader;
-    glUseProgram(pathTextShader->program);
-    glUniformMatrix4fv(pathTextShader->getProjectionMatrix(), 1, GL_FALSE, p.data());
-    glUniform4f(pathTextShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
-    glUniform1i(pathTextShader->getTextureLocation(), 0);
-    glUniformMatrix4fv(pathTextShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
-    glUniform1f(pathTextShader->getElapsedTimeLocation(), elapsedTime);
-    glUniform1f(pathTextShader->getScaleLocation(), scaleText);
+//    glUseProgram(pathTextShader->program);
+//    glUniformMatrix4fv(pathTextShader->getProjectionMatrix(), 1, GL_FALSE, p.data());
+//    glUniform4f(pathTextShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+//    glUniform1i(pathTextShader->getTextureLocation(), 0);
+//    glUniformMatrix4fv(pathTextShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
+//    glUniform1f(pathTextShader->getElapsedTimeLocation(), elapsedTime);
+//    glUniform1f(pathTextShader->getScaleLocation(), scaleText);
 
     for (int drIndex = 0; drIndex < drawTextAlongPath.size(); drIndex++) {
         auto& drawTextItem = drawTextAlongPath[drIndex];
-        auto& points = drawTextItem.points;
         auto& path = drawTextItem.path;
         auto pathLen = drawTextItem.legthOfPath;
         float textWidth = drawTextItem.textWidth * scaleText;
+        // текст гораздо боьше этого маленького отрезка пути
         if (textWidth + textCollisionDelta > pathLen) continue;
         float startShift = (pathLen - textWidth) / 2;
         float yShift = drawTextItem.textHeight / 4.0;
@@ -272,7 +379,122 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
             drawTextItem.transferedToGPU = true;
         }
 
-        // Рисуем дорогу
+
+        // collisions draw points test
+        bool renderThisRoadText = true;
+        std::vector<float> tempLettersScreenXY = {};
+        float currentShift = 0;
+        for (auto charRender: forRender) {
+            Symbol symbol = std::get<0>(charRender);
+            float w = std::get<1>(charRender);
+            float h = std::get<2>(charRender);
+            float pixelsShift = std::get<3>(charRender);
+            float bitmapLeft = symbol.bitmapLeft;
+            float rowsMinusTop = (symbol.rows - symbol.bitmapTop) + yShift;
+
+            // здесь вычисляем позицию каждой буквы
+            size_t u_pointsSize = path.size();
+            float skipLen = currentShift * scaleText + startShift;
+            float pointX, pointY;
+            float nextPointX, nextPointY;
+            for (int i = 0; i < u_pointsSize - 1; i++) {
+                pointX = path[i * 2];
+                pointY = path[i * 2 + 1];
+                nextPointX = path[i * 2 + 2];
+                nextPointY = path[i * 2 + 2 + 1];
+                float dist = sqrt( pow(nextPointX - pointX, 2.0) + pow(nextPointY - pointY, 2.0) );
+                if (skipLen > dist) {
+                    skipLen -= dist;
+                } else break;
+            }
+            float fromPointShift = skipLen - pixelsShift * scaleText / 2.0;
+
+            Eigen::Vector2f tangent = Eigen::Vector2f(nextPointX, nextPointY) - Eigen::Vector2f(pointX, pointY);
+            tangent.normalize();
+            Eigen::Vector2f orthogonal = Eigen::Vector2f(-tangent.y(), tangent.x());
+
+            Eigen::Vector2f point = Eigen::Vector2f(pointX, pointY);
+            Eigen::Vector2f vertexPosition = Eigen::Vector2f (w / 2.0f, h / 2.0f);
+            Eigen::Vector2f a_symbolShift = Eigen::Vector2f (bitmapLeft, rowsMinusTop);
+            Eigen::Vector2f startLoc = (vertexPosition.x() + a_symbolShift.x()) * tangent + (vertexPosition.y() - a_symbolShift.y()) * orthogonal;
+            startLoc *= scaleText;
+            Eigen::Vector2f symbPos = startLoc + point + tangent * fromPointShift;
+            float symbPosX = symbPos.x();
+            float symbPosY = symbPos.y();
+
+            Eigen::Vector4f gomogenCoordinate = pvm.cast<float>() * Eigen::Vector4f(symbPosX, symbPosY, 0, 1);
+            float ndcX = gomogenCoordinate.x() / gomogenCoordinate.w();
+            float ndcY = gomogenCoordinate.y() / gomogenCoordinate.w();
+            float screenX = (ndcX + 1) * 0.5 * mapNumbers.screenWidth;
+            float screenY = (1.0 - (ndcY + 1) * 0.5) * mapNumbers.screenHeight;
+            Eigen::Matrix4f pvScreen = mapNumbers.pvScreen;
+
+            // проверяем ппересечения с другими буквами
+            for (auto textRoad : roadLettersPtr) {
+                if (
+                        textRoad.roadId == drawTextItem.roadId &&
+                        textRoad.regionId != drawTextItem.regionId &&
+                        textRoad.tileKey != drawTextItem.tileId
+                ) continue;
+
+                for (int letterI = 0; letterI < textRoad.amount; letterI++) {
+                    float otherLetterX = roadLettersScreenXY[textRoad.startIndex + letterI * 2];
+                    float otherLetterY = roadLettersScreenXY[textRoad.startIndex + letterI * 2 + 1];
+
+                    float deltaX = screenX - otherLetterX;
+                    float deltaY = screenY - otherLetterY;
+                    float distance = sqrt(deltaX * deltaX + deltaY * deltaY);
+
+                    if (distance < 35) {
+                        renderThisRoadText = false;
+                        break;
+                    }
+                }
+
+                if (renderThisRoadText == false) break;
+            }
+            if (renderThisRoadText == false) break;
+
+            tempLettersScreenXY.push_back(screenX);
+            tempLettersScreenXY.push_back(screenY);
+
+
+            float data[] = {screenX, screenY, 0, 1};
+            auto plainShader = shadersBucket.plainShader;
+            glUseProgram(plainShader->program);
+            glVertexAttribPointer(plainShader->getPosLocation(), 4, GL_FLOAT, GL_FALSE, 0, data);
+            glEnableVertexAttribArray(plainShader->getPosLocation());
+            glUniformMatrix4fv(plainShader->getMatrixLocation(), 1, GL_FALSE, pvScreen.data());
+            glUniform1f(plainShader->getPointSizeLocation(), 20.0f);
+            glUniform4f(plainShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+            glDrawArrays(GL_POINTS, 0, 2);
+
+            currentShift += pixelsShift;
+        }
+
+        if (renderThisRoadText) {
+            uint startIndexLetters = roadLettersScreenXY.size();
+            // если рендрим в итоге то добавляем
+            for (auto coord : tempLettersScreenXY) {
+                roadLettersScreenXY.push_back(coord);
+            }
+            uint lettersAmount = tempLettersScreenXY.size() / 2;
+            auto tileKey = tile->makeKey(tile->getX(), tile->getY(), tile->getZ());
+            roadLettersPtr.push_back(RoadLettersPtr { drawTextItem.roadId, tileKey, startIndexLetters, lettersAmount, drawTextItem.regionId, } );
+        }
+
+        if (renderThisRoadText == false) continue;
+
+        // это должно быть сверху!!
+        glUseProgram(pathTextShader->program);
+        glUniformMatrix4fv(pathTextShader->getProjectionMatrix(), 1, GL_FALSE, p.data());
+        glUniform4f(pathTextShader->getColorLocation(), 1.0, 0.0, 0.0, 1.0);
+        glUniform1i(pathTextShader->getTextureLocation(), 0);
+        glUniformMatrix4fv(pathTextShader->getMatrixLocation(), 1, GL_FALSE, vm.data());
+        glUniform1f(pathTextShader->getElapsedTimeLocation(), elapsedTime);
+        glUniform1f(pathTextShader->getScaleLocation(), scaleText);
+
+        // Рисуем текст на дороге
         glUniform2fv(pathTextShader->getPathLocation(), path.size(), path.data());
         glUniform1i(pathTextShader->getPointsSizeLocation(), path.size());
         glUniform1f(pathTextShader->getStartShiftLocation(), startShift);
@@ -295,10 +517,12 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
         glUniform1f(pathTextShader->getSymbolScaleLocation(), 0.0);
         glUniform3f(pathTextShader->getColorLocation(), 0.0, 0.0, 0.0);
         glDrawElements(GL_TRIANGLES, drawTextItem.iboSize, GL_UNSIGNED_INT, 0);
+
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 }
 
 void MapTileRender::renderTile(

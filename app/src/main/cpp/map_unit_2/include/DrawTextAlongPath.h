@@ -23,11 +23,17 @@ public:
     uint64_t tileId;
     std::vector<vtzero::point> points;
     short type;
+    uint64_t roadId;
+    short regionId;
 
+
+
+    bool collisionPassed = false;
     bool transferedToGPU = false;
     GLuint vboData;
     GLuint ibo;
     unsigned int iboSize;
+
 
     float startAnimationTime = 0;
 };

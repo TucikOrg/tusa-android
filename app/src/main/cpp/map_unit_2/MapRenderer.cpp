@@ -115,6 +115,11 @@ void MapRenderer::renderFrame() {
         mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter, mn
     };
 
+    // cобираем все лейблы в кучу и сортируем по полю
+    // города сортируются по населению
+    // где больше людей то и показываем выше других городов
+    updateSumAllPlaceLabelsOfTiles(mn, tiles, existTiles, backgroundTiles.size());
+
     mapEnvironment.selectClearColor(mn.zoom);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -126,29 +131,6 @@ void MapRenderer::renderFrame() {
         glBindTexture(GL_TEXTURE_2D, mapTileRender.getMapTexture());
         drawMap.drawMapViaTexture(drawMapData);
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
-    }
-
-
-    std::string newUpdateSumTitleKey = std::to_string(mn.visTileYStart) +
-                                       std::to_string(mn.visTileYEnd) +
-                                       std::to_string(mn.visTileXStartInf) +
-                                       std::to_string(mn.visTileXEndInf) +
-                                       std::to_string(mn.tileZ) +
-                                       std::to_string(existTiles);
-
-    if (newUpdateSumTitleKey != sumAllTilesTitlesKey) {
-        sumAllTilesTitlesKey = newUpdateSumTitleKey;
-        sumAllTilesTitles.clear();
-
-        for (auto& tile: tiles) {
-            for (auto marker : tile.second->resultOrderedMarkerTitles) {
-                sumAllTilesTitles.push_back(marker);
-            }
-        }
-        std::sort(sumAllTilesTitles.begin(), sumAllTilesTitles.end(),
-                  [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
-                      return a->filterNumber > b->filterNumber;
-                  });
     }
 
 
@@ -172,6 +154,32 @@ void MapRenderer::renderFrame() {
     //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
 
     //drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.2);
+}
+
+void MapRenderer::updateSumAllPlaceLabelsOfTiles(MapNumbers& mn, std::unordered_map<uint64_t, MapTile*> tiles, bool existTiles, int backgroundTilesSize) {
+     std::string newUpdateSumTitleKey = std::to_string(mn.visTileYStart) +
+                                        std::to_string(mn.visTileYEnd) +
+                                        std::to_string(mn.visTileXStartInf) +
+                                        std::to_string(mn.visTileXEndInf) +
+                                        std::to_string(mn.tileZ) +
+                                        std::to_string(backgroundTilesSize) +
+                                        std::to_string(textureTileSizeUnit) +
+                                        std::to_string(existTiles);
+
+     if (newUpdateSumTitleKey != sumAllTilesTitlesKey) {
+         sumAllTilesTitlesKey = newUpdateSumTitleKey;
+         sumAllTilesTitles.clear();
+
+         for (auto& tile: tiles) {
+             for (auto marker : tile.second->resultOrderedMarkerTitles) {
+                 sumAllTilesTitles.push_back(marker);
+             }
+         }
+         std::sort(sumAllTilesTitles.begin(), sumAllTilesTitles.end(),
+                   [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
+                       return a->filterNumber > b->filterNumber;
+                   });
+     }
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -201,12 +209,12 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
 
     error = CommonUtils::getGLErrorString();
 
-    float lat = DEG2RAD(55.7566);
-    float lon = DEG2RAD(37.6391);
+    float lat = DEG2RAD(55.7486);
+    float lon = DEG2RAD(37.6191);
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
     mapControls.setCamPos(lat, lon);
-    mapControls.setZoom(8.1);
+    mapControls.setZoom(13.1);
 
     //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
     //mapControls.setZoom(11.4);
@@ -268,6 +276,7 @@ MapRenderer::MapRenderer() {
 void MapRenderer::cleanup() {
     markers.joinThreads();
     mapTileGetter->joinThreads();
+    mapTileRender.joinThreads();
     delete mapTileGetter;
 }
 

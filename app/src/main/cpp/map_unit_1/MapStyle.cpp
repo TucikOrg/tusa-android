@@ -284,7 +284,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 4.0f;
         borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
+        renderWideAfterZoom[currentIndex] = 13.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -296,7 +296,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 8.0f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
+        renderWideAfterZoom[currentIndex] = 13.0f;
         borderFactor[currentIndex] = 0.00f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(249, 199, 128)");
@@ -309,7 +309,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 8.0f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
+        renderWideAfterZoom[currentIndex] = 13.0f;
         borderFactor[currentIndex] = 0.00f;
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(240, 227, 86)");
@@ -368,8 +368,8 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "country" || type == "ocean" || type == "continent")) {
-        fontSize[currentIndex] = 0.020f;
+    if (layerName == "place_label" && (type == "country")) {
+        fontSize[currentIndex] = 0.015f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
@@ -377,7 +377,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
     } else currentIndex++;
 
     if (layerName == "place_label" && (type == "city" || type == "region" || type == "province")) {
-        fontSize[currentIndex] = 0.017;
+        fontSize[currentIndex] = 0.014;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
@@ -534,6 +534,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
     if (layerName == "water" || layerName == "river" || layerName == "water_inner") {
         color[currentIndex] = MapColors::getWaterColor();
         visibleZoom[currentIndex] = allZoomsVisible({});
+        lineWidth[currentIndex] = 4.0f;
         addStyle(currentIndex);
         return currentIndex;
     } else currentIndex++;

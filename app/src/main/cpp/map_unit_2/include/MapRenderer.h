@@ -66,6 +66,8 @@ private:
 
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
+
+    void updateSumAllPlaceLabelsOfTiles(MapNumbers& mn, std::unordered_map<uint64_t, MapTile*> tiles, bool existTiles, int backgroundTilesSize);
 };
 
 

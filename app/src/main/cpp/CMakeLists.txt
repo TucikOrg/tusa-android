@@ -109,6 +109,7 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         map_unit_2/AvatarAtlasPointer.cpp
         map_unit_2/AvatarsGroup.cpp
         map_unit_2/IGetPointData.cpp
+        map_unit_2/RoadLettersPtr.cpp
 
         grid/Grid.cpp
         grid/GridNode.cpp

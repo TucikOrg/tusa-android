@@ -37,7 +37,7 @@ class RequestTile(private val context: Context) {
 //        }
 
         try {
-            val base = "http://192.168.0.103:8080/api/v1/tile/"
+            val base = "http://192.168.0.103:8081/api/v1/tile/"
             val url = URL("$base$zoom/$x/$y.mvt")
             val result = ByteArrayOutputStream()
             val urlConnection = url.openConnection() as HttpURLConnection

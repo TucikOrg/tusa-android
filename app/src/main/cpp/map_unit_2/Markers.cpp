@@ -540,9 +540,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         auto color = MapColors::getAvatarsBorderColor();
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
 
-        Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
-        Eigen::Matrix4f viewScreen = mapCamera.createView();
-        Eigen::Matrix4f pvScreen = projectionScreen * viewScreen;
+        Eigen::Matrix4f pvScreen = mapNumbers.pvScreen;
 
         // при больших зумах нужно каждый маркер рисовать отдельно так как не хватает точности float
         // и считать точку нахождения в CPU

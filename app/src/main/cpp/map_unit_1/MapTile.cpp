@@ -64,12 +64,12 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                         auto type = property.value().type();
                     }
 
-                    if (property.value().type() == vtzero::property_value_type::string_value) {
-                        LOGI("key = %s value = %s",
-                             std::string(property.key()).data(),
-                             std::string(property.value().string_value()).data()
-                        );
-                    }
+//                    if (property.value().type() == vtzero::property_value_type::string_value) {
+//                        LOGI("key = %s value = %s",
+//                             std::string(property.key()).data(),
+//                             std::string(property.value().string_value()).data()
+//                        );
+//                    }
                 }
                 int i = 1;
             }
@@ -102,13 +102,15 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     }
                     auto wName = Utils::stringToWstring(name);
 
+
                     std::vector<vtzero::point> sumPoints = {};
                     for (size_t geomIndex = 0; geomIndex < geomSize; ++geomIndex) {
                         auto point_array = lineHandler.lines[geomIndex];
                         //sumPoints.insert(sumPoints.begin(), point_array.begin(), point_array.end());
                         if (name != "") {
                             // Добавить названия на улицы
-                            parseRoadTitleText(wName, name, point_array, mapSymbols);
+                            auto id = boost::get<uint64_t>(props["id"]);
+                            parseRoadTitleText(wName, name, point_array, mapSymbols, id);
                         }
 
 
@@ -323,11 +325,9 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                         forRender.push_back({symbol, w, h, xPixelsShift});
                     }
 
-                    uint32_t latBits, lonBits;
-                    memcpy(&latBits, &latitude, sizeof(float));
-                    memcpy(&lonBits, &longitude, sizeof(float));
-                    uint64_t placeLabelKey = (static_cast<uint64_t>(latBits) << 32) | lonBits;
+                    uint64_t placeLabelKey = CommonUtils::makeKeyFromFloats(latitude, longitude);
                     auto filterNumber = boost::get<uint64_t>(props["population"]);
+                    auto id = boost::get<uint64_t>(props["id"]);
                     resultMarkerTitles[placeLabelKey] = MarkerMapTitle(
                             wName,
                             latitude,
@@ -339,7 +339,8 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                             textureHeight,
                             forRender,
                             maxTop,
-                            filterNumber
+                            filterNumber,
+                            id
                     );
                     // сортируем позже по значению filter
                     resultOrderedMarkerTitles.push_back(&resultMarkerTitles[placeLabelKey]);
@@ -574,12 +575,17 @@ void MapTile::parseRoadTitleText(
         std::wstring useStreetName,
         std::string name,
         std::vector<vtzero::point>& pointsRaw,
-        MapSymbols& mapSymbols
+        MapSymbols& mapSymbols,
+        uint64_t roadId
 ) {
     // временно символ заменяем Надо потом как-то ё научится рендрить
     wchar_t old_char = L'ё';
     wchar_t new_char = L'е';
     std::replace(useStreetName.begin(), useStreetName.end(), old_char, new_char);
+
+//    if (name != "Боровицкая улица") {
+//        return;
+//    }
 
     pathIndex++;
     std::vector<std::tuple<Symbol, float, float, float>> forRender {};
@@ -674,10 +680,8 @@ void MapTile::parseRoadTitleText(
     }
 
     // regions это участки одного пути Одного feature разделенные так чтобы текст правильно ложился
-    for(auto& region : regions) {
-        if (name != "Софийская набережная") {
-            //continue;
-        }
+    for(short regionId = 0; regionId < regions.size(); regionId++) {
+        auto& region = regions[regionId];
         auto& regionPoints = region.points;
 
         // Calculate full length of path
@@ -700,7 +704,8 @@ void MapTile::parseRoadTitleText(
         resultDrawTextAlongPath.push_back(DrawTextAlongPath {
                 useStreetName, path, randomColor, forRender,
                 textureWidth, textureHeight, maxTop, sumLength,
-                MapTile::makeKey(getX(), getY(), getZ()), regionPoints, region.type
+                MapTile::makeKey(getX(), getY(), getZ()), regionPoints, region.type,
+                roadId, regionId
         });
     }
 }

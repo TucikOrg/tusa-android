@@ -15,6 +15,7 @@
 
 class MapNumbers {
 public:
+    MapNumbers() = default;
     MapNumbers(
             MapControls &mapControls,
             MapCamera &mapCamera,
@@ -82,6 +83,9 @@ public:
     double planetUDelta;
     float transition;
     float shiftUTex;
+    float screenWidth;
+    float screenHeight;
+    Eigen::Matrix4f pvScreen;
 };
 
 

@@ -3,6 +3,7 @@
 //
 
 #include "DrawMap.h"
+#include "Grid.h"
 
 void DrawMap::drawMapForward(DrawMapData &data) {
     auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
@@ -153,6 +154,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // Рисуем текст поверх всех тайлов
     if (zoom >= 14) {
+        mapTileRender.resetLettersRoadCollision();
         for (OnTilePathText &drawTile: onTilePathText) {
             auto tile = drawTile.mapTile;
             auto &vTileMatrix = drawTile.vTileMatrix;

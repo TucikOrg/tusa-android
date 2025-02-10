@@ -11,6 +11,13 @@ MapNumbers::MapNumbers(
         int textureTileSizeUnit,
         float forwardRenderingToWorldZoom
 ) {
+    screenWidth = mapCamera.getScreenW();
+    screenHeight = mapCamera.getScreenH();
+
+    Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
+    Eigen::Matrix4f viewScreen = mapCamera.createView();
+    pvScreen = projectionScreen * viewScreen;
+
     this->mapControls = &mapControls;
     this->planeSize = planeSize;
     radius = planeSize / (2.0f * M_PI);

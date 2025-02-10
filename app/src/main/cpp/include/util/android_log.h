@@ -94,6 +94,14 @@ public:
 
 class CommonUtils {
 public:
+    static uint64_t makeKeyFromFloats(float first, float second) {
+        uint32_t latBits, lonBits;
+        memcpy(&latBits, &first, sizeof(float));
+        memcpy(&lonBits, &second, sizeof(float));
+        uint64_t placeLabelKey = (static_cast<uint64_t>(latBits) << 32) | lonBits;
+        return placeLabelKey;
+    }
+
     static bool isEnglish(const std::string& str) {
         for (unsigned char ch : str) {
             if (!std::isalpha(ch) || (ch >= 128)) return false; // ASCII-only letters

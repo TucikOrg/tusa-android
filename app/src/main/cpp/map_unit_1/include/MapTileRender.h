@@ -22,9 +22,13 @@
 #include <Eigen/Dense>
 #include <Eigen/Core>
 #include <Eigen/StdVector>
+#include "Grid.h"
+#include "RoadLettersPtr.h"
 
 class MapTileRender {
 public:
+    MapTileRender();
+
     void initTilesTexture();
 
     void renderTile(
@@ -74,7 +78,26 @@ public:
     }
 
     void destroy();
+
+
+    void checkCollisionsRoadsNames(
+            MapNumbers& mapNumbers,
+            std::vector<MapTile*> tiles,
+            ShadersBucket& shadersBucket
+    );
+
+    void joinThreads() {
+
+    }
+
+    void resetLettersRoadCollision() {
+        roadLettersPtr.clear();
+        roadLettersScreenXY.clear();
+    }
 private:
+
+    std::vector<RoadLettersPtr> roadLettersPtr;
+    std::vector<float> roadLettersScreenXY;
 
     float extent = 4096;
     GLuint tilesTexture;
