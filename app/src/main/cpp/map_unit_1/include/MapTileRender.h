@@ -65,11 +65,12 @@ public:
             Eigen::Matrix4f pvm
     );
 
+    float getScaleText(MapNumbers& mapNumbers);
 
     void renderPathText(MapTile* tile, MapSymbols& mapSymbols,
                         Eigen::Matrix4f vm, Eigen::Matrix4f p,
                         ShadersBucket& shadersBucket, MapNumbers& mapNumbers,
-                        float elapsedTime, Eigen::Matrix4f pvm
+                        float elapsedTime, Eigen::Matrix4f pvm,  float scaleText
     );
 
     GLuint getTilesTexture();
@@ -80,22 +81,38 @@ public:
     void destroy();
 
 
-    void checkCollisionsRoadsNames(
-            MapNumbers& mapNumbers,
-            std::vector<MapTile*> tiles,
-            ShadersBucket& shadersBucket
-    );
-
+    std::thread parallelThread;
+    bool parallelThreadRunning = true;
+    bool lockThread = true;
     void joinThreads() {
-
+        parallelThreadRunning = false;
+        if (parallelThread.joinable()) {
+            parallelThread.join();
+        }
     }
+    int savedVisTileYStart, savedVisTileYEnd, savedVisTileXStartInf, savedVisTileXEndInf, savedN, savedTileZ;
+    std::unordered_map<uint64_t, MapTile*> savedTiles;
+    float textCollisionDelta = -25;
+    Eigen::Matrix4f savedPVScreen;
+
+    float screenWidth, screenHeight;
 
     void resetLettersRoadCollision() {
         roadLettersPtr.clear();
         roadLettersScreenXY.clear();
     }
+    void shouldRecalculateCollisions(float elapsedTime) {
+        float timeFromLastCollisionCheck = elapsedTime - elapsedTimeLastCollisionCheck;
+        checkCollisions = timeFromLastCollisionCheck > 2; // каждые две секунды считаем коллизии между текстом
+        if (checkCollisions) {
+            elapsedTimeLastCollisionCheck = elapsedTime;
+        }
+    }
+    void setCheckRoadsCollisionsFalse() {
+        checkCollisions = false;
+    }
 private:
-
+    bool checkCollisions = true;
     std::vector<RoadLettersPtr> roadLettersPtr;
     std::vector<float> roadLettersScreenXY;
 
@@ -106,6 +123,8 @@ private:
     int prTex2dWidth;
     GLuint mapTexture;
     GLuint mapTextureFramebuffer;
+
+    float elapsedTimeLastCollisionCheck = 0;
 
 };
 

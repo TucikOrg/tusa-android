@@ -7,15 +7,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 class RequestTile(private val context: Context) {
-
-    var testPbf = byteArrayOf()
-
-    init {
-        context.assets.open("mvt/test.pbf").use { inputStream ->
-            testPbf = inputStream.readBytes()
-        }
-    }
-
     private fun saveByteArrayToCache(fileName: String, byteArray: ByteArray) {
         val cacheFile = File(context.cacheDir, fileName)
         cacheFile.outputStream().use { it.write(byteArray) }
@@ -37,7 +28,7 @@ class RequestTile(private val context: Context) {
 //        }
 
         try {
-            val base = "http://192.168.0.103:8081/api/v1/tile/"
+            val base = BuildConfig.MAP_URL
             val url = URL("$base$zoom/$x/$y.mvt")
             val result = ByteArrayOutputStream()
             val urlConnection = url.openConnection() as HttpURLConnection
@@ -51,7 +42,9 @@ class RequestTile(private val context: Context) {
 
             // это запись кеша в файловую систему
             val bytesResult = result.toByteArray()
-            saveByteArrayToCache(fileName, bytesResult)
+            if (bytesResult.size > 0) {
+                saveByteArrayToCache(fileName, bytesResult)
+            }
             return bytesResult
         } catch (e: Exception) {
             // нету интернета и не могу загрузить тайл

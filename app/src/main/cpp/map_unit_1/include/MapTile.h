@@ -39,7 +39,7 @@ public:
     }
 
     bool is(std::array<int, 3> tileCords) {
-        return x == tileCords[0] && y == tileCords[1] && z == tileCords[3];
+        return x == tileCords[0] && y == tileCords[1] && z == tileCords[2];
     }
 
     bool isEmpty() {
@@ -78,6 +78,9 @@ public:
 
     MapStyle style = MapStyle();
     void destroy();
+
+    Eigen::Matrix4f savedForRoadTextCollisionCheckPVM;
+    float savedScaleForRoadTextCollisionsCheck;
 private:
     int z;
     int x;

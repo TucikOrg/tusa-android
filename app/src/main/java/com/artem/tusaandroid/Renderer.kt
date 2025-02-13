@@ -78,6 +78,6 @@ class Renderer(
         }
 
         // Рендрим любимейшую мою планету
-        NativeLibrary.render()
+        NativeLibrary.render(BuildConfig.MAP_DEBUG)
     }
 }

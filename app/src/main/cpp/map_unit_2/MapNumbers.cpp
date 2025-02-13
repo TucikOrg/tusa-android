@@ -39,14 +39,14 @@ MapNumbers::MapNumbers(
     zoom = mapControls.getZoom();
 
 
-    if (zoom >= 2 && zoom <= 3.0) {
-        float latMaxDelta = M_PI / 2.0;
-        float zoom3Process = zoom - 2.0f;
-        float moveDelta = latMaxDelta * (1.0 - zoom3Process + 0.15);
-        if (abs(camLatitude) > latMaxDelta - moveDelta) {
-            tileZ = 1;
-        }
-    }
+//    if (zoom >= 2 && zoom <= 3.0) {
+//        float latMaxDelta = M_PI / 2.0;
+//        float zoom3Process = zoom - 2.0f;
+//        float moveDelta = latMaxDelta * (1.0 - zoom3Process + 0.15);
+//        if (abs(camLatitude) > latMaxDelta - moveDelta) {
+//            tileZ = 1;
+//        }
+//    }
     n = pow(2, tileZ);
 
     scale = mapControls.getScale();

@@ -4,8 +4,22 @@
 
 #include "DrawMap.h"
 #include "Grid.h"
+void DrawMap::onSurfaceCreated() {
+    glGenBuffers(1, &verticesVBO);
+    glGenBuffers(1, &indicesIBO);
+    glGenBuffers(1, &texUV_VBO);
+    glGenBuffers(1, &EPSG3857_VBO);
+}
+
+void DrawMap::destroy() {
+    glDeleteBuffers(1, &verticesVBO);
+    glDeleteBuffers(1, &indicesIBO);
+    glDeleteBuffers(1, &texUV_VBO);
+    glDeleteBuffers(1, &EPSG3857_VBO);
+}
 
 void DrawMap::drawMapForward(DrawMapData &data) {
+
     auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
     auto& tilesSwiped = data.tilesSwiped;
     auto& EPSGLonNormInfNegative = data.EPSGLonNormInfNegative;
@@ -36,6 +50,7 @@ void DrawMap::drawMapForward(DrawMapData &data) {
     auto& mapSymbols = data.mapSymbols;
     auto& mapFpsCounter = data.mapFpsCounter;
     auto& mapNumbers = data.mapNumbers;
+    float scaleText = mapTileRender.getScaleText(mapNumbers);
 
     double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
     Eigen::Vector4d topLeftWorld4f = planeModelMatrix * Eigen::Vector4d(leftXVertex, topYVertex, 0, 1.0);
@@ -154,11 +169,29 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // Рисуем текст поверх всех тайлов
     if (zoom >= 14) {
-        mapTileRender.resetLettersRoadCollision();
+//        mapTileRender.resetLettersRoadCollision();
+//        mapTileRender.shouldRecalculateCollisions(mapFpsCounter.getTimeElapsed());
+        if (mapTileRender.lockThread == false) {
+            mapTileRender.savedVisTileYStart = mapNumbers.visTileYStart;
+            mapTileRender.savedVisTileYEnd = mapNumbers.visTileYEnd;
+            mapTileRender.savedVisTileXStartInf = mapNumbers.visTileXStartInf;
+            mapTileRender.savedVisTileXEndInf = mapNumbers.visTileXEndInf;
+            mapTileRender.savedN = mapNumbers.n;
+            mapTileRender.savedTileZ = mapNumbers.tileZ;
+            mapTileRender.savedTiles = tiles;
+            mapTileRender.savedPVScreen = mapNumbers.pvScreen;
+        }
+
         for (OnTilePathText &drawTile: onTilePathText) {
             auto tile = drawTile.mapTile;
             auto &vTileMatrix = drawTile.vTileMatrix;
             auto &pvTileMatrix = drawTile.pvTileMatrix;
+
+            if (mapTileRender.lockThread == false) {
+                tile->savedForRoadTextCollisionCheckPVM = pvTileMatrix;
+                tile->savedScaleForRoadTextCollisionsCheck = scaleText;
+            }
+
             mapTileRender.renderPathText(
                     tile,
                     mapSymbols,
@@ -167,9 +200,11 @@ void DrawMap::drawMapForward(DrawMapData &data) {
                     shadersBucket,
                     mapNumbers,
                     mapFpsCounter.getTimeElapsed(),
-                    pvTileMatrix
+                    pvTileMatrix,
+                    scaleText
             );
         }
+//        mapTileRender.setCheckRoadsCollisionsFalse();
     }
 }
 
@@ -192,37 +227,56 @@ void DrawMap::drawMapViaTexture(DrawMapData &data) {
     auto& shiftUTex = data.shiftUTex;
     auto& scaleUTex = data.scaleUTex;
 
-    std::vector<float> planetEPSG3857;
-    std::vector<float> planetTexUV;
-    std::vector<float> planetVertices;
-    for (int i = 0; i <= segments; i ++) {
-        double planetV = planetVStart + i * planetVDelta;
-        float y = planetV * planeSize - verticesShift;
 
-        for (int j = 0; j <= segments; j++) {
-            double planetU = planetUStart + j * planetUDelta;
-            float x = planetU * planeSize - verticesShift;
+    if(segments != savedSegmentsAmount || data.tileZ != savedTileZ) {
+        savedSegmentsAmount = segments;
+        savedTileZ = data.tileZ;
+        std::vector<float> planetEPSG3857;
+        std::vector<float> planetTexUV;
+        std::vector<float> planetVertices;
+        std::vector<unsigned int> indices;
 
-            planetVertices.push_back(x);
-            planetVertices.push_back(y);
-            planetEPSG3857.push_back((planetV * 2.0f - 1.0f) * M_PI);
-            planetEPSG3857.push_back((planetU * 2.0f - 1.0f) * M_PI);
+        for (int i = 0; i <= segments; i ++) {
+            double planetV = planetVStart + i * planetVDelta;
+            float y = planetV * planeSize - verticesShift;
 
-            planetTexUV.push_back(FLOAT(j) / segments);
-            planetTexUV.push_back(FLOAT(i) / segments);
+            for (int j = 0; j <= segments; j++) {
+                double planetU = planetUStart + j * planetUDelta;
+                float x = planetU * planeSize - verticesShift;
+
+                planetVertices.push_back(x);
+                planetVertices.push_back(y);
+                planetEPSG3857.push_back((planetV * 2.0f - 1.0f) * M_PI);
+                planetEPSG3857.push_back((planetU * 2.0f - 1.0f) * M_PI);
+
+                planetTexUV.push_back(FLOAT(j) / segments);
+                planetTexUV.push_back(FLOAT(i) / segments);
+            }
         }
-    }
 
-    std::vector<unsigned int> indices;
-    for (int i = 0; i < segments; i++) {
-        for (int j = 0; j <= segments; j++) {
-            indices.push_back(i * (segments + 1) + j);
-            indices.push_back((i + 1) * (segments + 1) + j);
+        glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+        glBufferData(GL_ARRAY_BUFFER, planetVertices.size() * sizeof(float), planetVertices.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, EPSG3857_VBO);
+        glBufferData(GL_ARRAY_BUFFER, planetEPSG3857.size() * sizeof(float), planetEPSG3857.data(), GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, texUV_VBO);
+        glBufferData(GL_ARRAY_BUFFER, planetTexUV.size() * sizeof(float), planetTexUV.data(), GL_STATIC_DRAW);
+
+        for (int i = 0; i < segments; i++) {
+            for (int j = 0; j <= segments; j++) {
+                indices.push_back(i * (segments + 1) + j);
+                indices.push_back((i + 1) * (segments + 1) + j);
+            }
+            if (i != segments - 1) {
+                indices.push_back((i + 1) * (segments + 1) + segments);
+                indices.push_back((i + 1) * (segments + 1));
+            }
         }
-        if (i != segments - 1) {
-            indices.push_back((i + 1) * (segments + 1) + segments);
-            indices.push_back((i + 1) * (segments + 1));
-        }
+
+        indicesSize = indices.size();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesIBO);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
     }
 
     auto planet3Shader = shadersBucket.planet3Shader.get();
@@ -234,11 +288,14 @@ void DrawMap::drawMapViaTexture(DrawMapData &data) {
     glUniformMatrix4fv(planet3Shader->getMatrixLocation(), 1, GL_FALSE, pvFloat.data());
     glUniformMatrix4fv(planet3Shader->getPlaneMatrixLocation(), 1, GL_FALSE, planeModelMatrixFloat.data());
     glUniformMatrix4fv(planet3Shader->getSphereMatrixLocation(), 1, GL_FALSE, sphereModelMatrixFloat.data());
-    glVertexAttribPointer(planet3Shader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetVertices.data());
+    glBindBuffer(GL_ARRAY_BUFFER, verticesVBO);
+    glVertexAttribPointer(planet3Shader->getPosLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(planet3Shader->getPosLocation());
-    glVertexAttribPointer(planet3Shader->getPlanetEPSG3857Location(), 2, GL_FLOAT, GL_FALSE, 0, planetEPSG3857.data());
+    glBindBuffer(GL_ARRAY_BUFFER, EPSG3857_VBO);
+    glVertexAttribPointer(planet3Shader->getPlanetEPSG3857Location(), 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(planet3Shader->getPlanetEPSG3857Location());
-    glVertexAttribPointer(planet3Shader->getTextureUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, planetTexUV.data());
+    glBindBuffer(GL_ARRAY_BUFFER, texUV_VBO);
+    glVertexAttribPointer(planet3Shader->getTextureUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(planet3Shader->getTextureUVLocation());
     glUniform1i(planet3Shader->getTextureLocation(), 0);
     glUniform1f(planet3Shader->getPlaneSizeLocation(), planeSize);
@@ -246,6 +303,10 @@ void DrawMap::drawMapViaTexture(DrawMapData &data) {
     glUniform2f(planet3Shader->getCameraEPSG3857Location(), EPSG3857CamLat, 0.0f);
     glUniform2f(planet3Shader->getUVOffsetLocation(), shiftUTex, 0.0f);
     glUniform2f(planet3Shader->getUVScaleLocation(), scaleUTex, 1.0f);
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, indices.data());
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indicesIBO);
+    glDrawElements(GL_TRIANGLE_STRIP, indicesSize, GL_UNSIGNED_INT, 0);
     glDisable(GL_DEPTH_TEST);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }

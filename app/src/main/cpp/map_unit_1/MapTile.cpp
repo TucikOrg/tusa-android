@@ -326,7 +326,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     }
 
                     uint64_t placeLabelKey = CommonUtils::makeKeyFromFloats(latitude, longitude);
-                    auto filterNumber = boost::get<uint64_t>(props["population"]);
                     auto id = boost::get<uint64_t>(props["id"]);
                     resultMarkerTitles[placeLabelKey] = MarkerMapTitle(
                             wName,
@@ -339,7 +338,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                             textureHeight,
                             forRender,
                             maxTop,
-                            filterNumber,
                             id
                     );
                     // сортируем позже по значению filter
@@ -496,13 +494,6 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
             std::move(wideLinesUVs)
         };
     }
-
-    // сортируем
-    std::sort(resultOrderedMarkerTitles.begin(), resultOrderedMarkerTitles.end(),
-              [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
-                  return a->filterNumber > b->filterNumber; // сортируем по убыванию
-              }
-    );
 
     style.createStylesVec();
 }

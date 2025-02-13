@@ -24,7 +24,7 @@
 class MapRenderer {
 public:
     MapRenderer();
-    void renderFrame();
+    void renderFrame(bool isDebugBuildVariant);
     void init(AAssetManager *assetManager, JNIEnv *env, jobject& request_tile);
     void onSurfaceChanged(int w, int h);
     void onSurfaceCreated(AAssetManager* assetManager);
@@ -61,8 +61,6 @@ private:
     int textureTileSizeUnit = 2048;
     std::string textureKey;
 
-    std::vector<MarkerMapTitle*> sumAllTilesTitles;
-    std::string sumAllTilesTitlesKey;
 
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);

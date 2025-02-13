@@ -34,6 +34,9 @@ class MapView(
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
 
+    private var scaleListener: ScaleListener? = null
+    private var gestureListener: GestureListener? = null
+
     init {
         // Настраиваем карту первоначально перед запуском
         NativeLibrary.create()
@@ -57,9 +60,13 @@ class MapView(
         val width = holder.surfaceFrame.width().toFloat()
         val height = holder.surfaceFrame.height().toFloat()
 
-        scaleGestureDetector = ScaleGestureDetector(context, ScaleListener(width, height))
-        gestureDetector = GestureDetector(context, GestureListener())
+        scaleListener = ScaleListener(width, height)
+        gestureListener = GestureListener()
+
+        scaleGestureDetector = ScaleGestureDetector(context, scaleListener!!)
+        gestureDetector = GestureDetector(context, gestureListener!!)
     }
+
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
         //NativeLibrary.surfaceDestroyed()
@@ -75,9 +82,21 @@ class MapView(
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
+        when (event.action) {
+            MotionEvent.ACTION_UP -> {
+                Log.d("TouchEvent", "Палец поднялся!")
+                gestureListener!!.isOneFingerScaling = false
+                gestureListener!!.isDragging = false
+            }
+        }
         scaleGestureDetector!!.onTouchEvent(event)
         gestureDetector!!.onTouchEvent(event)
         return true
+    }
+
+    fun scale(factor: Float) {
+        val zoom = NativeLibrary.scale(factor)
+        systemUIState?.setLight(zoom < 3.0f)
     }
 
     private inner class ScaleListener(
@@ -85,8 +104,7 @@ class MapView(
         private var height: Float
     ) : SimpleOnScaleGestureListener() {
         override fun onScale(detector: ScaleGestureDetector): Boolean {
-            val zoom = NativeLibrary.scale(detector.scaleFactor)
-            systemUIState?.setLight(zoom < 3.0f)
+            scale(detector.scaleFactor)
             return true
         }
 
@@ -96,7 +114,8 @@ class MapView(
     }
 
     private inner class GestureListener : SimpleOnGestureListener() {
-        private var isDragging = false
+        var isOneFingerScaling = false
+        var isDragging = false
         override fun onScroll(
             e1: MotionEvent?,
             e2: MotionEvent,
@@ -105,13 +124,13 @@ class MapView(
         ): Boolean {
             val x = e2.x
             val y = e2.y
-            val wb = width - width / 4.0f
+            val wb = width - width / 5.0f
             val hb = height / 3.0f
-            val scaleDragging = x >= wb && y >= hb && !isDragging && abs(distanceX) < abs(distanceY)
-            if (scaleDragging) {
+            val scaleDragging = x >= wb && y >= hb
+            if ( (scaleDragging || isOneFingerScaling) && !isDragging) {
                 // это приближение и отдаление если правую нижниюю часть экарана трогать пальцем
-                // нормально работает но нужно доработать еще некоторые случаи Пока что эта штука иногда раздражает
-                //NativeLibrary.scale(1.0f + distanceY / 300.0f)
+                scale(1.0f + distanceY / 450.0f)
+                isOneFingerScaling = true
                 return true
             }
 
@@ -126,9 +145,18 @@ class MapView(
         }
 
         override fun onDown(e: MotionEvent): Boolean {
-            isDragging = false
             NativeLibrary.onDown()
             return true
+        }
+
+        override fun onContextClick(event: MotionEvent): Boolean {
+            when (event.action) {
+                MotionEvent.ACTION_UP -> {
+                    isOneFingerScaling = false
+                    isDragging = false
+                }
+            }
+            return super.onContextClick(event)
         }
 
         override fun onSingleTapConfirmed(e: MotionEvent): Boolean {

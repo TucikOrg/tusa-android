@@ -14,10 +14,21 @@
 
 class DrawMap {
 public:
+    void onSurfaceCreated();
     void drawMapForward(DrawMapData& data);
     void drawMapViaTexture(DrawMapData& data);
+    void destroy();
 private:
     float extent = 4096;
+
+    short savedTileZ = 0;
+    short savedSegmentsAmount = 0;
+
+    unsigned int indicesSize;
+    GLuint EPSG3857_VBO;
+    GLuint verticesVBO;
+    GLuint indicesIBO;
+    GLuint texUV_VBO;
 };
 
 

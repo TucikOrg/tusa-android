@@ -10,10 +10,12 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -70,7 +72,6 @@ import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.theme.TusaAndroidTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.adapter
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -180,7 +181,6 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
             )
         },
     ) { it ->
-
         TucikMap(
             model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMapViewModel())
         )
@@ -214,15 +214,48 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                 // то предлогаем ему его ввести
                 InputUniqueName(hiltViewModel())
 
-                MainActionFab(modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .width(120.dp)
-                    .height(120.dp)
-                    .padding(16.dp),
-                    hiltViewModel()
-                )
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(bottom = 10.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    FriendsActionFab(
+                        modifier = Modifier.padding(4.dp),
+                        model = hiltViewModel()
+                    )
 
-                if (model.profileState.getUserId() == 1L || true) {
+
+                    MainActionFab(modifier = Modifier
+                        .width(90.dp)
+                        .height(90.dp)
+                        .padding(4.dp),
+                        model = hiltViewModel()
+                    )
+
+                    ChatsActionFab(
+                        modifier = Modifier.padding(4.dp),
+                        model = hiltViewModel()
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 10.dp).padding(end = 21.dp),
+                ) {
+                    val lastLocationExistsState = model.lastLocationState.getLastLocationExists()
+                    if (lastLocationExistsState.value) {
+                        MoveToMyLocationFab(
+                            modifier = Modifier,
+                            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMoveToMyLocationViewModel())
+                        )
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                }
+
+
+                if (model.profileState.getUserId() == 1L) {
                     Column {
                         LogsFab(
                             modifier = Modifier
@@ -234,30 +267,6 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                             hiltViewModel()
                         )
                     }
-                }
-
-                Column(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(16.dp)
-                ) {
-                    val lastLocationExistsState = model.lastLocationState.getLastLocationExists()
-                    if (lastLocationExistsState.value) {
-                        MoveToMyLocationFab(
-                            modifier = Modifier,
-                            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewMoveToMyLocationViewModel())
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                    }
-                    FriendsActionFab(
-                        modifier = Modifier,
-                        model = hiltViewModel()
-                    )
-                    Spacer(modifier = Modifier.height(10.dp))
-                    ChatsActionFab(
-                        modifier = Modifier,
-                        model = hiltViewModel()
-                    )
                 }
 
                 SelectedMarkerModal(model = hiltViewModel())

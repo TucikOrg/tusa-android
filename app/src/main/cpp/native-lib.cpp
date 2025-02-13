@@ -40,8 +40,8 @@ Java_com_artem_tusaandroid_NativeLibrary_cleanup(JNIEnv *env, jclass clazz) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_artem_tusaandroid_NativeLibrary_render(JNIEnv *env, jclass clazz) {
-    renderer->renderFrame();
+Java_com_artem_tusaandroid_NativeLibrary_render(JNIEnv *env, jclass clazz, jboolean isDebugBuildVariant) {
+    renderer->renderFrame(isDebugBuildVariant);
 }
 
 extern "C"

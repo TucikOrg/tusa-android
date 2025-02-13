@@ -11,7 +11,7 @@ object NativeLibrary {
     external fun create()
     external fun cleanup()
 
-    external fun render()
+    external fun render(isDebugBuildVariant: Boolean)
     external fun onSurfaceChanged(width: Int, height: Int)
     external fun surfaceCreated(assetManager: AssetManager?)
     external fun surfaceDestroyed()

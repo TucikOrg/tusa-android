@@ -8,7 +8,7 @@
 #include <format>
 #include <iostream>
 
-void MapRenderer::renderFrame() {
+void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapFpsCounter.newFrame();
     auto mn = MapNumbers(
             mapControls, mapCamera, planeSize,
@@ -47,6 +47,7 @@ void MapRenderer::renderFrame() {
             tiles.insert({MapTile::makeKey(tileX, tileY, mn.tileZ), tile});
         }
     }
+
 
     // проверяем что тайлы храняться в GPU
     // если они не в GPU то грузим в GPU
@@ -115,11 +116,6 @@ void MapRenderer::renderFrame() {
         mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter, mn
     };
 
-    // cобираем все лейблы в кучу и сортируем по полю
-    // города сортируются по населению
-    // где больше людей то и показываем выше других городов
-    updateSumAllPlaceLabelsOfTiles(mn, tiles, existTiles, backgroundTiles.size());
-
     mapEnvironment.selectClearColor(mn.zoom);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -136,17 +132,22 @@ void MapRenderer::renderFrame() {
 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
-    markers.drawMarkers(shadersBucket, mn.pv,
-                        mn, tiles, mapSymbols, mapCamera,
-                        canRefreshTitles, sumAllTilesTitles
-    );
+//    markers.drawMarkers(shadersBucket, mn.pv,
+//                        mn, tiles, mapSymbols, mapCamera,
+//                        canRefreshTitles
+//    );
 
-    auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
-    auto zoomText = Utils::floatToWString(mn.zoom, 1);
-    std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText +
-                            L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
-                            L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
-    mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.05f);
+    if (isDebugBuildVariant) {
+        auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
+        auto zoomText = Utils::floatToWString(mn.zoom, 1);
+        std::wstring textInfo = L"FPS: " + fps + L" Z:" + zoomText;
+        mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, textInfo, 0.5f, 0.2f);
+
+        std::wstring latLonText =  L" Lat: " + Utils::floatToWString(RAD2DEG(mn.camLatitude), 4) +
+                                   L" Lon: " + Utils::floatToWString(RAD2DEG(mn.camLongitude), 4);
+
+        mapTest.drawTopText(shadersBucket, mapSymbols, mapCamera, latLonText, 0.5f, 0.25f);
+    }
 
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
@@ -154,32 +155,6 @@ void MapRenderer::renderFrame() {
     //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
 
     //drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.2);
-}
-
-void MapRenderer::updateSumAllPlaceLabelsOfTiles(MapNumbers& mn, std::unordered_map<uint64_t, MapTile*> tiles, bool existTiles, int backgroundTilesSize) {
-     std::string newUpdateSumTitleKey = std::to_string(mn.visTileYStart) +
-                                        std::to_string(mn.visTileYEnd) +
-                                        std::to_string(mn.visTileXStartInf) +
-                                        std::to_string(mn.visTileXEndInf) +
-                                        std::to_string(mn.tileZ) +
-                                        std::to_string(backgroundTilesSize) +
-                                        std::to_string(textureTileSizeUnit) +
-                                        std::to_string(existTiles);
-
-     if (newUpdateSumTitleKey != sumAllTilesTitlesKey) {
-         sumAllTilesTitlesKey = newUpdateSumTitleKey;
-         sumAllTilesTitles.clear();
-
-         for (auto& tile: tiles) {
-             for (auto marker : tile.second->resultOrderedMarkerTitles) {
-                 sumAllTilesTitles.push_back(marker);
-             }
-         }
-         std::sort(sumAllTilesTitles.begin(), sumAllTilesTitles.end(),
-                   [](const MarkerMapTitle* a, const MarkerMapTitle* b) {
-                       return a->filterNumber > b->filterNumber;
-                   });
-     }
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {
@@ -191,6 +166,8 @@ void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &reques
 void MapRenderer::onSurfaceChanged(int screenW, int screenH) {
     mapCamera = MapCamera(screenW, screenH, 60.0f);
     mapTest.init(mapCamera);
+    mapTileRender.screenWidth = screenW;
+    mapTileRender.screenHeight = screenH;
 }
 
 void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
@@ -201,6 +178,7 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     mapSymbols.initGl(assetManager, mapCamera, shadersBucket);
     mapTileRender.initTilesTexture();
     mapEnvironment.init(planeSize);
+    drawMap.onSurfaceCreated();
     markers.initGL();
     surfaceCreated = true;
 
@@ -214,7 +192,7 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
     mapControls.setCamPos(lat, lon);
-    mapControls.setZoom(13.1);
+    mapControls.setZoom(0.1);
 
     //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
     //mapControls.setZoom(11.4);
@@ -291,6 +269,7 @@ void MapRenderer::destroyGL() {
     mapSymbols.destroy();
     shadersBucket.destroy();
     mapTileGetter->destroy();
+    drawMap.destroy();
 }
 
 

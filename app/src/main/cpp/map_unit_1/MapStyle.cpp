@@ -216,74 +216,70 @@ bool MapStyle::registerLandUseLayer(std::string layerName, std::string className
     return false;
 }
 
+std::unordered_map<std::string, void*> isBigCityRoadList = {
+        {"secondary", nullptr},
+        {"tertiary", nullptr},
+        {"secondary_link", nullptr},
+        {"tertiary_link", nullptr},
+        {"tertiary", nullptr},
+        {"primary", nullptr},
+        {"primary_link", nullptr},
+};
+
 bool MapStyle::registerRoadLayer(std::string layerName, std::string className, int& currentIndex) {
 
-    if (layerName == "road" && (className == "secondary" || className == "tertiary")) {
-        forwardRenderingOnly[currentIndex] = false;
-        isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 4.0f;
-        borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
-        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
-        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
-        visibleZoom[currentIndex] = allZoomsVisible();
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road" && (className == "secondary_link" || className == "tertiary_link")) {
-        forwardRenderingOnly[currentIndex] = false;
-        isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 2.0f;
-        borderFactor[currentIndex] = 0.05f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
-        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
-        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
-        visibleZoom[currentIndex] = allZoomsVisible();
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road" && className == "street" ) {
-        forwardRenderingOnly[currentIndex] = false;
-        isWideLine[currentIndex] = true;
-        renderWideAfterZoom[currentIndex] = 14.0f;
-        lineWidth[currentIndex] = 2.0f;
-        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = allZoomsVisible();
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road" && className == "street_limited" ) {
+    // пешеходные дорожки (тротуары)
+    if (layerName == "road" && (className == "footway") ) {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         renderWideAfterZoom[currentIndex] = 14.0f;
         lineWidth[currentIndex] = 1.0f;
         color[currentIndex] = CSSColorParser::parse("rgb(255, 255, 255)");
-        borderFactor[currentIndex] = 0.05f;
-        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
+        borderFactor[currentIndex] = 0.1f;
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && (className == "service" || className == "services")) {
+
+    // сервисные дорожки которые соединяют какие-либо объекты
+    // обеспечивают доступ к этим объектам
+    // рендрим с низким приоритетом чтобы они не перекрывали другие дороги
+    if (layerName == "road" && (className == "service")) {
         forwardRenderingOnly[currentIndex] = false;
         renderWideAfterZoom[currentIndex] = 14.0f;
         isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 1.0f;
-        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
+        borderFactor[currentIndex] = 0.1f;
+        lineWidth[currentIndex] = 2.0f;
+        color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
         visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && (className == "primary" || className == "primary_link")) {
+    // большие улицы для прогулок в городах
+    if (layerName == "road" && (className == "residential" || className == "pedestrian")) {
+        forwardRenderingOnly[currentIndex] = false;
+        renderWideAfterZoom[currentIndex] = 14.0f;
+        isWideLine[currentIndex] = true;
+        borderFactor[currentIndex] = 0.1f;
+        lineWidth[currentIndex] = 5.0f;
+        color[currentIndex] = CSSColorParser::parse("rgba(255, 255, 255, 1.0)");
+        borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
+        visibleZoom[currentIndex] = allZoomsVisible();
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    // это трассы автомобильные в городах
+    auto isBigCityRoad = isBigCityRoadList.count(className) > 0;
+    if (layerName == "road" && isBigCityRoad) {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 4.0f;
-        borderFactor[currentIndex] = 0.05f;
+        lineWidth[currentIndex] = 5.0f;
+        borderFactor[currentIndex] = 0.2f;
         renderWideAfterZoom[currentIndex] = 13.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(233, 233, 237, 1.0)");
         borderColor[currentIndex] = CSSColorParser::parse("rgba(200, 200, 200, 1.0)");
@@ -292,7 +288,8 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "road" && className == "motorway") {
+    // эти дороги соединяют города
+    if (layerName == "road" && (className == "trunk" || className == "trunk_link" || className == "motorway")) {
         forwardRenderingOnly[currentIndex] = false;
         isWideLine[currentIndex] = true;
         lineWidth[currentIndex] = 8.0f;
@@ -301,43 +298,6 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
         borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
         color[currentIndex] = CSSColorParser::parse("rgb(249, 199, 128)");
         visibleZoom[currentIndex] = allZoomsVisible({});
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road" && (className == "trunk" || className == "trunk_link")) {
-        forwardRenderingOnly[currentIndex] = false;
-        isWideLine[currentIndex] = true;
-        lineWidth[currentIndex] = 8.0f;
-        renderWideAfterZoom[currentIndex] = 13.0f;
-        borderFactor[currentIndex] = 0.00f;
-        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
-        color[currentIndex] = CSSColorParser::parse("rgb(240, 227, 86)");
-        visibleZoom[currentIndex] = allZoomsVisible({});
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road" && (className == "track")) {
-        forwardRenderingOnly[currentIndex] = true;
-        isWideLine[currentIndex] = false;
-        lineWidth[currentIndex] = 2.0f;
-        renderWideAfterZoom[currentIndex] = 14.0f;
-        borderFactor[currentIndex] = 0.00f;
-        borderColor[currentIndex] = CSSColorParser::parse("rgba(0, 0, 0, 0.8)");
-        color[currentIndex] = CSSColorParser::parse("rgb(200, 200, 200)");
-        visibleZoom[currentIndex] = allZoomsVisible({});
-        addStyle(currentIndex);
-        return true;
-    } else currentIndex++;
-
-    if (layerName == "road") {
-        forwardRenderingOnly[currentIndex] = false;
-        isWideLine[currentIndex] = true;
-        renderWideAfterZoom[currentIndex] = 14.0f;
-        lineWidth[currentIndex] = 2.0f;
-        color[currentIndex] = CSSColorParser::parse("rgb(233, 233, 237)");
-        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return true;
     } else currentIndex++;
@@ -506,7 +466,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
 
     if (layerName == "landcover" || layerName == "landcover_big_zoom") {
         color[currentIndex] = MapColors::getLandCoverColor();
-        visibleZoom[currentIndex] = allZoomsVisible({});
+        visibleZoom[currentIndex] = allZoomsVisible();
         addStyle(currentIndex);
         return currentIndex;
     } else currentIndex++;

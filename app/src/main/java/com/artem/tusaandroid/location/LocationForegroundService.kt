@@ -23,7 +23,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import okhttp3.OkHttpClient
 import javax.inject.Inject
 import kotlin.time.Duration
 import com.google.android.gms.location.ActivityRecognition
@@ -61,9 +60,15 @@ class LocationForegroundService: Service() {
         removeActivityRecognition()
     }
 
-    override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+    override fun onStartCommand(intentPassed: Intent?, flags: Int, startId: Int): Int {
+        if (intentPassed == null) {
+            // перезапущен системой
+            return START_NOT_STICKY
+        }
+
+        val intent = intentPassed
         if (intent.action == ACTION_START && started) {
-            return START_STICKY
+            return START_NOT_STICKY
         }
 
         started = true
@@ -75,7 +80,7 @@ class LocationForegroundService: Service() {
             lastLocationState.saveLocationForegroundServiceStarted(false)
 
             stop()
-            return START_STICKY
+            return START_NOT_STICKY
         }
 
         if (intent.action == ACTION_ACTIVITY_RESULT) {
@@ -105,7 +110,7 @@ class LocationForegroundService: Service() {
                     }
                 }
             }
-            return START_STICKY
+            return START_NOT_STICKY
         }
 
         lastLocationState.saveLocationForegroundServiceStarted(true)
@@ -129,7 +134,7 @@ class LocationForegroundService: Service() {
         serviceScope.launch {
             doBackgroundWork()
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onCreate() {
@@ -213,10 +218,12 @@ class LocationForegroundService: Service() {
                     .build()
             val request = ActivityTransitionRequest(transitions)
 
-            activityRecognition!!
-                .requestActivityTransitionUpdates(request, forActivityPendingIntent!!).addOnSuccessListener {
+            if (forActivityPendingIntent == null) {
+                throw Exception("forActivityPendingIntent is null!")
+            }
+            activityRecognition?.requestActivityTransitionUpdates(request, forActivityPendingIntent!!)?.addOnSuccessListener {
                     Log.i("Tucik", "Activity recognition request success")
-                }.addOnFailureListener {
+                }?.addOnFailureListener {
                     Log.e("Tucik", "Activity recognition request failed", it)
                 }
         }
@@ -228,11 +235,14 @@ class LocationForegroundService: Service() {
                 Manifest.permission.ACTIVITY_RECOGNITION
             ) == PackageManager.PERMISSION_GRANTED
         ) {
-            activityRecognition!!.removeActivityTransitionUpdates(forActivityPendingIntent!!)
-                .addOnSuccessListener {
-                    forActivityPendingIntent!!.cancel()
+            if (forActivityPendingIntent == null) {
+                throw Exception("forActivityPendingIntent is null!")
+            }
+            activityRecognition?.removeActivityTransitionUpdates(forActivityPendingIntent!!)
+                ?.addOnSuccessListener {
+                    forActivityPendingIntent?.cancel()
                 }
-                .addOnFailureListener { e: Exception ->
+                ?.addOnFailureListener { e: Exception ->
                     Log.e("Tucik", e.message!!)
                 }
         }
