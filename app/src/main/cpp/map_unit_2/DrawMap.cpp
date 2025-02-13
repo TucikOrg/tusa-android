@@ -169,8 +169,6 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 
     // Рисуем текст поверх всех тайлов
     if (zoom >= 14) {
-//        mapTileRender.resetLettersRoadCollision();
-//        mapTileRender.shouldRecalculateCollisions(mapFpsCounter.getTimeElapsed());
         if (mapTileRender.lockThread == false) {
             mapTileRender.savedVisTileYStart = mapNumbers.visTileYStart;
             mapTileRender.savedVisTileYEnd = mapNumbers.visTileYEnd;
@@ -204,7 +202,6 @@ void DrawMap::drawMapForward(DrawMapData &data) {
                     scaleText
             );
         }
-//        mapTileRender.setCheckRoadsCollisionsFalse();
     }
 }
 

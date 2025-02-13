@@ -210,6 +210,7 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, textureWidth, textureHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
         prTex2dHeight = textureHeight;
         prTex2dWidth = textureWidth;
+        //LOGI("New texture size %f %f", textureWidth, textureHeight);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, mapTextureFramebuffer);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, mapTexture, 0);

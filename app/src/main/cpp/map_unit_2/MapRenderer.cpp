@@ -132,10 +132,10 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
-//    markers.drawMarkers(shadersBucket, mn.pv,
-//                        mn, tiles, mapSymbols, mapCamera,
-//                        canRefreshTitles
-//    );
+    markers.drawMarkers(shadersBucket, mn.pv,
+                        mn, tiles, mapSymbols, mapCamera,
+                        canRefreshTitles
+    );
 
     if (isDebugBuildVariant) {
         auto fps = Utils::floatToWString(mapFpsCounter.getFps(), 1);
