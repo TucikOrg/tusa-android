@@ -16,6 +16,6 @@ jobs:
       - name: Move APK File
         run: |
           cp app/release/app-release.apk /opt/tucik.apk
-          cp app/privacy.pdf /opt/tucik/privacy.pdf
+          cp app/privacy.pdf /opt/privacy.pdf
         env:
           GITHUB_WORKSPACE: ${{ github.workspace }}
