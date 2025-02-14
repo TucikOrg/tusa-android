@@ -84,7 +84,7 @@ class MapView(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_UP -> {
-                Log.d("TouchEvent", "Палец поднялся!")
+                //Log.d("TouchEvent", "Палец поднялся!")
                 gestureListener!!.isOneFingerScaling = false
                 gestureListener!!.isDragging = false
             }

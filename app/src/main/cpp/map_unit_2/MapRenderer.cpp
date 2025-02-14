@@ -192,7 +192,7 @@ void MapRenderer::onSurfaceCreated(AAssetManager *assetManager) {
     //animateCameraTo.addAnimation(0, moscowLat, moscowLon, 2);
     //animateCameraTo.addAnimation(17, moscowLat, moscowLon, 1);
     mapControls.setCamPos(lat, lon);
-    mapControls.setZoom(0.1);
+    mapControls.setZoom(13.1);
 
     //mapControls.setCamPos(DEG2RAD(-23.5808), DEG2RAD(-46.6698));
     //mapControls.setZoom(11.4);

@@ -31,8 +31,7 @@ bool MapStyle::registerAdminLayer(
         uint64_t adminLevel,
         int& currentIndex
 ) {
-    std::unordered_map<short, void*> zooms = fromToZoomsVisible(0, 6);
-    zooms.erase(0);
+    std::unordered_map<short, void*> zooms = allZoomsVisible();
     if(layerName == "admin" && adminLevel == 0) {
         lineWidth[currentIndex] = 2.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
@@ -51,6 +50,14 @@ bool MapStyle::registerAdminLayer(
 
     if(layerName == "admin" && adminLevel == 2) {
         lineWidth[currentIndex] = 0.1f;
+        color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
+        visibleZoom[currentIndex] = zooms;
+        addStyle(currentIndex);
+        return true;
+    } else currentIndex++;
+
+    if(layerName == "admin") {
+        lineWidth[currentIndex] = 4.0f;
         color[currentIndex] = CSSColorParser::parse("rgba(94, 0, 172, 1.0)");
         visibleZoom[currentIndex] = zooms;
         addStyle(currentIndex);
@@ -224,6 +231,7 @@ std::unordered_map<std::string, void*> isBigCityRoadList = {
         {"tertiary", nullptr},
         {"primary", nullptr},
         {"primary_link", nullptr},
+        {"unclassified", nullptr}
 };
 
 bool MapStyle::registerRoadLayer(std::string layerName, std::string className, int& currentIndex) {
@@ -246,7 +254,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
     // сервисные дорожки которые соединяют какие-либо объекты
     // обеспечивают доступ к этим объектам
     // рендрим с низким приоритетом чтобы они не перекрывали другие дороги
-    if (layerName == "road" && (className == "service")) {
+    if (layerName == "road" && (className == "service" || className == "living_street")) {
         forwardRenderingOnly[currentIndex] = false;
         renderWideAfterZoom[currentIndex] = 14.0f;
         isWideLine[currentIndex] = true;
@@ -320,7 +328,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         }
     }
 
-    if (layerName == "place_label" && (type == "ocean" || type == "continent")) {
+    if (layerName == "place_label" && (type == "ocean" || type == "continent" || type == "sea")) {
         fontSize[currentIndex] = 0.017f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = allZoomsVisible();
@@ -328,7 +336,7 @@ bool MapStyle::registerPlaceLabel(std::string layerName, layer_map_type props, i
         return true;
     } else currentIndex++;
 
-    if (layerName == "place_label" && (type == "country")) {
+    if (layerName == "place_label" && (type == "country" || type == "sea")) {
         fontSize[currentIndex] = 0.015f;
         names[currentIndex] = name;
         visibleZoom[currentIndex] = allZoomsVisible();

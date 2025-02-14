@@ -225,9 +225,10 @@ void DrawMap::drawMapViaTexture(DrawMapData &data) {
     auto& scaleUTex = data.scaleUTex;
 
 
-    if(segments != savedSegmentsAmount || data.tileZ != savedTileZ) {
+    if(segments != savedSegmentsAmount || data.tileZ != savedTileZ || data.topY != savedTopY) {
         savedSegmentsAmount = segments;
         savedTileZ = data.tileZ;
+        savedTopY = data.topY;
         std::vector<float> planetEPSG3857;
         std::vector<float> planetTexUV;
         std::vector<float> planetVertices;

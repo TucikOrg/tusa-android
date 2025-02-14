@@ -58,7 +58,7 @@ android {
             isDebuggable = true
             buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
             buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
-            buildConfigField("String", "MAP_URL", "\"http://192.168.0.103:8081/api/v1/tile/\"")
+            buildConfigField("String", "MAP_URL", "\"http://192.168.1.100:8081/api/v1/tile/\"")
             buildConfigField("Boolean", "MAP_DEBUG", "true")
             signingConfig = signingConfigs.getByName("debug")
         }

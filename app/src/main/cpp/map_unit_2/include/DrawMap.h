@@ -23,6 +23,7 @@ private:
 
     short savedTileZ = 0;
     short savedSegmentsAmount = 0;
+    uint savedTopY = 0;
 
     unsigned int indicesSize;
     GLuint EPSG3857_VBO;
