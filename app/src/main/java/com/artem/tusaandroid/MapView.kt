@@ -3,6 +3,8 @@ package com.artem.tusaandroid
 import android.annotation.SuppressLint
 import android.content.Context
 import android.opengl.GLSurfaceView
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import android.view.GestureDetector
 import android.view.GestureDetector.SimpleOnGestureListener
@@ -12,6 +14,7 @@ import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener
 import android.view.SurfaceHolder
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
+import com.artem.tusaandroid.app.map.UpdateMapTitleState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.location.LastLocationState
@@ -29,7 +32,8 @@ class MapView(
     private val avatarState: AvatarState?,
     private val selectedState: SelectedState?,
     private val locationsState: LocationsState?,
-    private val systemUIState: SystemUIState?
+    private val systemUIState: SystemUIState?,
+    private val updateMapTitleState: UpdateMapTitleState?
 ) : GLSurfaceView(context) {
     private var scaleGestureDetector: ScaleGestureDetector? = null
     private var gestureDetector: GestureDetector? = null
@@ -61,7 +65,10 @@ class MapView(
         val height = holder.surfaceFrame.height().toFloat()
 
         scaleListener = ScaleListener(width, height)
-        gestureListener = GestureListener()
+        gestureListener = GestureListener() {
+            // on scroll stop
+            updateMapTitleState?.updateMapTitle()
+        }
 
         scaleGestureDetector = ScaleGestureDetector(context, scaleListener!!)
         gestureDetector = GestureDetector(context, gestureListener!!)
@@ -78,7 +85,6 @@ class MapView(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
     }
-
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
@@ -113,18 +119,27 @@ class MapView(
         }
     }
 
-    private inner class GestureListener : SimpleOnGestureListener() {
+    private inner class GestureListener(private val onScrollStop: () -> Unit) : SimpleOnGestureListener() {
         var isOneFingerScaling = false
         var isDragging = false
+        private val handler = Handler(Looper.getMainLooper())
+        private val scrollStopRunnable = Runnable { onScrollStop() }
+
         override fun onScroll(
             e1: MotionEvent?,
             e2: MotionEvent,
             distanceX: Float,
             distanceY: Float
         ): Boolean {
+            // Отменяем предыдущий таймер
+            handler.removeCallbacks(scrollStopRunnable)
+
+            // Запускаем таймер, если скролл не продолжается через 200 мс, вызываем onScrollStop()
+            handler.postDelayed(scrollStopRunnable, 200)
+
             val x = e2.x
             val y = e2.y
-            val wb = width - width / 5.0f
+            val wb = width - width / 6.0f
             val hb = height / 3.0f
             val scaleDragging = x >= wb && y >= hb
             if ( (scaleDragging || isOneFingerScaling) && !isDragging) {
@@ -138,6 +153,7 @@ class MapView(
             isDragging = true
             return true
         }
+
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
             NativeLibrary.doubleTap()

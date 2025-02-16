@@ -21,5 +21,6 @@ open class MapViewModel @Inject constructor(
     val selectedState: SelectedState?,
     val locationsState: LocationsState?,
     val systemUIState: SystemUIState?,
+    val updateMapTitleState: UpdateMapTitleState?
 ): ViewModel()
 

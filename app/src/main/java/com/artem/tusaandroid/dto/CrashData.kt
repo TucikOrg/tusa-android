@@ -1,8 +1,11 @@
 package com.artem.tusaandroid.dto
 
+import androidx.annotation.Keep
+import com.squareup.moshi.Json
 
+@Keep
 data class CrashData(
-    val message: String,
-    val stackTrace: String,
-    val thread: String
+    @Json(name = "message") val message: String,
+    @Json(name = "stackTrace") val stackTrace: String,
+    @Json(name = "thread") val thread: String
 )

@@ -14,6 +14,7 @@ class CustomTucikEndpoints(
     private val sendCode = "api/v1/auth/send-code"
     private val logout = "api/v1/logout"
     private val sendLogs = "api/v1/logs"
+    private val mapTitle = "api/v1/tile/map-title/"
 
     private fun makeEndpoint(path: String): String {
         return "$basePath/$path"
@@ -66,6 +67,11 @@ class CustomTucikEndpoints(
 
     fun makeSendLogs(): String {
         val uri = Uri.parse(makeEndpoint(sendLogs)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeMapTitle(lat: Float, lon: Float, zoom: Int): String {
+        val uri = Uri.parse(makeEndpoint("$mapTitle$lat/$lon/$zoom")).buildUpon().build()
         return uri.toString()
     }
 }

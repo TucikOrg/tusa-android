@@ -20,7 +20,18 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
+-keep class com.artem.tusaandroid.NativeLibrary { *; }
+-keep class com.artem.tusaandroid.location.CameraPos { *; }
+-keep class com.artem.tusaandroid.MapClickResult { *; }
+-keep class com.artem.tusaandroid.RequestTile { *; }
+
+
 -if class androidx.credentials.CredentialManager
 -keep class androidx.credentials.playservices.** {
   *;
 }
+
+
+-keep class com.artem.tusaandroid.dto.LoginResponseDto { *; }
+-keep class com.artem.tusaandroid.dto.CrashData { *; }
+-keep class com.artem.tusaandroid.dto.LoginResponseDto { *; }

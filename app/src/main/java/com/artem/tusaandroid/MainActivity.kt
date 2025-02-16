@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -49,6 +50,7 @@ import com.artem.tusaandroid.app.dialog.AppDialog
 import com.artem.tusaandroid.app.dialog.AppDialogViewModelPreview
 import com.artem.tusaandroid.app.login.InputUniqueName
 import com.artem.tusaandroid.app.logs.CrashLogUploadWorker
+import com.artem.tusaandroid.app.map.MapTitle
 import com.artem.tusaandroid.app.map.PreviewMapViewModel
 import com.artem.tusaandroid.app.map.TucikMap
 import com.artem.tusaandroid.app.profile.ProfileState
@@ -202,6 +204,14 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                     .align(Alignment.TopEnd)
                     .padding(4.dp),
                 connectionStatusViewModel = TucikViewModel(preview = model.isPreview(), previewModel = PreviewConnectionStatusViewModel())
+            )
+
+            MapTitle(
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(13.dp)
+                    .padding(top = 21.dp),
+                model = hiltViewModel()
             )
 
             if (model.authenticationState.authenticated) {

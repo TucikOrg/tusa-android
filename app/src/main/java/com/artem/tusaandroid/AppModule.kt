@@ -10,6 +10,7 @@ import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.ChatsState
 import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.logs.AppLogsState
+import com.artem.tusaandroid.app.map.UpdateMapTitleState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.app.systemui.SystemUIState
@@ -41,6 +42,12 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideUpdateMapTitleState(): UpdateMapTitleState {
+        return UpdateMapTitleState()
+    }
+
     @Provides
     @Singleton
     fun provideSocketConnect(

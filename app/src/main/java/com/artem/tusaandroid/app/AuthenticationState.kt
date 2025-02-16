@@ -25,6 +25,7 @@ import com.artem.tusaandroid.R
 import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.dto.LoginResponseDto
 import com.artem.tusaandroid.socket.SocketConnect
+import java.util.logging.Logger
 
 class AuthenticationState(
     private val okHttpClient: OkHttpClient,
@@ -35,6 +36,7 @@ class AuthenticationState(
     private val socketConnect: SocketConnect,
     private val appDialogState: AppDialogState
 ) {
+    val logger: Logger = Logger.getLogger("AuthenticationState")
     var authenticated by mutableStateOf(profileState.getIsAuthenticated())
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -78,10 +80,15 @@ class AuthenticationState(
                 .post(idToken.toRequestBody("application/json".toMediaTypeOrNull()))
                 .build()
             val response = okHttpClient.newCall(request).execute()
+
+
             if (response.isSuccessful) {
+                val body = response.body?.string()!!
+                logger.info("loginResponse: $body")
                 // The server validated the token and created a session.
                 // Proceed to the next screen.
-                val loginResponse = moshi.adapter<LoginResponseDto>().fromJson(response.body?.string()!!)!!
+                val loginResponse = moshi.adapter<LoginResponseDto>().fromJson(body)!!
+                logger.info("jwt: ${loginResponse.jwt}")
                 profileState.saveJwt(loginResponse.jwt)
                 profileState.saveUserId(loginResponse.id)
                 profileState.saveName(loginResponse.name)
