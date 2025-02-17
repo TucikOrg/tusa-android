@@ -50,6 +50,15 @@
             android:foregroundServiceType="location"
             android:exported="false" />
 
+        <service
+            android:name=".firebase.MyFirebaseMessagingService"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
+
         <activity
             android:windowSoftInputMode="adjustResize"
             android:name=".MainActivity"

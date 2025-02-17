@@ -5,6 +5,7 @@ plugins {
     id("dagger.hilt.android.plugin")
     id("com.google.devtools.ksp")
     kotlin("plugin.serialization") version "2.0.21"
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -15,7 +16,7 @@ android {
         applicationId = "com.artem.tusaandroid"
         minSdk = 30
         targetSdk = 35
-        versionCode = 6
+        versionCode = 7
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -42,8 +43,8 @@ android {
             buildConfigField("Boolean", "MAP_DEBUG", "false")
         }
         debug {
-            buildConfigField("String", "SERVICE_URL", "\"http://192.168.0.103:8080\"")
-            buildConfigField("String", "SOCKET_URL", "\"ws://192.168.0.103:8080/stream\"")
+            buildConfigField("String", "SERVICE_URL", "\"http://192.168.1.100:8080\"")
+            buildConfigField("String", "SOCKET_URL", "\"ws://192.168.1.100:8080/stream\"")
             buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tile/\"")
             buildConfigField("Boolean", "MAP_DEBUG", "false")
         }
@@ -103,6 +104,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.play.services.fitness)
+    implementation("com.google.firebase:firebase-messaging-ktx:24.1.0")
+    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.exifinterface)

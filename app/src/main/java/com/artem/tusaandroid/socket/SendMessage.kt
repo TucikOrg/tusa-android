@@ -8,6 +8,7 @@ import com.artem.tusaandroid.dto.RequestChats
 import com.artem.tusaandroid.dto.RequestMessages
 import com.artem.tusaandroid.dto.SendMessage
 import com.artem.tusaandroid.dto.messenger.InitMessenger
+import com.artem.tusaandroid.dto.messenger.WritingMessage
 import com.artem.tusaandroid.room.StateTimePoint
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -19,6 +20,21 @@ import okio.ByteString.Companion.toByteString
 class SendMessage(
     private val socket: WebSocket?
 ) {
+    fun requestOnlineFriendsStatuses() {
+        sendMessage(SocketBinaryMessage("request-online-friends", byteArrayOf()))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun writingMessage(withUserId: Long, message: String) {
+        sendMessage(SocketBinaryMessage("writing-message", Cbor.encodeToByteArray(
+            WritingMessage(
+                toUserId = withUserId,
+                message = message,
+                fromUserId = 0
+            )
+        )))
+    }
+
     @OptIn(ExperimentalSerializationApi::class)
     fun removeFriend(id: Long) {
         sendMessage(SocketBinaryMessage("delete-friend", Cbor.encodeToByteArray(id)))
@@ -167,5 +183,10 @@ class SendMessage(
     @OptIn(ExperimentalSerializationApi::class)
     fun avatarsActions(point: StateTimePoint) {
         sendMessage(SocketBinaryMessage("avatars-actions", Cbor.encodeToByteArray(point.timePoint)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun sendFirebaseToken(firebaseToken: String) {
+        sendMessage(SocketBinaryMessage("firebase-token", Cbor.encodeToByteArray(firebaseToken)))
     }
 }

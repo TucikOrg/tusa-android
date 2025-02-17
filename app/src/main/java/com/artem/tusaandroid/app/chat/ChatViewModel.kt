@@ -6,13 +6,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.app.AlineTwoLongsIds
+import com.artem.tusaandroid.app.IsOnlineState
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.dto.SendMessage
+import com.artem.tusaandroid.dto.UsersPage
+import com.artem.tusaandroid.dto.messenger.WritingMessage
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,6 +27,7 @@ import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.util.UUID
 import javax.inject.Inject
+import kotlin.collections.MutableMap
 
 @HiltViewModel
 open class ChatViewModel @Inject constructor(
@@ -31,11 +36,56 @@ open class ChatViewModel @Inject constructor(
     val socketListener: SocketListener,
     val friendDao: FriendDao,
     val profileState: ProfileState,
-    val messagesDao: MessageDao
+    val messagesDao: MessageDao,
+    val isOnlineState: IsOnlineState
 ): ViewModel() {
     var page = 1
     private var messagesStatesMap: MutableMap<Pair<Long, Long>, StateFlow<List<MessageResponse>>> = mutableMapOf()
+    private var writingMessagesMap: MutableMap<Long, MutableState<String>> = mutableMapOf()
+    private var updateWritingMessagesTime: MutableMap<Long, LocalDateTime> = mutableMapOf()
 
+    fun getIsFriendOnline(): MutableState<Boolean> {
+        return isOnlineState.isUserOnline(getWithUserId())
+    }
+
+    fun getCurrentWritingMessage(): MutableState<String> {
+        return getWritingMessage(getWithUserId())
+    }
+
+    fun getWritingMessage(fromUserId: Long): MutableState<String> {
+        var writingMessage = writingMessagesMap[fromUserId]
+        if (writingMessage == null) {
+            writingMessage = mutableStateOf("")
+            writingMessagesMap[fromUserId] = writingMessage
+        }
+        return writingMessage
+    }
+
+    fun checkWritingMessagesLife() {
+        val now = LocalDateTime.now(ZoneOffset.UTC)
+        updateWritingMessagesTime.forEach { (userId, time) ->
+            if (now.minusSeconds(5) > time) {
+                writingMessagesMap[userId]!!.value = ""
+            }
+        }
+    }
+
+    init {
+        socketListener.getReceiveMessage().getReceiveMessenger().writingMessageBus.addListener(object : EventListener<WritingMessage> {
+            override fun onEvent(data: WritingMessage) {
+                if (data.toUserId != profileState.getUserId()) {
+                    throw Exception("Writing message to another user")
+                }
+                if (writingMessagesMap[data.fromUserId] == null) {
+                    writingMessagesMap[data.fromUserId] = mutableStateOf("")
+                }
+                updateWritingMessagesTime[data.fromUserId] = LocalDateTime.now(ZoneOffset.UTC)
+                writingMessagesMap[data.fromUserId]!!.value = data.message
+            }
+        })
+
+
+    }
 
     fun getMessages(): StateFlow<List<MessageResponse>> {
         val chat = chatsState.chat.value!!
@@ -89,6 +139,8 @@ open class ChatViewModel @Inject constructor(
         )
         socketListener.getSendMessage()?.sendChatMessage(sendMessage)
 
+        // временно сохраняем сообщение в базу данных
+        // оно будет показываться в чате как сообщение для отправки
         viewModelScope.launch {
             messagesDao.insert(MessageResponse(
                 id = null,
@@ -97,15 +149,13 @@ open class ChatViewModel @Inject constructor(
                 secondUserId = currentChat.secondUserId,
                 senderId = profileState.getUserId(),
                 message = message,
-                creation = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+                creation = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
             ))
         }
     }
 
     fun loadMoreItems() {
-        val currentChat = chatsState.chat.value!!
-        val withUserId = if (currentChat.firstUserId == profileState.getUserId())
-            currentChat.secondUserId else currentChat.firstUserId
+        val withUserId = getWithUserId()
 
         val page = getMessages().value.size / MessagesConsts.batchSize
         socketListener.getSendMessage()?.messages(
@@ -113,5 +163,17 @@ open class ChatViewModel @Inject constructor(
             page = page,
             size = MessagesConsts.batchSize
         )
+    }
+
+    fun writingMessage(message: String) {
+        val withUserId = getWithUserId()
+        socketListener.getSendMessage()?.writingMessage(withUserId, message)
+    }
+
+    private fun getWithUserId(): Long {
+        val currentChat = chatsState.chat.value!!
+        val withUserId = if (currentChat.firstUserId == profileState.getUserId())
+            currentChat.secondUserId else currentChat.firstUserId
+        return withUserId
     }
 }

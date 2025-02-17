@@ -3,6 +3,7 @@ package com.artem.tusaandroid
 import android.content.Context
 import android.content.res.AssetManager
 import com.artem.tusaandroid.app.AuthenticationState
+import com.artem.tusaandroid.app.IsOnlineState
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.avatar.AvatarState
@@ -15,6 +16,7 @@ import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.cropper.CropperState
+import com.artem.tusaandroid.firebase.FirebaseState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationUpdatingState
 import com.artem.tusaandroid.location.LocationsState
@@ -42,6 +44,18 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideIsOnlineState(socketListener: SocketListener): IsOnlineState {
+        return IsOnlineState(socketListener)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseState(socketListener: SocketListener): FirebaseState {
+        return FirebaseState(socketListener)
+    }
+
     @Provides
     @Singleton
     fun provideUpdateMapTitleState(): UpdateMapTitleState {

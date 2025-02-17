@@ -8,6 +8,7 @@ import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.dto.FriendRequestActionDto
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
+import com.artem.tusaandroid.dto.IsOnlineDto
 import com.artem.tusaandroid.dto.LocationDto
 import com.artem.tusaandroid.dto.UpdateLocationDto
 import com.artem.tusaandroid.dto.UsersPage
@@ -38,6 +39,7 @@ class ReceiveMessage() {
     val friendsRequestsActionsBus: EventBus<List<FriendRequestActionDto>> = EventBus()
     val avatarsActionsBus: EventBus<List<AvatarAction>> = EventBus()
     val connectionClosedBus: EventBus<String> = EventBus()
+    val isOnlineBus: EventBus<IsOnlineDto> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
@@ -47,6 +49,10 @@ class ReceiveMessage() {
         receiveMessenger.handleMessage(socketBinaryMessage)
 
         when (socketBinaryMessage.type) {
+            "is-online" -> {
+                val isOnlineDto = Cbor.decodeFromByteArray<IsOnlineDto>(socketBinaryMessage.data)
+                isOnlineBus.pushEvent(isOnlineDto)
+            }
             "closed" -> {
                 val reason = Cbor.decodeFromByteArray<String>(socketBinaryMessage.data)
                 connectionClosedBus.pushEvent(reason)

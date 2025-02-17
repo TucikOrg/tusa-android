@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
@@ -60,6 +61,7 @@ import com.artem.tusaandroid.app.state.RefreshStateListenersViewModel
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.dto.CrashData
+import com.artem.tusaandroid.firebase.FirebaseState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.ListenLocationsUpdates
 import com.artem.tusaandroid.location.LoadAllFriendsLocations
@@ -71,8 +73,10 @@ import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.socket.ConnectionStatus
 import com.artem.tusaandroid.socket.PreviewConnectionStatusViewModel
 import com.artem.tusaandroid.socket.SocketConnect
+import com.artem.tusaandroid.socket.SocketListener
 import com.artem.tusaandroid.theme.TusaAndroidTheme
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.firebase.messaging.FirebaseMessaging
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -89,6 +93,10 @@ class MainActivity : ComponentActivity() {
     lateinit var moshi: Moshi
     @Inject
     lateinit var customTucikEndpoints: CustomTucikEndpoints
+    @Inject
+    lateinit var firebaseState: FirebaseState
+    @Inject
+    lateinit var socketListener: SocketListener
 
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -103,6 +111,15 @@ class MainActivity : ComponentActivity() {
             statusBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb()),
             navigationBarStyle = SystemBarStyle.dark(Color.Transparent.toArgb())
         )
+
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val token = task.result
+                Log.d("FCM", "FCM Token: $token")
+                // Отправь токен на сервер
+                firebaseState.saveToken(token)
+            }
+        }
 
         setContent {
             TusaAndroidTheme() {

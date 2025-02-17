@@ -33,7 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import com.artem.tusaandroid.R
@@ -45,24 +45,26 @@ fun ChatInput(chatViewModel: ChatViewModel) {
 
     Row(
         modifier = Modifier.fillMaxWidth()
-            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = 3.dp, vertical = 5.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
+        val textInputColor = lerp(MaterialTheme.colorScheme.surface, Color.White, 0.15f)
         TextField(
             value = message,
             onValueChange = {
                 message = it
+                chatViewModel.writingMessage(message)
             },
             placeholder = { Text(text = "Сообщение") },
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(16.dp), // Rounded corners
             colors = TextFieldDefaults.colors(
                 cursorColor = MaterialTheme.colorScheme.primary,
-                focusedContainerColor = Color.White,
-                disabledContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                errorContainerColor = Color.White,
+                focusedContainerColor = textInputColor,
+                disabledContainerColor = textInputColor,
+                unfocusedContainerColor = textInputColor,
+                errorContainerColor = textInputColor,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent
             ),
@@ -70,7 +72,13 @@ fun ChatInput(chatViewModel: ChatViewModel) {
         )
         FilledIconButton (
             onClick = {
+                // отправляем сообщение
                 chatViewModel.sendMessage(message)
+
+                // очищаем у друга поле "пишет сообщение"
+                chatViewModel.writingMessage("")
+
+                // очищаем поле ввода локальное
                 message = ""
             },
             modifier = Modifier.padding(4.dp),

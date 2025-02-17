@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,11 +26,16 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.lerp
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.isPreview
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import androidx.compose.ui.graphics.lerp
 
 @Composable
 fun FriendRow(
@@ -71,14 +77,14 @@ fun FriendRowCard(
                 model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewFriendAvatarViewModel()),
                 userId = friend.id
             )
-            Spacer(modifier = Modifier.width(20.dp))
+            Spacer(modifier = Modifier.width(15.dp))
             Column(
-                modifier = Modifier.weight(1.0f),
+                modifier = Modifier.weight(1.0f).fillMaxWidth(),
             ) {
                 Text(
                     modifier = Modifier,
                     text = friend.name,
-                    style = MaterialTheme.typography.headlineSmall
+                    style = MaterialTheme.typography.bodyLarge
                 )
                 Spacer(modifier = Modifier.height(3.dp))
                 if (friend.uniqueName != null) {
@@ -88,8 +94,26 @@ fun FriendRowCard(
                         color = Color.Gray
                     )
                 }
+
+                val isOnline = model.isOnlineState(friend.id)
+                if (isOnline.value) {
+                    Text("В сети",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = lerp(Color.Green, Color.Black, 0.2f)
+                    )
+                } else {
+                    val localDateTime = Instant.ofEpochSecond(friend.lastOnlineTime)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+                    val time = DateTimeFormatter.ofPattern("HH:mm MM.dd").format(localDateTime)
+                    Text("Был(а) в сети $time",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Color.Gray
+                    )
+                }
+
             }
-            Spacer(modifier = Modifier.weight(1f))
+            //Spacer(modifier = Modifier.weight(1f))
             IconButton(
                 onClick = { model.openChat(friend) }
             ) {

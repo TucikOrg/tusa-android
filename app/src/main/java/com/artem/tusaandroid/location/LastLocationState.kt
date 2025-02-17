@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.artem.tusaandroid.StateHasSharedPreferences
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 // это класс где храниться местоположение пользователя
 class LastLocationState: StateHasSharedPreferences() {
@@ -62,14 +63,14 @@ class LastLocationState: StateHasSharedPreferences() {
 
     fun setLastLatitude(value: Float) {
         latitude = value
-        lastLocationUpdateTime = LocalDateTime.now()
+        lastLocationUpdateTime = LocalDateTime.now(ZoneOffset.UTC)
         needUpdateLastLocationInRenderer = true
         lastLocationExists.value = lastLocationExistsInner()
     }
 
     fun setLastLongitude(value: Float) {
         longitude = value
-        lastLocationUpdateTime = LocalDateTime.now()
+        lastLocationUpdateTime = LocalDateTime.now(ZoneOffset.UTC)
         needUpdateLastLocationInRenderer = true
         lastLocationExists.value = lastLocationExistsInner()
     }

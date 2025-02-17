@@ -23,6 +23,7 @@ import com.artem.tusaandroid.dto.messenger.InitMessagesResponse
 import com.artem.tusaandroid.dto.messenger.InitMessenger
 import com.artem.tusaandroid.dto.messenger.MessagesActionType
 import com.artem.tusaandroid.dto.messenger.MessagesAction
+import com.artem.tusaandroid.firebase.FirebaseState
 import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.FriendRequestDao
@@ -57,6 +58,7 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val authenticationState: AuthenticationState,
     private val socketConnect: SocketConnect,
     private val chatState: ChatState,
+    private val firebaseState: FirebaseState,
     @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
@@ -134,6 +136,9 @@ class RefreshStateListenersViewModel @Inject constructor(
                                 friendDao.deleteById(action.friendDto.id)
                                 locationState.removeLocation(action.friendDto.id)
                             }
+                            FriendsActionType.CHANGE -> {
+                                friendDao.insert(action.friendDto)
+                            }
                         }
                     }
                     if (event.isNotEmpty()) {
@@ -184,6 +189,9 @@ class RefreshStateListenersViewModel @Inject constructor(
                             }
                             FriendsActionType.DELETE -> {
                                 friendRequestDao.deleteById(action.friendRequestDto.userId)
+                            }
+                            FriendsActionType.CHANGE -> {
+                                //friendRequestDao.insert(action.friendRequestDto)
                             }
                         }
                     }
@@ -299,6 +307,9 @@ class RefreshStateListenersViewModel @Inject constructor(
                                 chatDao.deleteById(chat.id!!)
                                 messageDao.deleteByFirstUserIdAndSecondUserId(chat.firstUserId, chat.secondUserId)
                             }
+                            ChatsActionType.CHANGE -> {
+                                chatDao.insert(action.chat)
+                            }
                         }
                     }
                     if (event.isNotEmpty()) {
@@ -333,6 +344,7 @@ class RefreshStateListenersViewModel @Inject constructor(
             override fun onEvent(event: SocketConnectionStates) {
 
                 when (event) {
+                    // соединение было открыто или переоткрыто
                     SocketConnectionStates.OPEN -> {
                         // запрашиваем у сервера историю для синхронизации
                         refreshFriendsListener.onEvent(Unit)
@@ -348,6 +360,12 @@ class RefreshStateListenersViewModel @Inject constructor(
                                 chatState.resendMessage(viewModelScope, message)
                             }
                         }
+
+                        // отправляем ключ фаербейса еще раз если он был
+                        firebaseState.resaveSame()
+
+                        // запрашиваем сатусы друзей. Кто онлайн, а кто оффлайн
+                        socketListener.getSendMessage()?.requestOnlineFriendsStatuses()
                     }
                     SocketConnectionStates.CLOSED -> {
                         // Если соединение было закрыто по причине нарушения политики безопасности
@@ -357,7 +375,17 @@ class RefreshStateListenersViewModel @Inject constructor(
                             // разлогиниваем пользователя
                             viewModelScope.launch {
                                 authenticationState.logout(applicationContext)
+
+                                // если токен невалидный то сокрее всего я базу почистил
+                                // и поэтому нужно еще раз инициализировать состояния
+                                // всю локальную базу чистим
+                                friendDao.clearAll()
+                                friendRequestDao.clearAll()
+                                chatDao.clearAll()
+                                messageDao.clearAll()
                             }
+
+
                         }
                     }
                     SocketConnectionStates.FAILED -> {}

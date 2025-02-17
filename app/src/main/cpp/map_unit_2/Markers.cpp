@@ -33,6 +33,7 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
             for (auto& markerId : renderMarkers) {
                 auto& marker = storageMarkers[markerId];
 
+                // убрать маркер если он на другой стороне планеты
                 float longitudeDelta = abs(marker.longitude - cameraLongitudeT);
                 if (longitudeDelta > longitudeHideMarkerDelta) {
                     saveMarkerVisibleState(resultAvatarsShifts, 1.0, markerId);
@@ -878,7 +879,7 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         radiusT = mapNumbers.radius;
         pvT = pvD;
         scaleT = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
-        cameraLongitudeT = mapNumbers.camLongitude;
+        cameraLongitudeT = mapNumbers.camLongitudeNormalized;
 
         Eigen::Matrix4f projectionTest = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
         Eigen::Matrix4f viewTest = mapCamera.createView();

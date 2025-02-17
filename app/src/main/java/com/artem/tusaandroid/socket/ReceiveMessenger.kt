@@ -1,11 +1,13 @@
 package com.artem.tusaandroid.socket
 
 import com.artem.tusaandroid.dto.ChatsResponse
+import com.artem.tusaandroid.dto.IsOnlineDto
 import com.artem.tusaandroid.dto.ResponseMessages
 import com.artem.tusaandroid.dto.messenger.ChatAction
 import com.artem.tusaandroid.dto.messenger.InitChatsResponse
 import com.artem.tusaandroid.dto.messenger.InitMessagesResponse
 import com.artem.tusaandroid.dto.messenger.MessagesAction
+import com.artem.tusaandroid.dto.messenger.WritingMessage
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
 import kotlinx.serialization.decodeFromByteArray
@@ -19,10 +21,16 @@ class ReceiveMessenger {
     val refreshMessages: EventBus<Unit> = EventBus()
     val messagesInitBus: EventBus<InitMessagesResponse> = EventBus()
     val chatsInitBus: EventBus<InitChatsResponse> = EventBus()
+    val writingMessageBus: EventBus<WritingMessage> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun handleMessage(socketBinaryMessage: SocketBinaryMessage) {
         when (socketBinaryMessage.type) {
+
+            "writing-message" -> {
+                val writingMessage = Cbor.decodeFromByteArray<WritingMessage>(socketBinaryMessage.data)
+                writingMessageBus.pushEvent(writingMessage)
+            }
             "init-messages" -> {
                 val initMessagesResponse = Cbor.decodeFromByteArray<InitMessagesResponse>(socketBinaryMessage.data)
                 messagesInitBus.pushEvent(initMessagesResponse)

@@ -2,6 +2,7 @@ package com.artem.tusaandroid.app.logs
 
 import androidx.compose.runtime.mutableStateOf
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 class AppLogsState {
     private var logs = mutableStateOf(listOf<LogRow>())
@@ -16,7 +17,7 @@ class AppLogsState {
             }
         }
         logs.value += LogRow(
-            time = LocalDateTime.now(),
+            time = LocalDateTime.now(ZoneOffset.UTC),
             message = message,
             reason = reason
         )

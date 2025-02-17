@@ -1,4 +1,10 @@
 package com.artem.tusaandroid.dto.messenger
 
-class WritingMessage {
-}
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class WritingMessage(
+    val toUserId: Long,
+    val message: String,
+    var fromUserId: Long
+)

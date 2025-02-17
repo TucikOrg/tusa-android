@@ -9,5 +9,6 @@ import kotlinx.serialization.Serializable
 data class FriendDto(
     @PrimaryKey()  val id: Long,
     val name: String,
-    val uniqueName: String?
+    val uniqueName: String?,
+    val lastOnlineTime: Long
 )
