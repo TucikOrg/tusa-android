@@ -14,6 +14,7 @@ data class MessageResponse(
     var senderId: Long,
     val message: String,
     var creation: Long,
+    var payload: String
 ) {
     fun isServerUploaded() = id != null
 }

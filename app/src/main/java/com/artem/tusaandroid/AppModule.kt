@@ -10,6 +10,8 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.ChatsState
 import com.artem.tusaandroid.app.dialog.AppDialogState
+import com.artem.tusaandroid.app.image.ImageDao
+import com.artem.tusaandroid.app.image.ImageState
 import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.app.map.UpdateMapTitleState
 import com.artem.tusaandroid.app.profile.ProfileState
@@ -44,6 +46,15 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideImageState(
+        socketListener: SocketListener,
+        imageDao: ImageDao
+    ): ImageState {
+        return ImageState(socketListener, imageDao)
+    }
+
     @Provides
     @Singleton
     fun provideIsOnlineState(socketListener: SocketListener): IsOnlineState {

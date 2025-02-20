@@ -8,6 +8,7 @@ import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.dto.FriendRequestActionDto
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
+import com.artem.tusaandroid.dto.ImageDto
 import com.artem.tusaandroid.dto.IsOnlineDto
 import com.artem.tusaandroid.dto.LocationDto
 import com.artem.tusaandroid.dto.UpdateLocationDto
@@ -40,6 +41,7 @@ class ReceiveMessage() {
     val avatarsActionsBus: EventBus<List<AvatarAction>> = EventBus()
     val connectionClosedBus: EventBus<String> = EventBus()
     val isOnlineBus: EventBus<IsOnlineDto> = EventBus()
+    val imageBus: EventBus<ImageDto> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
@@ -49,6 +51,10 @@ class ReceiveMessage() {
         receiveMessenger.handleMessage(socketBinaryMessage)
 
         when (socketBinaryMessage.type) {
+            "image" -> {
+                val imageDto = Cbor.decodeFromByteArray<ImageDto>(socketBinaryMessage.data)
+                imageBus.pushEvent(imageDto)
+            }
             "is-online" -> {
                 val isOnlineDto = Cbor.decodeFromByteArray<IsOnlineDto>(socketBinaryMessage.data)
                 isOnlineBus.pushEvent(isOnlineDto)

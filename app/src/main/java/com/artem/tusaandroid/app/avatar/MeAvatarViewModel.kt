@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
@@ -63,7 +64,7 @@ open class MeAvatarViewModel @Inject constructor(
         ByteArrayOutputStream().use {
             avatar.compress(Bitmap.CompressFormat.JPEG, 50, it)
             val bytesArray = it.toByteArray()
-            meAvatarState.setAvatar(avatar, bytesArray)
+            meAvatarState.setAvatar(avatar, bytesArray, viewModelScope)
             val tempFile = File.createTempFile("avatar", null, context.cacheDir)
             FileOutputStream(tempFile).use { fos ->
                 fos.write(bytesArray)

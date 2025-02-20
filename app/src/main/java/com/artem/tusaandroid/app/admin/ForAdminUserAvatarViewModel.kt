@@ -31,7 +31,7 @@ open class ForAdminUserAvatarViewModel @Inject constructor(
     fun getAvatarBitmap(userId: Long) = avatarState?.getAvatarBitmap(userId)
 
     fun loadAvatar(userId: Long) {
-        avatarState?.retrieveAvatar(userId, viewModelScope) {  }
+        avatarState?.retrieveAvatar(userId, viewModelScope)
     }
 
     fun avatarUriSelected(uri: Uri, context: Context, userId: Long) {

@@ -2,6 +2,8 @@ package com.artem.tusaandroid.room
 
 import android.content.Context
 import androidx.room.Room
+import com.artem.tusaandroid.app.image.ImageDao
+import com.artem.tusaandroid.app.image.TempIdToUriDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.MessageDao
 import dagger.Module
@@ -22,6 +24,16 @@ object DatabaseModule {
             TucikDatabase::class.java,
             "tucik_database"
         ).allowMainThreadQueries().build()
+    }
+
+    @Provides
+    fun provideTempLocalIdToUriDao(database: TucikDatabase): TempIdToUriDao {
+        return database.tempLocalIdToUriDao()
+    }
+
+    @Provides
+    fun provideImageDao(database: TucikDatabase): ImageDao {
+        return database.imageDao()
     }
 
     @Provides

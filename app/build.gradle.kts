@@ -104,8 +104,8 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.play.services.fitness)
-    implementation("com.google.firebase:firebase-messaging-ktx:24.1.0")
-    implementation(platform("com.google.firebase:firebase-bom:33.9.0"))
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.firebase.bom)
 
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.exifinterface)

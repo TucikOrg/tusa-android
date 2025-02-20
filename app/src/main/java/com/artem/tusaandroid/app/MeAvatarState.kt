@@ -6,6 +6,8 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.AvatarRoomEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 class MeAvatarState(
     private val profileState: ProfileState?,
@@ -55,12 +57,14 @@ class MeAvatarState(
         hideMeFlag = false
     }
 
-    fun setAvatar(avatar: Bitmap?, bytesArray: ByteArray?) {
+    fun setAvatar(avatar: Bitmap?, bytesArray: ByteArray?, viewModelScope: CoroutineScope) {
         // Заменяем в локальной базе устройства мою аватарку
-        avatarDao?.insert(AvatarRoomEntity(
-            id = getMeId(),
-            avatar = bytesArray
-        ))
+        viewModelScope.launch {
+            avatarDao?.insert(AvatarRoomEntity(
+                id = getMeId(),
+                avatar = bytesArray
+            ))
+        }
         avatarState?.saveAvatarInMem(profileState!!.getUserId(), avatar!!, bytesArray!!)
         needUpdateInRenderFlag = true
     }

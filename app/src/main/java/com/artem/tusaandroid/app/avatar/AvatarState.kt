@@ -8,11 +8,13 @@ import com.artem.tusaandroid.dto.AvatarDTO
 import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.AvatarRoomEntity
+import com.artem.tusaandroid.socket.EventBus
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketConnectionStates
 import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
 
 class AvatarState(
@@ -25,18 +27,15 @@ class AvatarState(
     private val bitmaps: MutableMap<Long, MutableState<Bitmap?>> = mutableMapOf()
     private val bytes: MutableMap<Long, ByteArray> = mutableMapOf()
     private val loadingAvatars: MutableMap<Long, MutableState<Boolean>> = mutableMapOf()
-    private val onAvailableMap: MutableMap<Long, MutableList<(AvatarUI) -> Unit>> = mutableMapOf()
     private var defaultAvatar: ByteArray? = null
+
+    val avatarEventBus: EventBus<AvatarUI> = EventBus()
 
     fun getDefaultAvatar(): ByteArray {
         return defaultAvatar!!
     }
 
-    init {
-        assetManager?.open("images/default_user.png").use { asset ->
-            defaultAvatar = asset?.readBytes()
-        }
-
+    fun initListeners(viewModelScope: CoroutineScope) {
         socketConnectionState?.socketStateBus?.addListener(object: EventListener<SocketConnectionStates> {
             override fun onEvent(event: SocketConnectionStates) {
                 if (event == SocketConnectionStates.OPEN) {
@@ -67,31 +66,30 @@ class AvatarState(
                 }
 
                 bytes[event.ownerId] = useAvatar
-                avatarDao?.insert(AvatarRoomEntity(event.ownerId, useAvatar))
-
-                val onAvailable = onAvailableMap[event.ownerId]
-                if (onAvailable != null) {
-                    for(onAvailable in onAvailable) {
-                        onAvailable(AvatarUI(event.ownerId,  bitmaps[event.ownerId]!!, useAvatar))
-                    }
-                    onAvailableMap[event.ownerId] = mutableListOf()
+                viewModelScope.launch {
+                    avatarDao?.insert(AvatarRoomEntity(event.ownerId, useAvatar))
                 }
 
-                // если аватарка пришла то обновляем ее в маркере если есть
-                for(location in locationsState?.friendLocations?: emptyList()) {
-                    if (location.ownerId == event.ownerId) {
-                        location.updateMarkerFlag = true
-                        location.updateAvatar = true
-                    }
-                }
+                avatarEventBus.pushEvent(AvatarUI(
+                    id = event.ownerId,
+                    bitmap = bitmaps[event.ownerId]!!,
+                    byteArray = useAvatar,
+                    isNetwork = true
+                ))
             }
         })
     }
 
-    fun retrieveAvatar(userId: Long, scope: CoroutineScope, forceReload: Boolean = false, onAvailable: (AvatarUI) -> Unit) {
+    init {
+        assetManager?.open("images/default_user.png").use { asset ->
+            defaultAvatar = asset?.readBytes()
+        }
+    }
+
+    fun retrieveAvatar(userId: Long, scope: CoroutineScope, forceReload: Boolean = false){
         if (existsInMemory(userId) && !forceReload) {
-            val result = AvatarUI(userId, bitmaps[userId]!!, bytes[userId]!!)
-            onAvailable(result)
+            val result = AvatarUI(userId, bitmaps[userId]!!, bytes[userId]!!, false)
+            avatarEventBus.pushEvent(result)
             return
         }
 
@@ -101,18 +99,15 @@ class AvatarState(
             avatarEntity.avatar?.let {
                 val bitmap = BitmapFactory.decodeByteArray(it, 0, it.size)
                 saveAvatarInMem(userId, bitmap, it)
-                val result = AvatarUI(userId, bitmaps[userId]!!, bytes[userId]!!)
-                onAvailable(result)
+                val result = AvatarUI(userId, bitmaps[userId]!!, bytes[userId]!!, false)
+                avatarEventBus.pushEvent(result)
+                return
             }
-            return
         }
 
         // если нету в локальной базе то загружаем из сети
-        if (onAvailableMap[userId] == null) {
-            onAvailableMap[userId] = mutableListOf()
-        }
-        onAvailableMap[userId]!!.add(onAvailable)
         loadAvatar(userId)
+        return
     }
 
     fun isLoading(userId: Long): MutableState<Boolean> {

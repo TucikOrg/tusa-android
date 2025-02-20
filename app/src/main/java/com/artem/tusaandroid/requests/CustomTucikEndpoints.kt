@@ -8,6 +8,7 @@ class CustomTucikEndpoints(
     private val legalDocuments = "api/v1/legal/documents"
     private val getAvatarImage = "api/v1/avatar/image"
     private val uploadAvatar = "api/v1/avatar"
+    private val uploadImage = "api/v1/image"
     private val login = "api/v1/auth/login"
     private val googleSignIN = "api/v1/auth/google/login"
     private val addLocation = "api/v1/location/add"
@@ -52,6 +53,11 @@ class CustomTucikEndpoints(
 
     fun makeAvatarUpload(): String? {
         val uri = Uri.parse(makeEndpoint(uploadAvatar)).buildUpon().build()
+        return uri.toString()
+    }
+
+    fun makeImageUpload(): String? {
+        val uri = Uri.parse(makeEndpoint(uploadImage)).buildUpon().build()
         return uri.toString()
     }
 

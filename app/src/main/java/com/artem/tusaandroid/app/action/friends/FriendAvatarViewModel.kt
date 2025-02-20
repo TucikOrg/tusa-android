@@ -13,6 +13,6 @@ open class FriendAvatarViewModel @Inject constructor(
     fun getState(userId: Long) = avatarsState?.getAvatarBitmap(userId)
 
     fun retrieveAvatar(userId: Long) {
-        avatarsState?.retrieveAvatar(userId, viewModelScope) {  }
+        avatarsState?.retrieveAvatar(userId, viewModelScope)
     }
 }

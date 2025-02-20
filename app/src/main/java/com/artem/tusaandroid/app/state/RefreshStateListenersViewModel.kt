@@ -89,15 +89,17 @@ class RefreshStateListenersViewModel @Inject constructor(
                         when (action.actionType) {
                             AvatarActionType.CHANGE -> {
                                 // перезагрузить аватрки юзеров
+                                // кешированные значения не нужны
                                 avatarState.retrieveAvatar(action.ownerId, viewModelScope,
                                     forceReload = true
-                                ) {
-                                    viewModelScope.launch {
-                                        statesTimePointsDao.insert(StateTimePoint(StateTypes.AVATARS.ordinal, action.actionTime))
-                                    }
-                                }
+                                )
                             }
                         }
+                    }
+
+                    if (event.isNotEmpty()) {
+                        val maxTimePoint = event.maxOf { it.actionTime }
+                        statesTimePointsDao.insert(StateTimePoint(StateTypes.AVATARS.ordinal, maxTimePoint))
                     }
                 }
             }

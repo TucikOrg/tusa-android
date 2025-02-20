@@ -12,7 +12,7 @@ interface AvatarDao {
     fun getAvatarById(id: Long): AvatarRoomEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insert(avatar: AvatarRoomEntity)
+    suspend fun insert(avatar: AvatarRoomEntity)
 
     @Query("DELETE FROM avatar WHERE id = :id")
     fun deleteById(id: Long)

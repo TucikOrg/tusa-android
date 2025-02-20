@@ -1,9 +1,11 @@
 package com.artem.tusaandroid.socket
 
+import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.dto.AddUserDto
 import com.artem.tusaandroid.dto.AllUsersRequest
 import com.artem.tusaandroid.dto.ChangeNameOther
 import com.artem.tusaandroid.dto.FakeLocation
+import com.artem.tusaandroid.dto.ImageDto
 import com.artem.tusaandroid.dto.RequestChats
 import com.artem.tusaandroid.dto.RequestMessages
 import com.artem.tusaandroid.dto.SendMessage
@@ -188,5 +190,14 @@ class SendMessage(
     @OptIn(ExperimentalSerializationApi::class)
     fun sendFirebaseToken(firebaseToken: String) {
         sendMessage(SocketBinaryMessage("firebase-token", Cbor.encodeToByteArray(firebaseToken)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun image(tempFileId: String, ownerId: Long) {
+        sendMessage(SocketBinaryMessage("image", Cbor.encodeToByteArray(ImageDto(
+            localFilePathId = tempFileId,
+            ownerId = ownerId,
+            image = null
+        ))));
     }
 }

@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "friend")
 @Serializable
 data class FriendDto(
-    @PrimaryKey()  val id: Long,
+    @PrimaryKey() val id: Long,
     val name: String,
     val uniqueName: String?,
     val lastOnlineTime: Long

@@ -6,5 +6,6 @@ import androidx.compose.runtime.MutableState
 data class AvatarUI(
     val id: Long,
     val bitmap: MutableState<Bitmap?>,
-    val byteArray: ByteArray
+    val byteArray: ByteArray,
+    val isNetwork: Boolean
 )

@@ -170,6 +170,8 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
 
     val uiShouldBeLight = model.systemUIState.getIsLight()
     LaunchedEffect(uiShouldBeLight.value) {
+        model.initStateListeners()
+
         if (uiShouldBeLight.value) {
             systemUiController.setStatusBarColor(
                 color = Color.Transparent,

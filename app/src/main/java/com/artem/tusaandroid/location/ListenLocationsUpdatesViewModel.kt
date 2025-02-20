@@ -40,22 +40,10 @@ open class ListenLocationsUpdatesViewModel @Inject constructor(
                         updateMarkerFlag = true
                     ))
                 }
-
-                // при получении обновлении локации тоже проверяем наличие аватарки
-                val avatar = avatarState.retrieveAvatar(
-                    userId = event.whoId,
-                    scope = viewModelScope
-                ) { availableAvatar ->
-                    // если аватарка пришла то обновляем ее в маркере если есть
-                    val location = locationsState.friendLocations.find { it.ownerId == event.whoId }
-                    if (location != null) {
-                        location.updateMarkerFlag = true
-                        location.updateAvatar = true
-                    }
-                }
             }
         })
 
+        // этот метод перегружает сначала все локации друзей
         socketListener.getReceiveMessage().locationsBus.addListener(object: EventListener<List<LocationDto>> {
             override fun onEvent(event: List<LocationDto>) {
                 locationsState.friendLocations = event.map { FriendLocation(
@@ -68,16 +56,11 @@ open class ListenLocationsUpdatesViewModel @Inject constructor(
 
                 // нужно проверить наличие аватарок для маркеров
                 for (location in locationsState.friendLocations) {
-                    val avatar = avatarState.retrieveAvatar(
+                    // Обновляем аватар
+                    avatarState.retrieveAvatar(
                         userId = location.ownerId,
                         scope = viewModelScope
-                    ) { available ->
-                        // если аватарка пришла то обновляем ее в маркере если есть
-                        locationsState.friendLocations.find { it.ownerId == location.ownerId }?.let {
-                            it.updateMarkerFlag = true
-                            it.updateAvatar = true
-                        }
-                    }
+                    )
                 }
             }
         })

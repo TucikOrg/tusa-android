@@ -33,7 +33,7 @@ Markers::Markers(MapFpsCounter* mapFpsCounter_): mapFpsCounter(mapFpsCounter_) {
             for (auto& markerId : renderMarkers) {
                 auto& marker = storageMarkers[markerId];
 
-                // убрать маркер если он на другой стороне планеты
+                // убрать маркер если он на aдругой стороне планеты
                 float longitudeDelta = abs(marker.longitude - cameraLongitudeT);
                 if (longitudeDelta > longitudeHideMarkerDelta) {
                     saveMarkerVisibleState(resultAvatarsShifts, 1.0, markerId);

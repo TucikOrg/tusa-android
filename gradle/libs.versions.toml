@@ -1,5 +1,7 @@
 [versions]
 accompanistSystemuicontroller="0.27.0"
+firebaseBom="33.9.0"
+firebaseMessagingKtx="24.1.0"
 googleid="1.1.1"
 agp = "8.7.3"
 coilCompose = "2.4.0"
@@ -41,6 +43,8 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
 credentials-play-services-auth = { module = "androidx.credentials:credentials-play-services-auth" }
+firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging-ktx = { module = "com.google.firebase:firebase-messaging-ktx", version.ref = "firebaseMessagingKtx" }
 googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref="googleid" }
 gradle = { module = "com.android.tools.build:gradle", version.ref = "gradle" }
 hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }

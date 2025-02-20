@@ -12,8 +12,7 @@ open class LoadAvatarViewModel @Inject constructor(
     private val avatarState: AvatarState
 ): ViewModel() {
     fun retrieveMyAvatarAndUpdateMarker() {
-        avatarState.retrieveAvatar(meAvatarState.getMeId(), viewModelScope) {
-            meAvatarState.updateMeMarkerInRender()
-        }
+        // загружаем мою аватарку
+        avatarState.retrieveAvatar(meAvatarState.getMeId(), viewModelScope)
     }
 }

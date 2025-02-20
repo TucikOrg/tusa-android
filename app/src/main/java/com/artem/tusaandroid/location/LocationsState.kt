@@ -9,8 +9,16 @@ class LocationsState() {
         return friendLocations.find { it.ownerId == markerId }
     }
 
-    fun removeLocation(markerId: kotlin.Long) {
+    fun removeLocation(markerId: Long) {
         friendLocations.removeIf { it.ownerId == markerId }
         NativeLibrary.removeMarker(markerId)
+    }
+
+    fun updateAvatarIsRequired(userId: Long) {
+        val location = friendLocations.find { it.ownerId == userId }
+        if (location != null) {
+            location.updateMarkerFlag = true
+            location.updateAvatar = true
+        }
     }
 }
