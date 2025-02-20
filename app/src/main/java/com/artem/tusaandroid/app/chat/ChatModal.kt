@@ -337,7 +337,7 @@ fun MessageItem(message: MessageResponse, userId: Long, chatViewModel: ChatViewM
             val time = DateTimeFormatter.ofPattern("HH:mm").format(localDateTime)
             Row (
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = if (isMyMessage) Arrangement.Start else Arrangement.End
             ) {
                 val serverUploaded = message.isServerUploaded()
                 if (serverUploaded == false) {

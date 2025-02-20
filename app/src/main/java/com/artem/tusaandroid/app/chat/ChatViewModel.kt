@@ -6,8 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -17,6 +19,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
@@ -26,6 +29,7 @@ import coil.compose.AsyncImage
 import com.artem.tusaandroid.app.AlineTwoLongsIds
 import com.artem.tusaandroid.app.IsOnlineState
 import com.artem.tusaandroid.app.action.friends.FriendsState
+import com.artem.tusaandroid.app.beauty.ShimmerBox
 import com.artem.tusaandroid.app.image.ImageAttached
 import com.artem.tusaandroid.app.image.ImageState
 import com.artem.tusaandroid.app.image.ImageUploadWorker
@@ -79,35 +83,39 @@ open class ChatViewModel @Inject constructor(
 
     @Composable
     fun Image(tempFileId: String) {
-        // Пробуем взять uri из галлереи
-        // uri предварительно был сохранен при загрузке картинки
-        val savedImageUri by produceState<Uri?>(initialValue = null, tempFileId) {
-            value = getUriByTempId(tempFileId)
-        }
-        if (savedImageUri != null) {
-            AsyncImage(
-                model = savedImageUri!!,
-                contentDescription = "Image",
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            return
-        }
+        Box(
+            modifier = Modifier.fillMaxWidth().height(250.dp)
+        ) {
+            // Пробуем взять uri из галлереи
+            // uri предварительно был сохранен при загрузке картинки
+            val savedImageUri by produceState<Uri?>(initialValue = null, tempFileId) {
+                value = getUriByTempId(tempFileId)
+            }
+            if (savedImageUri != null) {
+                AsyncImage(
+                    model = savedImageUri!!,
+                    contentDescription = "Image",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                return
+            }
 
-        // Пробуем взять картинку из базы данных
-        // если мы ее до этого загрузили
-        val imageBitmap by imageState.getImageBitmap(tempFileId, getWithUserId(), viewModelScope)
-        if (imageBitmap != null) {
-            androidx.compose.foundation.Image(
-                bitmap = imageBitmap!!.asImageBitmap(),
-                modifier = Modifier.fillMaxWidth(),
-                contentScale = ContentScale.FillWidth,
-                contentDescription = "User avatar",
-            )
-            return
+            // Пробуем взять картинку из базы данных
+            // если мы ее до этого загрузили
+            val imageBitmap by imageState.getImageBitmap(tempFileId, getWithUserId(), viewModelScope)
+            if (imageBitmap != null) {
+                androidx.compose.foundation.Image(
+                    bitmap = imageBitmap!!.asImageBitmap(),
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Fit,
+                    contentDescription = "User avatar",
+                )
+                return
+            }
+
+            ShimmerBox(modifier = Modifier.fillMaxSize(), len = 2000.0f, shimmerWidth = 500.0f)
         }
-
-
     }
 
     suspend fun getUriByTempId(tempId: String): Uri? {
@@ -184,28 +192,30 @@ open class ChatViewModel @Inject constructor(
             bitmap = Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
         }
 
+        var filePath = ""
+        val fileId = UUID.randomUUID().toString()
         ByteArrayOutputStream().use {
             bitmap!!.compress(Bitmap.CompressFormat.JPEG, 70, it)
             val bytesArray = it.toByteArray()
-            val fileId = UUID.randomUUID().toString()
             imageAttached.fileLocalId = fileId
             val tempFile = File.createTempFile(fileId, null, context.cacheDir)
             FileOutputStream(tempFile).use { fos ->
                 fos.write(bytesArray)
             }
-
-            val uploadWorkRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
-                .setInputData(
-                    Data.Builder()
-                        .putString("file_path", tempFile.path)
-                        .putString("jwt", JwtGlobal.jwt)
-                        .putString("url", customTucikEndpoints.makeImageUpload())
-                        .putString("file_id", fileId)
-                        .build()
-                )
-                .build()
-            WorkManager.getInstance(context).enqueue(uploadWorkRequest)
+            filePath = tempFile.path
         }
+
+        val uploadWorkRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
+            .setInputData(
+                Data.Builder()
+                    .putString("file_path", filePath)
+                    .putString("jwt", JwtGlobal.jwt)
+                    .putString("url", customTucikEndpoints.makeImageUpload())
+                    .putString("file_id", fileId)
+                    .build()
+            )
+            .build()
+        val operation = WorkManager.getInstance(context).enqueue(uploadWorkRequest)
 
         temIdToUriMap[imageAttached.fileLocalId] = imageAttached.uri
         viewModelScope.launch {
