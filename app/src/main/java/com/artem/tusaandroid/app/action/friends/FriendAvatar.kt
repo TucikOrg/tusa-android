@@ -20,7 +20,9 @@ import com.artem.tusaandroid.R
 @Composable
 fun FriendAvatar(
     modifier: Modifier,
-    model: FriendAvatarViewModel, userId: Long
+    model: FriendAvatarViewModel,
+    userId: Long,
+    contentScale: ContentScale = ContentScale.Crop
 ) {
     LaunchedEffect(Unit) {
         model.retrieveAvatar(userId)
@@ -46,7 +48,7 @@ fun FriendAvatar(
             Image(
                 bitmap = avatarBitmap.asImageBitmap(),
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
+                contentScale = contentScale,
                 contentDescription = "User avatar",
             )
         }

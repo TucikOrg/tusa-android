@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.app.toast.ToastsState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -17,7 +18,8 @@ import javax.inject.Inject
 @HiltViewModel
 open class MainActionFabViewModel @Inject constructor(
     val authenticationState: AuthenticationState?,
-    val profileState: ProfileState?
+    val profileState: ProfileState?,
+    val toastsState: ToastsState?
 ): ViewModel() {
     var showModal by mutableStateOf(false)
 

@@ -11,4 +11,12 @@ data class FriendDto(
     val name: String,
     val uniqueName: String?,
     val lastOnlineTime: Long
-)
+) {
+    fun getTitleOfFriend(): String {
+        return if (name.isEmpty()) {
+            uniqueName ?: ""
+        } else {
+            name
+        }
+    }
+}

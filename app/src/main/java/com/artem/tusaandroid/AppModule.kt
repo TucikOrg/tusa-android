@@ -19,6 +19,7 @@ import com.artem.tusaandroid.app.map.UpdateMapTitleState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedState
 import com.artem.tusaandroid.app.systemui.SystemUIState
+import com.artem.tusaandroid.app.toast.ToastsState
 import com.artem.tusaandroid.cropper.CropperState
 import com.artem.tusaandroid.firebase.FirebaseState
 import com.artem.tusaandroid.location.LastLocationState
@@ -48,6 +49,16 @@ import javax.inject.Singleton
 @Module
 @InstallIn(SingletonComponent::class)
 class AppModule {
+    @Provides
+    @Singleton
+    fun provideToastsState(
+        profileState: ProfileState,
+        avatarState: AvatarState,
+        friendsDao: FriendDao
+    ): ToastsState {
+        return ToastsState(profileState, avatarState, friendsDao)
+    }
+
     @Provides
     @Singleton
     fun provideImagesPreviewDialogState(): ImagesPreviewDialogState {

@@ -7,6 +7,7 @@ import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.MessagesConsts
+import com.artem.tusaandroid.app.toast.ToastsState
 import com.artem.tusaandroid.dto.AvatarAction
 import com.artem.tusaandroid.dto.AvatarActionType
 import com.artem.tusaandroid.dto.FriendActionDto
@@ -62,6 +63,7 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val chatState: ChatState,
     private val firebaseState: FirebaseState,
     private val imageUploadingStatusDao: ImageUploadingStatusDao,
+    private val toastsState: ToastsState,
     @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
@@ -247,6 +249,8 @@ class RefreshStateListenersViewModel @Inject constructor(
                         when (action.actionType) {
                             MessagesActionType.ADD -> {
                                 messageDao.insert(action.message)
+
+                                toastsState.newMessage(action.message, viewModelScope)
                             }
                         }
                     }

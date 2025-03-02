@@ -59,6 +59,7 @@ import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.selected.SelectedMarkerModal
 import com.artem.tusaandroid.app.state.RefreshStateListeners
 import com.artem.tusaandroid.app.state.RefreshStateListenersViewModel
+import com.artem.tusaandroid.app.toast.Toasts
 import com.artem.tusaandroid.cropper.CropperModal
 import com.artem.tusaandroid.cropper.PreviewCropperModalViewModel
 import com.artem.tusaandroid.dto.CrashData
@@ -309,6 +310,10 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
                     model = hiltViewModel()
                 )
             }
+
+            // показывает быстрые уведомления внутри приложения
+            // например новые сообщения от пользователей
+            Toasts()
         }
     }
 
@@ -316,5 +321,5 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
 
     AppDialog(model = TucikViewModel(preview = model.isPreview(), previewModel = AppDialogViewModelPreview()))
 
-    ImagesPreviewDialog(model = hiltViewModel())
+    ImagesPreviewDialog()
 }

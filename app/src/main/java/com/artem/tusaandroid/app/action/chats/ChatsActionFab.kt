@@ -142,12 +142,25 @@ fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
                     style = MaterialTheme.typography.headlineSmall,
                 )
                 Spacer(modifier = Modifier.height(3.dp))
-                Text(
-                    text = lastMessage?.message ?: "",
-                    style = MaterialTheme.typography.bodyLarge,
-                    maxLines = 1,
-                    color = Color.Gray
-                )
+                Row {
+                    val hasImage = lastMessage?.getClearedPayload()?.isNotEmpty() == true
+                    var messageLast = lastMessage?.message
+                    if (hasImage) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.image_52dp),
+                            contentDescription = "Done all",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    Text(
+                        text = messageLast?: "",
+                        style = MaterialTheme.typography.bodyLarge,
+                        maxLines = 1,
+                        color = Color.Gray
+                    )
+                }
             }
         }
     }
