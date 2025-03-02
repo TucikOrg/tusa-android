@@ -1,29 +1,43 @@
 package com.artem.tusaandroid.app.chat
 
+import com.artem.tusaandroid.R
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
+import android.util.Log
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import coil.compose.AsyncImage
 import com.artem.tusaandroid.app.AlineTwoLongsIds
@@ -43,7 +57,10 @@ import com.artem.tusaandroid.dto.SendMessage
 import com.artem.tusaandroid.dto.messenger.WritingMessage
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.artem.tusaandroid.room.FriendDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusEntity
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -71,63 +88,15 @@ open class ChatViewModel @Inject constructor(
     val isOnlineState: IsOnlineState,
     val customTucikEndpoints: CustomTucikEndpoints,
     val tempIdToUriDao: TempIdToUriDao,
-    val imageState: ImageState
+    val imageUploadingStatusDao: ImageUploadingStatusDao
 ): ViewModel() {
     var page = 1
     private var messagesStatesMap: MutableMap<Pair<Long, Long>, StateFlow<List<MessageResponse>>> = mutableMapOf()
+    private var imagesStatusesStatesFlow: StateFlow<List<ImageUploadingStatusEntity>>? = null
     private var writingMessagesMap: MutableMap<Long, MutableState<String>> = mutableMapOf()
     private var updateWritingMessagesTime: MutableMap<Long, LocalDateTime> = mutableMapOf()
     private var chatAttaches: MutableMap<Long, MutableState<List<ImageAttached>>> = mutableMapOf()
 
-    private var temIdToUriMap: MutableMap<String, Uri> = mutableMapOf()
-
-    @Composable
-    fun Image(tempFileId: String) {
-        Box(
-            modifier = Modifier.fillMaxWidth().height(250.dp)
-        ) {
-            // Пробуем взять uri из галлереи
-            // uri предварительно был сохранен при загрузке картинки
-            val savedImageUri by produceState<Uri?>(initialValue = null, tempFileId) {
-                value = getUriByTempId(tempFileId)
-            }
-            if (savedImageUri != null) {
-                AsyncImage(
-                    model = savedImageUri!!,
-                    contentDescription = "Image",
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxSize(),
-                )
-                return
-            }
-
-            // Пробуем взять картинку из базы данных
-            // если мы ее до этого загрузили
-            val imageBitmap by imageState.getImageBitmap(tempFileId, getWithUserId(), viewModelScope)
-            if (imageBitmap != null) {
-                androidx.compose.foundation.Image(
-                    bitmap = imageBitmap!!.asImageBitmap(),
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit,
-                    contentDescription = "User avatar",
-                )
-                return
-            }
-
-            ShimmerBox(modifier = Modifier.fillMaxSize(), len = 2000.0f, shimmerWidth = 500.0f)
-        }
-    }
-
-    suspend fun getUriByTempId(tempId: String): Uri? {
-        if (temIdToUriMap[tempId] != null)
-            return temIdToUriMap[tempId]!!
-
-        tempIdToUriDao.findById(tempId)?.let {
-            return Uri.parse(it.uri)
-        }
-
-        return null
-    }
 
     fun getIsFriendOnline(): MutableState<Boolean> {
         return isOnlineState.isUserOnline(getWithUserId())
@@ -163,61 +132,16 @@ open class ChatViewModel @Inject constructor(
         }
     }
 
-    fun imageUriSelected(uri: Uri, context: Context) {
-        var matrix: Matrix?
-        var bitmap: Bitmap?
-
+    fun imageUriSelected(uri: Uri) {
         val withUserId = getWithUserId()
-        var imageAttached = ImageAttached(uri = uri, fileLocalId = "")
+        val fileId = UUID.randomUUID().toString()
+        var imageAttached = ImageAttached(uri = uri, fileLocalId = fileId)
         if (chatAttaches[withUserId] == null) {
             chatAttaches[withUserId] = mutableStateOf(listOf(imageAttached))
         } else {
             chatAttaches[withUserId]!!.value = chatAttaches[withUserId]!!.value + imageAttached
         }
 
-        context.contentResolver.openInputStream(uri).use { inputStream ->
-            val exif = ExifInterface(inputStream!!)
-            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-            val rotationDegrees = when (orientation) {
-                ExifInterface.ORIENTATION_ROTATE_90 -> 90
-                ExifInterface.ORIENTATION_ROTATE_180 -> 180
-                ExifInterface.ORIENTATION_ROTATE_270 -> 270
-                else -> 0
-            }
-            matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
-        }
-
-        context.contentResolver.openInputStream(uri).use { inputStream ->
-            val originalBitmap = BitmapFactory.decodeStream(inputStream)
-            bitmap = Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
-        }
-
-        var filePath = ""
-        val fileId = UUID.randomUUID().toString()
-        ByteArrayOutputStream().use {
-            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 70, it)
-            val bytesArray = it.toByteArray()
-            imageAttached.fileLocalId = fileId
-            val tempFile = File.createTempFile(fileId, null, context.cacheDir)
-            FileOutputStream(tempFile).use { fos ->
-                fos.write(bytesArray)
-            }
-            filePath = tempFile.path
-        }
-
-        val uploadWorkRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
-            .setInputData(
-                Data.Builder()
-                    .putString("file_path", filePath)
-                    .putString("jwt", JwtGlobal.jwt)
-                    .putString("url", customTucikEndpoints.makeImageUpload())
-                    .putString("file_id", fileId)
-                    .build()
-            )
-            .build()
-        val operation = WorkManager.getInstance(context).enqueue(uploadWorkRequest)
-
-        temIdToUriMap[imageAttached.fileLocalId] = imageAttached.uri
         viewModelScope.launch {
             tempIdToUriDao.insert(TempIdToUriEntity(imageAttached.fileLocalId, imageAttached.uri.toString()))
         }
@@ -236,7 +160,6 @@ open class ChatViewModel @Inject constructor(
                 writingMessagesMap[data.fromUserId]!!.value = data.message
             }
         })
-
 
     }
 
@@ -280,10 +203,9 @@ open class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendMessage(message: String) {
+    fun sendMessage(message: String, context: Context, lifecycleOwner: LifecycleOwner) {
         val currentChat = chatsState.chat.value!!
-        val toId = if (currentChat.firstUserId == profileState.getUserId())
-            currentChat.secondUserId else currentChat.firstUserId
+        val toId = getWithUserId()
 
         val attachedTempIds = getAttaches().value.map { it.fileLocalId }
         val sendMessage = SendMessage(
@@ -292,10 +214,6 @@ open class ChatViewModel @Inject constructor(
             payload = attachedTempIds,
             temporaryId = UUID.randomUUID().toString()
         )
-        socketListener.getSendMessage()?.sendChatMessage(sendMessage)
-
-        // очистит все прикрепленные картинки
-        chatAttaches[getWithUserId()]!!.value = listOf()
 
         // временно сохраняем сообщение в базу данных
         // оно будет показываться в чате как сообщение для отправки
@@ -308,9 +226,107 @@ open class ChatViewModel @Inject constructor(
                 senderId = profileState.getUserId(),
                 message = message,
                 creation = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC),
-                payload = attachedTempIds.joinToString(separator = ",")
+                payload = attachedTempIds.joinToString(separator = ","),
             ))
         }
+
+        val attaches = getAttaches().value
+        if (attaches.isEmpty()) {
+            // ели нету приложений то сразу отправялем сообщение
+            socketListener.getSendMessage()?.sendChatMessage(sendMessage)
+        }
+
+        // все выбранные картинки грузим на сервер
+        for (imageAttached in attaches) {
+
+            var uri = imageAttached.uri
+            val fileId = imageAttached.fileLocalId
+            uploadImageToServer(
+                uri = uri,
+                fileId = fileId,
+                sendMessage = sendMessage,
+                context = context,
+                lifecycleOwner = lifecycleOwner
+            )
+        }
+
+        // очистит все прикрепленные картинки
+        chatAttaches[getWithUserId()]!!.value = listOf()
+    }
+
+    fun uploadImageToServer(
+        uri: Uri,
+        fileId: String,
+        sendMessage: SendMessage,
+        context: Context,
+        lifecycleOwner: LifecycleOwner
+    ) {
+        // учитываем exif данные
+        // выравниваем изображение по повороту
+        var matrix: Matrix?
+        var bitmap: Bitmap?
+        context.contentResolver.openInputStream(uri).use { inputStream ->
+            val exif = ExifInterface(inputStream!!)
+            val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+            val rotationDegrees = when (orientation) {
+                ExifInterface.ORIENTATION_ROTATE_90 -> 90
+                ExifInterface.ORIENTATION_ROTATE_180 -> 180
+                ExifInterface.ORIENTATION_ROTATE_270 -> 270
+                else -> 0
+            }
+            matrix = Matrix().apply { postRotate(rotationDegrees.toFloat()) }
+        }
+        context.contentResolver.openInputStream(uri).use { inputStream ->
+            val originalBitmap = BitmapFactory.decodeStream(inputStream)
+            bitmap = Bitmap.createBitmap(originalBitmap, 0, 0, originalBitmap.width, originalBitmap.height, matrix, true)
+        }
+
+        // сжимаем файл и сохранем во временный файлы
+        var filePath = ""
+        ByteArrayOutputStream().use {
+            bitmap!!.compress(Bitmap.CompressFormat.JPEG, 70, it)
+            val bytesArray = it.toByteArray()
+
+            val tempFile = File.createTempFile(fileId, null, context.cacheDir)
+            FileOutputStream(tempFile).use { fos ->
+                fos.write(bytesArray)
+            }
+            filePath = tempFile.path
+        }
+
+        // запускаем загрузку файлов на сервер
+        val uploadWorkRequest = OneTimeWorkRequestBuilder<ImageUploadWorker>()
+            .setInputData(
+                Data.Builder()
+                    .putString("file_path", filePath)
+                    .putString("jwt", JwtGlobal.jwt)
+                    .putString("url", customTucikEndpoints.makeImageUpload())
+                    .putString("file_id", fileId)
+                    .putString("message_temp_id", sendMessage.temporaryId)
+                    .build()
+            )
+            .build()
+        WorkManager.getInstance(context).enqueue(uploadWorkRequest)
+
+        // слушаем когда загрузка картинки будет завершена
+        WorkManager.getInstance(context).getWorkInfoByIdLiveData(uploadWorkRequest.id)
+            .observe(lifecycleOwner) { workInfo ->
+                viewModelScope.launch {
+                    if (workInfo != null && workInfo.state.isFinished) {
+                        val uploaded = workInfo.outputData.getBoolean("uploaded", false)
+                        if (uploaded) {
+                            val messageTempId = workInfo.outputData.getString("message_temp_id")!!
+                            val message = messagesDao.findByTempId(messageTempId)!!
+                            val payload = message.getClearedPayload()
+                            val statuses = imageUploadingStatusDao.findByTempIdIn(payload)
+                            val isAllUploaded = statuses.all { it.status == UploadingImageStatus.UPLOADED.ordinal }
+                            if (isAllUploaded) {
+                                socketListener.getSendMessage()?.sendChatMessage(sendMessage)
+                            }
+                        }
+                    }
+                }
+            }
     }
 
     fun loadMoreItems() {
@@ -329,7 +345,7 @@ open class ChatViewModel @Inject constructor(
         socketListener.getSendMessage()?.writingMessage(withUserId, message)
     }
 
-    private fun getWithUserId(): Long {
+    fun getWithUserId(): Long {
         val currentChat = chatsState.chat.value!!
         val withUserId = if (currentChat.firstUserId == profileState.getUserId())
             currentChat.secondUserId else currentChat.firstUserId
@@ -338,6 +354,6 @@ open class ChatViewModel @Inject constructor(
 
     fun removeAttach(uri: Uri) {
         val withUserId = getWithUserId()
-        chatAttaches[withUserId]!!.value = chatAttaches[withUserId]!!.value.filter { it != uri }
+        chatAttaches[withUserId]!!.value = chatAttaches[withUserId]!!.value.filter { it.uri != uri }
     }
 }

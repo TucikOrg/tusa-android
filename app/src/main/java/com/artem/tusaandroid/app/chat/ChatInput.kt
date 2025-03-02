@@ -2,16 +2,9 @@ package com.artem.tusaandroid.app.chat
 
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
-import android.text.InputType
-import android.view.inputmethod.EditorInfo
-import android.view.inputmethod.InputConnection
-import android.widget.EditText
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,7 +12,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -37,29 +29,28 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.vectorResource
+import androidx.lifecycle.LifecycleOwner
 import coil.compose.AsyncImage
 import com.artem.tusaandroid.R
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun ChatInput(chatViewModel: ChatViewModel) {
-    val attaches by chatViewModel.getAttaches()
-
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
         InputMessage(chatViewModel)
+        val attaches by chatViewModel.getAttaches()
         if (attaches.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth()
@@ -98,16 +89,15 @@ fun ChatInput(chatViewModel: ChatViewModel) {
             }
         }
     }
-
 }
 
 @Composable
 fun InputMessage(chatViewModel: ChatViewModel) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     var message by remember { mutableStateOf("") }
     val pickAvatarLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
-
     ) { uri: Uri? ->
         if (uri == null)
             return@rememberLauncherForActivityResult
@@ -117,7 +107,7 @@ fun InputMessage(chatViewModel: ChatViewModel) {
             uri, Intent.FLAG_GRANT_READ_URI_PERMISSION
         )
 
-        chatViewModel.imageUriSelected(uri, context)
+        chatViewModel.imageUriSelected(uri)
     }
 
     Row(
@@ -126,17 +116,21 @@ fun InputMessage(chatViewModel: ChatViewModel) {
             .padding(horizontal = 3.dp, vertical = 5.dp),
         verticalAlignment = Alignment.Bottom,
     ) {
-        IconButton(
-            onClick = {
-                pickAvatarLauncher.launch(
-                    PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        val attaches by chatViewModel.getAttaches()
+        // максимум 1 фотографию можно прикрепить
+        if (attaches.size < 1) {
+            IconButton(
+                onClick = {
+                    pickAvatarLauncher.launch(
+                        PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                    )
+                }
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.clip),
+                    contentDescription = "Add attachment"
                 )
             }
-        ) {
-            Icon(
-                imageVector = ImageVector.vectorResource(id = R.drawable.clip),
-                contentDescription = "Add attachment"
-            )
         }
         val textInputColor = lerp(MaterialTheme.colorScheme.surface, Color.White, 0.15f)
         TextField(
@@ -161,8 +155,12 @@ fun InputMessage(chatViewModel: ChatViewModel) {
         )
         FilledIconButton (
             onClick = {
+                // сообщение отправялем только тогда когда есть что-то для отправки
+                if (message.isEmpty() && attaches.isEmpty())
+                    return@FilledIconButton
+
                 // отправляем сообщение
-                chatViewModel.sendMessage(message)
+                chatViewModel.sendMessage(message, context, lifecycleOwner)
 
                 // очищаем у друга поле "пишет сообщение"
                 chatViewModel.writingMessage("")

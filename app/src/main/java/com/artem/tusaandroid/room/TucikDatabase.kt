@@ -11,6 +11,8 @@ import com.artem.tusaandroid.dto.FriendRequestDto
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.room.messenger.ChatDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusEntity
 import com.artem.tusaandroid.room.messenger.MessageDao
 
 @Database(
@@ -22,7 +24,8 @@ import com.artem.tusaandroid.room.messenger.MessageDao
         ChatResponse::class,
         MessageResponse::class,
         TempIdToUriEntity::class,
-        ImageEntity::class
+        ImageEntity::class,
+        ImageUploadingStatusEntity::class
     ], version = 1, exportSchema = false)
 abstract class TucikDatabase: RoomDatabase() {
     abstract fun friendDao(): FriendDao
@@ -33,4 +36,5 @@ abstract class TucikDatabase: RoomDatabase() {
     abstract fun messageDao(): MessageDao
     abstract fun tempLocalIdToUriDao(): TempIdToUriDao
     abstract fun imageDao(): ImageDao
+    abstract fun imageUploadingStatusDao(): ImageUploadingStatusDao
 }

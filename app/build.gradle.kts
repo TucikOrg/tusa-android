@@ -16,7 +16,7 @@ android {
         applicationId = "com.artem.tusaandroid"
         minSdk = 30
         targetSdk = 35
-        versionCode = 7
+        versionCode = 8
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -107,6 +107,7 @@ dependencies {
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.bom)
 
+
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.exifinterface)
     ksp(libs.androidx.room.compiler)
@@ -115,6 +116,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.androidx.hilt.work)
+    ksp(libs.androidx.hilt.compiler)
 
     implementation(libs.moshi.kotlin)
     implementation(libs.moshi.adapters)

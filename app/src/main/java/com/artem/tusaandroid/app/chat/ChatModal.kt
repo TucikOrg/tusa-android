@@ -1,8 +1,5 @@
 package com.artem.tusaandroid.app.chat
 
-import android.graphics.Bitmap
-import android.net.Uri
-import androidx.compose.foundation.Image
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +11,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -40,20 +36,15 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.tooling.preview.Preview
-import coil.compose.AsyncImage
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
@@ -61,11 +52,11 @@ import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.isPreview
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusEntity
+import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import kotlinx.coroutines.delay
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 
@@ -297,7 +288,9 @@ fun WritingMessageOnlineShow(message: MutableState<String>) {
 }
 
 @Composable
-fun MessageItem(message: MessageResponse, userId: Long, chatViewModel: ChatViewModel) {
+fun MessageItem(message: MessageResponse, userId: Long,
+                chatViewModel: ChatViewModel
+) {
     val isMyMessage = message.senderId == userId
 
     Row(
@@ -325,9 +318,10 @@ fun MessageItem(message: MessageResponse, userId: Long, chatViewModel: ChatViewM
             }
             Spacer(modifier = Modifier.height(4.dp))
 
-            if (message.payload.isNotEmpty()) {
-                for (tempFileId in message.payload.split(",")) {
-                    chatViewModel.Image(tempFileId)
+            val payload = message.getClearedPayload()
+            if (payload.isNotEmpty()) {
+                for (tempId in payload) {
+                    ImageInChat(chatViewModel, tempId, message)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
             }

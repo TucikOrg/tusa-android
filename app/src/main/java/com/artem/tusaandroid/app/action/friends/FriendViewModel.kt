@@ -1,6 +1,5 @@
 package com.artem.tusaandroid.app.action.friends
 
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

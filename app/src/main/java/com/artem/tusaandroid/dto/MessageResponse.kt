@@ -14,7 +14,12 @@ data class MessageResponse(
     var senderId: Long,
     val message: String,
     var creation: Long,
-    var payload: String
+    var payload: String,
 ) {
     fun isServerUploaded() = id != null
+
+    fun getClearedPayload(): List<String> {
+        if (payload.isEmpty()) return emptyList()
+        return payload.split(",")
+    }
 }

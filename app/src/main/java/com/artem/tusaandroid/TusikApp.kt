@@ -3,17 +3,15 @@ package com.artem.tusaandroid
 import android.app.Application
 import android.os.StrictMode
 import android.util.Log
-import com.artem.tusaandroid.dto.AddLocationDto
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import com.artem.tusaandroid.dto.CrashData
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.adapter
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,17 +20,23 @@ import javax.inject.Inject
 import kotlin.system.exitProcess
 
 @HiltAndroidApp
-class TusikApp: Application() {
+class TusikApp(): Application(), Configuration.Provider {
     @Inject
     lateinit var okHttpClient: OkHttpClient
     @Inject
     lateinit var customTucikEndpoints: CustomTucikEndpoints
     @Inject
     lateinit var moshi: Moshi
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
 
+    override val workManagerConfiguration get() = Configuration.Builder()
+        .setWorkerFactory(workerFactory)
+        .build()
 
     override fun onCreate() {
         super.onCreate()
+        WorkManager.initialize(this, workManagerConfiguration)
 
         // Устанавливаем глобальный обработчик исключений
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->

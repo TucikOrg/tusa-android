@@ -12,6 +12,8 @@ import com.artem.tusaandroid.app.chat.ChatsState
 import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.app.image.ImageState
+import com.artem.tusaandroid.app.image.TempIdToUriDao
+import com.artem.tusaandroid.app.image.preview.ImagesPreviewDialogState
 import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.app.map.UpdateMapTitleState
 import com.artem.tusaandroid.app.profile.ProfileState
@@ -48,11 +50,18 @@ import javax.inject.Singleton
 class AppModule {
     @Provides
     @Singleton
+    fun provideImagesPreviewDialogState(): ImagesPreviewDialogState {
+        return ImagesPreviewDialogState()
+    }
+
+    @Provides
+    @Singleton
     fun provideImageState(
         socketListener: SocketListener,
-        imageDao: ImageDao
+        imageDao: ImageDao,
+        tempIdToUriDao: TempIdToUriDao
     ): ImageState {
-        return ImageState(socketListener, imageDao)
+        return ImageState(socketListener, imageDao, tempIdToUriDao)
     }
 
     @Provides

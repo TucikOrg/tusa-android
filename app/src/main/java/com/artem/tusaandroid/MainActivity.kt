@@ -49,6 +49,7 @@ import com.artem.tusaandroid.app.avatar.RetrieveMyAvatar
 import com.artem.tusaandroid.app.chat.ChatModal
 import com.artem.tusaandroid.app.dialog.AppDialog
 import com.artem.tusaandroid.app.dialog.AppDialogViewModelPreview
+import com.artem.tusaandroid.app.image.preview.ImagesPreviewDialog
 import com.artem.tusaandroid.app.login.InputUniqueName
 import com.artem.tusaandroid.app.logs.CrashLogUploadWorker
 import com.artem.tusaandroid.app.map.MapTitle
@@ -314,4 +315,6 @@ fun Tucik(model: MainActivityViewModel = hiltViewModel()) {
     CropperModal(model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewCropperModalViewModel()))
 
     AppDialog(model = TucikViewModel(preview = model.isPreview(), previewModel = AppDialogViewModelPreview()))
+
+    ImagesPreviewDialog(model = hiltViewModel())
 }

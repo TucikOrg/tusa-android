@@ -54,7 +54,7 @@ class SocketListener(
         try {
             receiveMessage.receiveBytesMessage(bytes)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("SocketListener", "Error: ${e.message}")
         }
     }
 

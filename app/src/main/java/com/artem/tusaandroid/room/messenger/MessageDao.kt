@@ -41,4 +41,7 @@ interface MessageDao {
 
     @Query("SELECT COUNT(*) FROM message")
     suspend fun count(): Int
+
+    @Query("SELECT * FROM message WHERE temporaryId = :temporaryId")
+    suspend fun findByTempId(temporaryId: String): MessageResponse?
 }

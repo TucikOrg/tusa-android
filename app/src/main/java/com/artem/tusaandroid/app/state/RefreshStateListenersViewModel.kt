@@ -31,7 +31,9 @@ import com.artem.tusaandroid.room.StateTimePoint
 import com.artem.tusaandroid.room.StateTypes
 import com.artem.tusaandroid.room.StatesTimePointDao
 import com.artem.tusaandroid.room.messenger.ChatDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.socket.SocketConnectionState
@@ -59,6 +61,7 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val socketConnect: SocketConnect,
     private val chatState: ChatState,
     private val firebaseState: FirebaseState,
+    private val imageUploadingStatusDao: ImageUploadingStatusDao,
     @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
@@ -359,6 +362,19 @@ class RefreshStateListenersViewModel @Inject constructor(
                         viewModelScope.launch {
                             val unsentMessages = messageDao.getUnsentMessages()
                             for (message in unsentMessages) {
+
+                                // проверяем payload на наличие картинок
+                                val payload = message.getClearedPayload()
+                                if (payload.isNotEmpty()) {
+                                    // если есть незагруженные на сервер картинки то не надо отправлять
+                                    val statuses = imageUploadingStatusDao.findByTempIdIn(payload)
+                                    if (statuses.any { it.status != UploadingImageStatus.UPLOADED.ordinal }) {
+                                        continue
+                                    }
+                                }
+
+                                // отправить сообщение еще раз
+                                // payload точно загружен на сервер
                                 chatState.resendMessage(viewModelScope, message)
                             }
                         }

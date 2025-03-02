@@ -5,6 +5,7 @@ import androidx.room.Room
 import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.app.image.TempIdToUriDao
 import com.artem.tusaandroid.room.messenger.ChatDao
+import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.MessageDao
 import dagger.Module
 import dagger.Provides
@@ -64,5 +65,10 @@ object DatabaseModule {
     @Provides
     fun provideMessageDao(database: TucikDatabase): MessageDao {
         return database.messageDao()
+    }
+
+    @Provides
+    fun provideImageUploadingStatusDao(database: TucikDatabase): ImageUploadingStatusDao {
+        return database.imageUploadingStatusDao()
     }
 }
