@@ -325,7 +325,7 @@ fun MessageItem(message: MessageResponse, userId: Long,
                 }
                 Spacer(modifier = Modifier.height(10.dp))
             }
-            val localDateTime = Instant.ofEpochSecond(message.creation)
+            val localDateTime = Instant.ofEpochSecond(message.updateTime)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime()
             val time = DateTimeFormatter.ofPattern("HH:mm").format(localDateTime)

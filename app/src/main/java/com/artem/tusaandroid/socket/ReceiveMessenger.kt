@@ -1,12 +1,11 @@
 package com.artem.tusaandroid.socket
 
 import com.artem.tusaandroid.dto.ChatsResponse
-import com.artem.tusaandroid.dto.IsOnlineDto
+import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.dto.ResponseMessages
-import com.artem.tusaandroid.dto.messenger.ChatAction
+import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.dto.messenger.InitChatsResponse
 import com.artem.tusaandroid.dto.messenger.InitMessagesResponse
-import com.artem.tusaandroid.dto.messenger.MessagesAction
 import com.artem.tusaandroid.dto.messenger.WritingMessage
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.cbor.Cbor
@@ -15,8 +14,8 @@ import kotlinx.serialization.decodeFromByteArray
 class ReceiveMessenger {
     val messagesBus: EventBus<ResponseMessages> = EventBus()
     val chatsBus: EventBus<ChatsResponse> = EventBus()
-    val chatsActionsBus: EventBus<List<ChatAction>> = EventBus()
-    val messagesActionsBus: EventBus<List<MessagesAction>> = EventBus()
+    val chatsActionsBus: EventBus<List<ChatResponse>> = EventBus()
+    val messagesActionsBus: EventBus<List<MessageResponse>> = EventBus()
     val refreshChats: EventBus<Unit> = EventBus()
     val refreshMessages: EventBus<Unit> = EventBus()
     val messagesInitBus: EventBus<InitMessagesResponse> = EventBus()
@@ -40,11 +39,11 @@ class ReceiveMessenger {
                 chatsInitBus.pushEvent(initChatsResponse)
             }
             "chats-actions" -> {
-                val chatsActions = Cbor.decodeFromByteArray<List<ChatAction>>(socketBinaryMessage.data)
+                val chatsActions = Cbor.decodeFromByteArray<List<ChatResponse>>(socketBinaryMessage.data)
                 chatsActionsBus.pushEvent(chatsActions)
             }
             "messages-actions" -> {
-                val messagesActions = Cbor.decodeFromByteArray<List<MessagesAction>>(socketBinaryMessage.data)
+                val messagesActions = Cbor.decodeFromByteArray<List<MessageResponse>>(socketBinaryMessage.data)
                 messagesActionsBus.pushEvent(messagesActions)
             }
             "messages" -> {

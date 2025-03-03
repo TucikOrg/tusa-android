@@ -12,13 +12,13 @@ interface MessageDao {
     @Query("DELETE FROM message WHERE firstUserId = :firstUserId AND secondUserId = :secondUserId")
     fun deleteByFirstUserIdAndSecondUserId(firstUserId: Long, secondUserId: Long)
 
-    @Query("SELECT * FROM message ORDER BY creation DESC")
+    @Query("SELECT * FROM message ORDER BY updateTime DESC")
     fun getAllFlow(): Flow<List<MessageResponse>>
 
-    @Query("SELECT * FROM message WHERE firstUserId = :firstUserId AND secondUserId = :secondUserId ORDER BY creation DESC")
+    @Query("SELECT * FROM message WHERE firstUserId = :firstUserId AND secondUserId = :secondUserId ORDER BY updateTime DESC")
     fun getAllFlow(firstUserId: Long, secondUserId: Long): Flow<List<MessageResponse>>
 
-    @Query("SELECT * FROM message where firstUserId = :firstUserId AND secondUserId = :secondUserId ORDER BY creation DESC limit 1")
+    @Query("SELECT * FROM message where firstUserId = :firstUserId AND secondUserId = :secondUserId ORDER BY updateTime DESC limit 1")
     fun getLastMessageFlow(firstUserId: Long, secondUserId: Long): Flow<MessageResponse?>
 
     @Query("SELECT * FROM message where id is null")

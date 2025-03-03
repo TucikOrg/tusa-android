@@ -8,6 +8,8 @@ import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.AvatarRoomEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 class MeAvatarState(
     private val profileState: ProfileState?,
@@ -62,7 +64,8 @@ class MeAvatarState(
         viewModelScope.launch {
             avatarDao?.insert(AvatarRoomEntity(
                 id = getMeId(),
-                avatar = bytesArray
+                avatar = bytesArray,
+                updatingTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
             ))
         }
         avatarState?.saveAvatarInMem(profileState!!.getUserId(), avatar!!, bytesArray!!)

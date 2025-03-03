@@ -25,6 +25,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.app.profile.ProfileUserColumn
 import com.artem.tusaandroid.isPreview
 import com.artem.tusaandroid.dto.FriendDto
 
@@ -54,23 +55,13 @@ fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
                     userId = friend.id
                 )
                 Spacer(modifier = Modifier.width(20.dp))
-                Column(
-                    modifier = Modifier.weight(1.0f),
-                ) {
-                    Text(
-                        modifier = Modifier,
-                        text = friend.name,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    if (friend.uniqueName != null) {
-                        Text(
-                            text = "@${friend.uniqueName}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                }
+                ProfileUserColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    name = friend.name,
+                    uniqueName = friend.uniqueName,
+                    userId = friend.id,
+                    lastOnlineTime = null,
+                )
 
                 LaunchedEffect(Unit) {
                     model.check(friend.id)
@@ -87,7 +78,7 @@ fun FriendRowInSearch(model: FriendRowInSearchViewModel, friend: FriendDto) {
                     }
                     FriendRequestRowState.REQUEST_SENT -> {
                         Text(
-                            text = "Запрос отправлен",
+                            text = "Отправлен",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )

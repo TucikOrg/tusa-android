@@ -8,24 +8,20 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.MessagesConsts
 import com.artem.tusaandroid.app.toast.ToastsState
-import com.artem.tusaandroid.dto.AvatarAction
-import com.artem.tusaandroid.dto.AvatarActionType
-import com.artem.tusaandroid.dto.FriendActionDto
-import com.artem.tusaandroid.dto.FriendRequestActionDto
-import com.artem.tusaandroid.dto.FriendsActionType
+import com.artem.tusaandroid.dto.AvatarForCheck
+import com.artem.tusaandroid.dto.FriendDto
+import com.artem.tusaandroid.dto.FriendRequestDto
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.dto.ResponseMessages
-import com.artem.tusaandroid.dto.messenger.ChatAction
-import com.artem.tusaandroid.dto.messenger.ChatsActionType
+import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.dto.messenger.InitChatsResponse
 import com.artem.tusaandroid.dto.messenger.InitMessagesResponse
 import com.artem.tusaandroid.dto.messenger.InitMessenger
-import com.artem.tusaandroid.dto.messenger.MessagesActionType
-import com.artem.tusaandroid.dto.messenger.MessagesAction
 import com.artem.tusaandroid.firebase.FirebaseState
 import com.artem.tusaandroid.location.LocationsState
+import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.FriendRequestDao
 import com.artem.tusaandroid.room.StateTimePoint
@@ -36,6 +32,7 @@ import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.MessageDao
 import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import com.artem.tusaandroid.socket.EventListener
+import com.artem.tusaandroid.socket.SocketBinaryMessage
 import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketConnectionStates
@@ -45,6 +42,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.serialization.ExperimentalSerializationApi
 import javax.inject.Inject
 
 @HiltViewModel
@@ -64,53 +62,18 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val firebaseState: FirebaseState,
     private val imageUploadingStatusDao: ImageUploadingStatusDao,
     private val toastsState: ToastsState,
+    private val avatarDao: AvatarDao,
     @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
-    // Аватарки
-    private val refreshAvatarsListener = object : EventListener<Long> {
-        override fun onEvent(serverTimePoint: Long) {
-            viewModelScope.launch {
-                val state = statesTimePointsDao.getStateTimePointByType(StateTypes.AVATARS.ordinal)
-                if (state != null) {
-                    socketListener.getSendMessage()?.avatarsActions(state)
-                    return@launch
-                }
-
-                val stateTimePoint = StateTimePoint(StateTypes.AVATARS.ordinal, serverTimePoint)
-                statesTimePointsDao.insert(stateTimePoint)
-                socketListener.getSendMessage()?.avatarsActions(stateTimePoint)
-            }
-        }
+    private fun refreshAvatars() {
+        val avatars = avatarDao.getAllWithoutBytes()
+        val checkAvatars = avatars.map { AvatarForCheck(
+            ownerId = it.id,
+            updatingTime = it.updatingTime
+        ) }
+        socketListener.getSendMessage()?.refreshAvatars(checkAvatars)
     }
-    private val avatarMutes = Mutex()
-    private val actionsAvatarsListener = object : EventListener<List<AvatarAction>> {
-        override fun onEvent(event: List<AvatarAction>) {
-            viewModelScope.launch {
-                avatarMutes.withLock {
-                    val state = statesTimePointsDao.getStateTimePointByType(StateTypes.AVATARS.ordinal)!!
-                    var useActions = event.filter { it.actionTime > state.timePoint }.sortedBy { it.actionTime }
-                    for (action in useActions) {
-                        when (action.actionType) {
-                            AvatarActionType.CHANGE -> {
-                                // перезагрузить аватрки юзеров
-                                // кешированные значения не нужны
-                                avatarState.retrieveAvatar(action.ownerId, viewModelScope,
-                                    forceReload = true
-                                )
-                            }
-                        }
-                    }
-
-                    if (event.isNotEmpty()) {
-                        val maxTimePoint = event.maxOf { it.actionTime }
-                        statesTimePointsDao.insert(StateTimePoint(StateTypes.AVATARS.ordinal, maxTimePoint))
-                    }
-                }
-            }
-        }
-    }
-
 
     // Друзья
     private val refreshFriendsListener = object : EventListener<Unit> {
@@ -128,28 +91,22 @@ class RefreshStateListenersViewModel @Inject constructor(
         }
     }
     private val friendMutes = Mutex()
-    private val actionsFriendsListener = object : EventListener<List<FriendActionDto>> {
-        override fun onEvent(event: List<FriendActionDto>) {
+    private val actionsFriendsListener = object : EventListener<List<FriendDto>> {
+        override fun onEvent(event: List<FriendDto>) {
             viewModelScope.launch {
                 friendMutes.withLock {
                     val state = statesTimePointsDao.getStateTimePointByType(StateTypes.FRIENDS.ordinal)!!
-                    var useActions = event.filter { it.actionTime > state.timePoint }.sortedBy { it.actionTime }
-                    for (action in useActions) {
-                        when (action.friendsActionType) {
-                            FriendsActionType.ADD -> {
-                                friendDao.insert(action.friendDto)
-                            }
-                            FriendsActionType.DELETE -> {
-                                friendDao.deleteById(action.friendDto.id)
-                                locationState.removeLocation(action.friendDto.id)
-                            }
-                            FriendsActionType.CHANGE -> {
-                                friendDao.insert(action.friendDto)
-                            }
+                    var friends = event.filter { it.updateTime > state.timePoint }.sortedBy { it.updateTime }
+                    for (friend in friends) {
+                        if (friend.deleted) {
+                            friendDao.deleteById(friend.id)
+                            locationState.removeLocation(friend.id)
+                        } else {
+                            friendDao.insert(friend)
                         }
                     }
                     if (event.isNotEmpty()) {
-                        val maxTimePoint = event.maxOf { it.actionTime }
+                        val maxTimePoint = event.maxOf { it.updateTime }
                         statesTimePointsDao.insert(StateTimePoint(StateTypes.FRIENDS.ordinal, maxTimePoint))
                     }
                 }
@@ -183,27 +140,21 @@ class RefreshStateListenersViewModel @Inject constructor(
         }
     }
     private val friendRequestsMutes = Mutex()
-    private val actionsFriendsRequestsListener = object : EventListener<List<FriendRequestActionDto>> {
-        override fun onEvent(event: List<FriendRequestActionDto>) {
+    private val actionsFriendsRequestsListener = object : EventListener<List<FriendRequestDto>> {
+        override fun onEvent(event: List<FriendRequestDto>) {
             viewModelScope.launch {
                 friendRequestsMutes.withLock {
                     val state = statesTimePointsDao.getStateTimePointByType(StateTypes.FRIENDS_REQUESTS.ordinal)!!
-                    var useActions = event.filter { it.actionTime > state.timePoint }.sortedBy { it.actionTime }
-                    for (action in useActions) {
-                        when (action.friendsActionType) {
-                            FriendsActionType.ADD -> {
-                                friendRequestDao.insert(action.friendRequestDto)
-                            }
-                            FriendsActionType.DELETE -> {
-                                friendRequestDao.deleteById(action.friendRequestDto.userId)
-                            }
-                            FriendsActionType.CHANGE -> {
-                                //friendRequestDao.insert(action.friendRequestDto)
-                            }
+                    var friendRequests = event.filter { it.updateTime > state.timePoint }.sortedBy { it.updateTime }
+                    for (friendRequest in friendRequests) {
+                        if (friendRequest.deleted) {
+                            friendRequestDao.deleteById(friendRequest.userId)
+                        } else {
+                            friendRequestDao.insert(friendRequest)
                         }
                     }
                     if (event.isNotEmpty()) {
-                        val maxTimePoint = event.maxOf { it.actionTime }
+                        val maxTimePoint = event.maxOf { it.updateTime }
                         statesTimePointsDao.insert(StateTimePoint(StateTypes.FRIENDS_REQUESTS.ordinal, maxTimePoint))
                     }
                 }
@@ -228,7 +179,6 @@ class RefreshStateListenersViewModel @Inject constructor(
             viewModelScope.launch {
                 val state = statesTimePointsDao.getStateTimePointByType(StateTypes.MESSAGES.ordinal)
                 if (state != null) {
-                    // если нету состояния то его инициализирует другой компонент
                     socketListener.getSendMessage()?.messagesActions(state)
                 } else {
                     socketListener.getSendMessage()?.initMessages(InitMessenger(
@@ -239,23 +189,20 @@ class RefreshStateListenersViewModel @Inject constructor(
         }
     }
     private val messagesMutes = Mutex()
-    private val actionsMessagesListener = object : EventListener<List<MessagesAction>> {
-        override fun onEvent(event: List<MessagesAction>) {
+    private val actionsMessagesListener = object : EventListener<List<MessageResponse>> {
+        override fun onEvent(event: List<MessageResponse>) {
             viewModelScope.launch {
                 messagesMutes.withLock {
                     val state = statesTimePointsDao.getStateTimePointByType(StateTypes.MESSAGES.ordinal)!!
-                    var useActions = event.filter { it.actionTime > state.timePoint }.sortedBy { it.actionTime }
-                    for (action in useActions) {
-                        when (action.actionType) {
-                            MessagesActionType.ADD -> {
-                                messageDao.insert(action.message)
-
-                                toastsState.newMessage(action.message, viewModelScope)
-                            }
+                    var messages = event.filter { it.updateTime > state.timePoint }.sortedBy { it.updateTime }
+                    for (message in messages) {
+                        if (message.deleted == false) {
+                            messageDao.insert(message)
+                            toastsState.newMessage(message, viewModelScope)
                         }
                     }
                     if (event.isNotEmpty()) {
-                        val maxTimePoint = event.maxOf { it.actionTime }
+                        val maxTimePoint = event.maxOf { it.updateTime }
                         statesTimePointsDao.insert(StateTimePoint(StateTypes.MESSAGES.ordinal, maxTimePoint))
                     }
                 }
@@ -299,30 +246,22 @@ class RefreshStateListenersViewModel @Inject constructor(
         }
     }
     private val chatsMutes = Mutex()
-    private val actionsChatsListener = object : EventListener<List<ChatAction>> {
-        override fun onEvent(event: List<ChatAction>) {
+    private val actionsChatsListener = object : EventListener<List<ChatResponse>> {
+        override fun onEvent(event: List<ChatResponse>) {
             viewModelScope.launch {
                 chatsMutes.withLock {
                     val state = statesTimePointsDao.getStateTimePointByType(StateTypes.CHATS.ordinal)!!
-                    var useActions = event.filter { it.actionTime > state.timePoint }.sortedBy { it.actionTime }
-                    for (action in useActions) {
-                        when (action.actionType) {
-                            ChatsActionType.ADD -> {
-                                chatDao.insert(action.chat)
-                            }
-                            ChatsActionType.DELETE -> {
-                                // если чат удаляем то удаляем и все сообщения
-                                val chat = action.chat
-                                chatDao.deleteById(chat.id!!)
-                                messageDao.deleteByFirstUserIdAndSecondUserId(chat.firstUserId, chat.secondUserId)
-                            }
-                            ChatsActionType.CHANGE -> {
-                                chatDao.insert(action.chat)
-                            }
+                    var chats = event.filter { it.updateTime > state.timePoint }.sortedBy { it.updateTime }
+                    for (chat in chats) {
+                        if (chat.deleted) {
+                            chatDao.deleteById(chat.id!!)
+                            messageDao.deleteByFirstUserIdAndSecondUserId(chat.firstUserId, chat.secondUserId)
+                        } else {
+                            chatDao.insert(chat)
                         }
                     }
                     if (event.isNotEmpty()) {
-                        val maxTimePoint = event.maxOf { it.actionTime }
+                        val maxTimePoint = event.maxOf { it.updateTime }
                         statesTimePointsDao.insert(StateTimePoint(StateTypes.CHATS.ordinal, maxTimePoint))
                     }
                 }
@@ -341,6 +280,15 @@ class RefreshStateListenersViewModel @Inject constructor(
     }
 
 
+    @OptIn(ExperimentalSerializationApi::class)
+    private val pingListener = object: EventListener<Unit> {
+        override fun onEvent(event: Unit) {
+            // отвечаем серверу что мы живы
+            socketListener.getSendMessage()?.sendMessage(
+                SocketBinaryMessage("pong", byteArrayOf())
+            )
+        }
+    }
     private val connectionClosedListener = object : EventListener<String> {
         override fun onEvent(event: String) {
             socketConnect.disconnect(event)
@@ -360,6 +308,8 @@ class RefreshStateListenersViewModel @Inject constructor(
                         refreshFriendsRequestsListener.onEvent(Unit)
                         refreshChatsListener.onEvent(Unit)
                         refreshMessagesListener.onEvent(Unit)
+                        refreshAvatars()
+
 
                         // отправляем сообщения которые не были отправлены
                         // и не получили подтверждения
@@ -442,8 +392,7 @@ class RefreshStateListenersViewModel @Inject constructor(
         socketListener.getReceiveMessage().getReceiveMessenger().chatsActionsBus.addListener(actionsChatsListener)
         socketListener.getReceiveMessage().getReceiveMessenger().chatsInitBus.addListener(initChatsListener)
 
-        // Аватарки
-        socketListener.getReceiveMessage().refreshAvatarsBus.addListener(refreshAvatarsListener)
-        socketListener.getReceiveMessage().avatarsActionsBus.addListener(actionsAvatarsListener)
+        // пинги от сервера чтобы понять когда сессия мертва
+        socketListener.getReceiveMessage().pingBus.addListener(pingListener)
     }
 }

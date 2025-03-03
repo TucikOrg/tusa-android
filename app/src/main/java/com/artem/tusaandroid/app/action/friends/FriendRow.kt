@@ -36,6 +36,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.graphics.lerp
+import com.artem.tusaandroid.app.profile.ProfileUserColumn
 
 @Composable
 fun FriendRow(
@@ -78,41 +79,13 @@ fun FriendRowCard(
                 userId = friend.id
             )
             Spacer(modifier = Modifier.width(15.dp))
-            Column(
-                modifier = Modifier.weight(1.0f).fillMaxWidth(),
-            ) {
-                Text(
-                    modifier = Modifier,
-                    text = friend.name,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.height(3.dp))
-                if (friend.uniqueName != null) {
-                    Text(
-                        text = "@${friend.uniqueName}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
-
-                val isOnline = model.isOnlineState(friend.id)
-                if (isOnline.value) {
-                    Text("В сети",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = lerp(Color.Green, Color.Black, 0.2f)
-                    )
-                } else {
-                    val localDateTime = Instant.ofEpochSecond(friend.lastOnlineTime)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-                    val time = DateTimeFormatter.ofPattern("HH:mm MM.dd").format(localDateTime)
-                    Text("Был(а) в сети $time",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.Gray
-                    )
-                }
-
-            }
+            ProfileUserColumn(
+                modifier = Modifier.fillMaxWidth().weight(1f),
+                name = friend.name,
+                uniqueName = friend.uniqueName,
+                userId = friend.id,
+                lastOnlineTime = friend.lastOnlineTime
+            )
             //Spacer(modifier = Modifier.weight(1f))
             IconButton(
                 onClick = { model.openChat(friend) }

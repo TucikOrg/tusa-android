@@ -16,4 +16,7 @@ interface AvatarDao {
 
     @Query("DELETE FROM avatar WHERE id = :id")
     fun deleteById(id: Long)
+
+    @Query("SELECT id, updatingTime FROM avatar")
+    fun getAllWithoutBytes() : List<AvatarRoomEntity>
 }

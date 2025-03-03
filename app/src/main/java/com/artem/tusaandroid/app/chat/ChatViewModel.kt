@@ -225,8 +225,9 @@ open class ChatViewModel @Inject constructor(
                 secondUserId = currentChat.secondUserId,
                 senderId = profileState.getUserId(),
                 message = message,
-                creation = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC),
+                updateTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC),
                 payload = attachedTempIds.joinToString(separator = ","),
+                deleted = false
             ))
         }
 

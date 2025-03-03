@@ -108,7 +108,9 @@ fun FriendsModal(model: FriendViewModel) {
                                 id = request.userId,
                                 name = request.userName,
                                 uniqueName = request.userUniqueName,
-                                lastOnlineTime = 0
+                                lastOnlineTime = 0,
+                                updateTime = request.updateTime,
+                                deleted = request.deleted
                             )
                         )
                         Spacer(modifier = Modifier.height(10.dp))

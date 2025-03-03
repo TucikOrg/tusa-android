@@ -3,6 +3,7 @@ package com.artem.tusaandroid.socket
 import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.dto.AddUserDto
 import com.artem.tusaandroid.dto.AllUsersRequest
+import com.artem.tusaandroid.dto.AvatarForCheck
 import com.artem.tusaandroid.dto.ChangeNameOther
 import com.artem.tusaandroid.dto.FakeLocation
 import com.artem.tusaandroid.dto.ImageDto
@@ -199,5 +200,10 @@ class SendMessage(
             ownerId = ownerId,
             image = null
         ))));
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    fun refreshAvatars(checks: List<AvatarForCheck>) {
+        sendMessage(SocketBinaryMessage("avatars-refresh", Cbor.encodeToByteArray(checks)))
     }
 }

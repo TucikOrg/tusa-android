@@ -5,5 +5,4 @@ enum class StateTypes {
     FRIENDS_REQUESTS,
     CHATS,
     MESSAGES,
-    AVATARS,
 }

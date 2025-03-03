@@ -18,8 +18,6 @@ open class FriendRowViewModel @Inject constructor(
         friendsState.removeFriend(id)
     }
 
-    fun isOnlineState(id: Long) = isOnlineState.isUserOnline(id)
-
     fun openChat(dto: FriendDto) {
         chatState.openChatWithUser(dto.id, viewModelScope)
     }

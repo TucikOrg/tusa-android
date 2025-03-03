@@ -66,6 +66,9 @@ class ChatState(
                     secondUniqueName = chatWithFriend.uniqueName
                 }
 
+                // чат временный
+                // только что открыли его с пользователем
+                // настоящий чат создастся при отправке сообщения
                 useChat = ChatResponse(
                     id = null,
                     firstUserId = ids.first,
@@ -73,7 +76,9 @@ class ChatState(
                     firsUserName = firstUserName,
                     secondUserName = secondUserName,
                     firstUserUniqueName = firstUserUniqueName,
-                    secondUserUniqueName = secondUniqueName
+                    secondUserUniqueName = secondUniqueName,
+                    updateTime = 0,
+                    deleted = false
                 )
             }
 

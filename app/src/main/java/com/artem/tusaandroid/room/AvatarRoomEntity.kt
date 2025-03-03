@@ -6,5 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "avatar")
 data class AvatarRoomEntity(
     @PrimaryKey() val id: Long,
-    val avatar: ByteArray?
+    val avatar: ByteArray?,
+    val updatingTime: Long
 )

@@ -1,11 +1,9 @@
 package com.artem.tusaandroid.socket
 
-import com.artem.tusaandroid.dto.AvatarAction
 import com.artem.tusaandroid.dto.AvatarDTO
 import com.artem.tusaandroid.dto.CreatedUser
-import com.artem.tusaandroid.dto.FriendActionDto
 import com.artem.tusaandroid.dto.FriendDto
-import com.artem.tusaandroid.dto.FriendRequestActionDto
+import com.artem.tusaandroid.dto.FriendRequestDto
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
 import com.artem.tusaandroid.dto.ImageDto
@@ -35,13 +33,12 @@ class ReceiveMessage() {
     val allUsers: EventBus<UsersPage> = EventBus()
     val refreshFriendsBus: EventBus<Unit> = EventBus()
     val refreshFriendsRequestsBus: EventBus<Unit> = EventBus()
-    val refreshAvatarsBus: EventBus<Long> = EventBus()
-    val friendsActionsBus: EventBus<List<FriendActionDto>> = EventBus()
-    val friendsRequestsActionsBus: EventBus<List<FriendRequestActionDto>> = EventBus()
-    val avatarsActionsBus: EventBus<List<AvatarAction>> = EventBus()
+    val friendsActionsBus: EventBus<List<FriendDto>> = EventBus()
+    val friendsRequestsActionsBus: EventBus<List<FriendRequestDto>> = EventBus()
     val connectionClosedBus: EventBus<String> = EventBus()
     val isOnlineBus: EventBus<IsOnlineDto> = EventBus()
     val imageBus: EventBus<ImageDto> = EventBus()
+    val pingBus: EventBus<Unit> = EventBus()
 
     @OptIn(ExperimentalSerializationApi::class)
     fun receiveBytesMessage(message: ByteString) {
@@ -51,6 +48,9 @@ class ReceiveMessage() {
         receiveMessenger.handleMessage(socketBinaryMessage)
 
         when (socketBinaryMessage.type) {
+            "ping" -> {
+                pingBus.pushEvent(Unit)
+            }
             "image" -> {
                 val imageDto = Cbor.decodeFromByteArray<ImageDto>(socketBinaryMessage.data)
                 imageBus.pushEvent(imageDto)
@@ -72,26 +72,18 @@ class ReceiveMessage() {
                 updateLocationBus.pushEvent(updateLocation)
             }
             "friends-actions" -> {
-                val friendsActions = Cbor.decodeFromByteArray<List<FriendActionDto>>(socketBinaryMessage.data)
+                val friendsActions = Cbor.decodeFromByteArray<List<FriendDto>>(socketBinaryMessage.data)
                 friendsActionsBus.pushEvent(friendsActions)
             }
             "friends-requests-actions" -> {
-                val friendsRequestsActions = Cbor.decodeFromByteArray<List<FriendRequestActionDto>>(socketBinaryMessage.data)
+                val friendsRequestsActions = Cbor.decodeFromByteArray<List<FriendRequestDto>>(socketBinaryMessage.data)
                 friendsRequestsActionsBus.pushEvent(friendsRequestsActions)
-            }
-            "avatars-actions" -> {
-                val avatarDTO = Cbor.decodeFromByteArray<List<AvatarAction>>(socketBinaryMessage.data)
-                avatarsActionsBus.pushEvent(avatarDTO)
             }
             "refresh-friends-requests" -> {
                 refreshFriendsRequestsBus.pushEvent(Unit)
             }
             "refresh-friends" -> {
                 refreshFriendsBus.pushEvent(Unit)
-            }
-            "refresh-avatars" -> {
-                val timePoint = Cbor.decodeFromByteArray<Long>(socketBinaryMessage.data)
-                refreshAvatarsBus.pushEvent(timePoint)
             }
 
             // admins

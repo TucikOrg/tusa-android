@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
+import com.artem.tusaandroid.app.profile.ProfileUserColumn
 import com.artem.tusaandroid.dto.FriendDto
 import com.artem.tusaandroid.isPreview
 
@@ -58,23 +60,13 @@ fun RequestToFriends(
                     userId = friend.id
                 )
                 Spacer(modifier = Modifier.width(20.dp))
-                Column(
-                    modifier = Modifier.weight(1.0f),
-                ) {
-                    Text(
-                        modifier = Modifier,
-                        text = friend.name,
-                        style = MaterialTheme.typography.headlineSmall
-                    )
-                    Spacer(modifier = Modifier.height(3.dp))
-                    if (friend.uniqueName != null) {
-                        Text(
-                            text = "@${friend.uniqueName}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                }
+                ProfileUserColumn(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
+                    name = friend.name,
+                    uniqueName = friend.uniqueName,
+                    userId = friend.id,
+                    lastOnlineTime = null
+                )
                 IconButton(
                     onClick = {
                         model.acceptRequest(friend.id)

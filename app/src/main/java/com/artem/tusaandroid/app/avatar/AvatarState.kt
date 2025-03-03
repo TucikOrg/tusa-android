@@ -67,7 +67,11 @@ class AvatarState(
 
                 bytes[event.ownerId] = useAvatar
                 viewModelScope.launch {
-                    avatarDao?.insert(AvatarRoomEntity(event.ownerId, useAvatar))
+                    avatarDao?.insert(AvatarRoomEntity(
+                        id = event.ownerId,
+                        avatar = useAvatar,
+                        updatingTime = event.updatingTime
+                    ))
                 }
 
                 avatarEventBus.pushEvent(AvatarUI(
