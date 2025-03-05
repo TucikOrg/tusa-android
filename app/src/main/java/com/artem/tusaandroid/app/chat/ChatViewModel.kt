@@ -88,7 +88,8 @@ open class ChatViewModel @Inject constructor(
     val isOnlineState: IsOnlineState,
     val customTucikEndpoints: CustomTucikEndpoints,
     val tempIdToUriDao: TempIdToUriDao,
-    val imageUploadingStatusDao: ImageUploadingStatusDao
+    val imageUploadingStatusDao: ImageUploadingStatusDao,
+    val imageState: ImageState
 ): ViewModel() {
     var page = 1
     private var messagesStatesMap: MutableMap<Pair<Long, Long>, StateFlow<List<MessageResponse>>> = mutableMapOf()
@@ -356,5 +357,9 @@ open class ChatViewModel @Inject constructor(
     fun removeAttach(uri: Uri) {
         val withUserId = getWithUserId()
         chatAttaches[withUserId]!!.value = chatAttaches[withUserId]!!.value.filter { it.uri != uri }
+    }
+
+    fun getGifByUrl(url: String, context: Context): MutableState<Bitmap?> {
+        return imageState.getGifByUrl(url, context, viewModelScope)
     }
 }

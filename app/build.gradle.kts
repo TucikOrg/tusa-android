@@ -106,6 +106,7 @@ dependencies {
     implementation(libs.play.services.fitness)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.bom)
+    implementation(libs.coil.gif)
 
 
     implementation(libs.androidx.room.runtime)

@@ -89,7 +89,7 @@ fun MeAvatar(modifier: Modifier, model: MeAvatarViewModel) {
                     modifier = Modifier.size(40.dp),
                     contentDescription = "User avatar"
                 )
-            } else ShimmerBox(modifier = Modifier.fillMaxSize(), len = 800.0f)
+            } else ShimmerBox(modifier = Modifier.fillMaxSize())
         } else {
             Image(
                 bitmap = avatarBitmap.asImageBitmap(),

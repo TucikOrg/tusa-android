@@ -9,6 +9,8 @@ import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.room.FriendDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 class ToastsState(
     val profileState: ProfileState,
@@ -36,6 +38,13 @@ class ToastsState(
 
     fun newMessage(message: MessageResponse, viewModelScope: CoroutineScope) {
         viewModelScope.launch {
+            val currentTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+            val difference = currentTime - message.updateTime
+            if (difference > 10) {
+                // если сообщение старое то не надо показывать уведомление о нем
+                return@launch
+            }
+
             val senderId = message.senderId
             val friend = friendsDao.findById(senderId)
             if (friend == null) return@launch

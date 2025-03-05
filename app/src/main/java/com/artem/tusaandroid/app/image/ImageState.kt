@@ -1,17 +1,26 @@
 package com.artem.tusaandroid.app.image
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.AnimatedImageDrawable
 import android.net.Uri
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.core.graphics.drawable.toBitmap
+import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.artem.tusaandroid.dto.ImageDto
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
 
 class ImageState(
     private val socketListener: SocketListener,
@@ -83,5 +92,45 @@ class ImageState(
         socketListener.getSendMessage()?.image(tempId, ownerId)
 
         return imageBitmapsMap[tempId]!!
+    }
+
+    fun getGifByUrl(url: String, context: Context, viewModelScope: CoroutineScope): MutableState<Bitmap?> {
+        var imageBitmapMap = imageBitmapsMap[url]
+        if (imageBitmapMap == null) {
+            imageBitmapMap = mutableStateOf(null)
+            imageBitmapsMap[url] = imageBitmapMap
+        }
+
+        viewModelScope.launch {
+            // нету в памяти картинки
+            if (imageBitmapMap.value == null) {
+                // ищем в базе
+                val imageEntity = imageDao.findById(url)
+                if (imageEntity != null) {
+                    imageBitmapsMap[url]!!.value = BitmapFactory.decodeByteArray(imageEntity.image, 0, imageEntity.image.size)
+                    return@launch
+                }
+
+                // грузим из интернета потому что нету ифнормации о картинке в базе
+                val requestImage = ImageRequest.Builder(context)
+                    .data(url)
+                    .decoderFactory(ImageDecoderDecoder.Factory())
+                    .build()
+                val imageLoader = ImageLoader.Builder(context).build()
+                val drawable = imageLoader.execute(requestImage).drawable
+                val bitmap = drawable!!.toBitmap()
+                imageBitmapsMap[url]!!.value = bitmap
+
+                ByteArrayOutputStream().use {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+                    imageDao.insert(ImageEntity(
+                        tempId = url,
+                        image = it.toByteArray()
+                    ))
+                }
+            }
+        }
+
+        return imageBitmapMap
     }
 }

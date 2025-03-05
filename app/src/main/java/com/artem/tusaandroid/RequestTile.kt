@@ -23,29 +23,30 @@ class RequestTile(private val context: Context) {
     fun request(zoom: Int, x: Int, y: Int): ByteArray {
         val fileName = "$zoom-$x-$y.mvt"
         // это чтение кеша из файлов системы
-//        readByteArrayFromCache(fileName)?.let {
-//            return it
-//        }
+        readByteArrayFromCache(fileName)?.let {
+            return it
+        }
 
         try {
             val base = BuildConfig.MAP_URL
             val url = URL("$base$zoom/$x/$y.mvt")
-            val result = ByteArrayOutputStream()
-            val urlConnection = url.openConnection() as HttpURLConnection
-            urlConnection.inputStream.use { inputStream ->
-                val buffer = ByteArray(1024)
-                var length: Int
-                while (inputStream.read(buffer).also { length = it } != -1) {
-                    result.write(buffer, 0, length)
+            ByteArrayOutputStream().use { result ->
+                val urlConnection = url.openConnection() as HttpURLConnection
+                urlConnection.inputStream.use { inputStream ->
+                    val buffer = ByteArray(1024)
+                    var length: Int
+                    while (inputStream.read(buffer).also { length = it } != -1) {
+                        result.write(buffer, 0, length)
+                    }
                 }
-            }
 
-            // это запись кеша в файловую систему
-            val bytesResult = result.toByteArray()
-            if (bytesResult.size > 0) {
-                saveByteArrayToCache(fileName, bytesResult)
+                // это запись кеша в файловую систему
+                val bytesResult = result.toByteArray()
+                if (bytesResult.size > 0) {
+                    saveByteArrayToCache(fileName, bytesResult)
+                }
+                return bytesResult
             }
-            return bytesResult
         } catch (e: Exception) {
             // нету интернета и не могу загрузить тайл
             val t = 0

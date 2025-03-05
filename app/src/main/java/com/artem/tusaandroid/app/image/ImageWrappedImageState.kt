@@ -38,6 +38,6 @@ fun ImageWrappedImageState(
             contentDescription = "User avatar",
         )
     } else {
-        ShimmerBox(modifier = modifier, len = 2000.0f, shimmerWidth = 500.0f)
+        ShimmerBox(modifier = modifier)
     }
 }

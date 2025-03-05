@@ -1,5 +1,9 @@
 package com.artem.tusaandroid.app.chat
 
+import android.graphics.Bitmap
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.Image
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,25 +40,52 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.core.graphics.drawable.toBitmap
+import coil.ImageLoader
+import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.SubcomposeAsyncImage
+import coil.compose.rememberAsyncImagePainter
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.request.CachePolicy
+import coil.request.ImageRequest
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
 import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
+import com.artem.tusaandroid.app.beauty.ShimmerBox
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.isPreview
 import com.artem.tusaandroid.room.messenger.ImageUploadingStatusEntity
 import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -234,7 +265,7 @@ fun MessagesArea(
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(5000)
+            delay(5000) // todo сделать потом чтобы чистильщик просто запускался через 5 секунд а не в цикле это проверять
             chatViewModel.checkWritingMessagesLife()
             //Log.i("ChatModal", "Check writing messages life")
         }
@@ -288,10 +319,51 @@ fun WritingMessageOnlineShow(message: MutableState<String>) {
 }
 
 @Composable
-fun MessageItem(message: MessageResponse, userId: Long,
+fun MessageItem(messageResponse: MessageResponse, userId: Long,
                 chatViewModel: ChatViewModel
 ) {
-    val isMyMessage = message.senderId == userId
+    val isMyMessage = messageResponse.senderId == userId
+    val message = messageResponse.message
+
+    val urlPattern = "(https?://[\\w.-]+(:\\d+)?(/[\\w-./?%&=]*)?)".toRegex()
+    val annotatedString = buildAnnotatedString {
+        // Находим ссылки с помощью регулярного выражения
+        val matches = urlPattern.findAll(message)
+        var messageToAppend = message
+        matches.filter {
+            val url = it.value
+            return@filter url.endsWith(".gif")
+        }.toList().forEach {
+            messageToAppend = messageToAppend.replace(it.value, "")
+        }
+        append(messageToAppend)
+
+        matches.forEach { match ->
+            val url = match.value
+            if (url.endsWith(".gif")) {
+                return@forEach
+            }
+            addStyle(
+                style = SpanStyle(
+                    color = Color.Blue,
+                    textDecoration = TextDecoration.Underline
+                ),
+                start = match.range.first,
+                end = match.range.last + 1
+            )
+            // Добавляем LinkAnnotation для кликабельности
+            addLink(
+                url = LinkAnnotation.Url(
+                    url = url,
+                    styles = TextLinkStyles(
+                        style = SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline)
+                    )
+                ),
+                start = match.range.first,
+                end = match.range.last + 1
+            )
+        }
+    }
 
     Row(
         modifier = Modifier
@@ -308,24 +380,73 @@ fun MessageItem(message: MessageResponse, userId: Long,
                 )
                 .padding(8.dp),
         ) {
-            SelectionContainer {
-                Text(
-                    modifier = Modifier.padding(bottom = 20.dp, end = 15.dp),
-                    text = message.message,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (isMyMessage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary
-                )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                SelectionContainer {
+                    Text(
+                        text = annotatedString,
+                        modifier = Modifier.padding(bottom = 20.dp, end = 15.dp),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = if (isMyMessage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
+                    )
+                }
+                val context = LocalContext.current
+                val findIn = message.replace("\n", "")
+                urlPattern.findAll(findIn).forEach { match ->
+                    val url = match.value
+                    if (url.endsWith(".gif")) {
+                        val colorPainter = ColorPainter(MaterialTheme.colorScheme.surface)
+
+                        SubcomposeAsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data(url)
+                                .decoderFactory(GifDecoder.Factory()) // Поддержка GIF-анимации
+                                .memoryCachePolicy(CachePolicy.ENABLED)
+                                .diskCachePolicy(CachePolicy.ENABLED)
+                                .build(),
+                            contentDescription = "GIF from chat",
+                            modifier = Modifier.fillMaxWidth().height(300.dp),
+                            contentScale = ContentScale.Crop,
+                            loading = {
+                                // Показываем статичный первый кадр или серый фон во время загрузки
+                                var imageBitmap by remember { chatViewModel.getGifByUrl(url, context) }
+                                if (imageBitmap != null) {
+                                    Image(
+                                        painter = BitmapPainter(imageBitmap!!.asImageBitmap()),
+                                        contentDescription = null,
+                                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                                        contentScale = ContentScale.Crop
+                                    )
+                                } else {
+                                    ShimmerBox(modifier = Modifier.fillMaxWidth().height(300.dp))
+                                }
+
+                            },
+                            error = {
+                                // В случае ошибки показываем серый фон
+                                Image(
+                                    painter = colorPainter,
+                                    contentDescription = "Error loading GIF",
+                                    modifier = Modifier.fillMaxWidth().height(300.dp),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        )
+                    }
+                }
             }
+
             Spacer(modifier = Modifier.height(4.dp))
 
-            val payload = message.getClearedPayload()
+            val payload = messageResponse.getClearedPayload()
             if (payload.isNotEmpty()) {
                 for (tempId in payload) {
-                    ImageInChat(chatViewModel, tempId, message)
+                    ImageInChat(chatViewModel, tempId, messageResponse)
                 }
                 Spacer(modifier = Modifier.height(10.dp))
             }
-            val localDateTime = Instant.ofEpochSecond(message.updateTime)
+            val localDateTime = Instant.ofEpochSecond(messageResponse.updateTime)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDateTime()
             val time = DateTimeFormatter.ofPattern("HH:mm").format(localDateTime)
@@ -333,7 +454,7 @@ fun MessageItem(message: MessageResponse, userId: Long,
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = if (isMyMessage) Arrangement.Start else Arrangement.End
             ) {
-                val serverUploaded = message.isServerUploaded()
+                val serverUploaded = messageResponse.isServerUploaded()
                 if (serverUploaded == false) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(10.dp),
