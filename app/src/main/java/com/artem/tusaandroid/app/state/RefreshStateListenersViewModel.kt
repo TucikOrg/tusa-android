@@ -7,6 +7,7 @@ import com.artem.tusaandroid.app.AuthenticationState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.chat.ChatState
 import com.artem.tusaandroid.app.chat.MessagesConsts
+import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.toast.ToastsState
 import com.artem.tusaandroid.dto.AvatarForCheck
 import com.artem.tusaandroid.dto.FriendDto
@@ -30,6 +31,8 @@ import com.artem.tusaandroid.room.StatesTimePointDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessages
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 import com.artem.tusaandroid.room.messenger.UploadingImageStatus
 import com.artem.tusaandroid.socket.EventListener
 import com.artem.tusaandroid.socket.SocketBinaryMessage
@@ -63,6 +66,8 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val imageUploadingStatusDao: ImageUploadingStatusDao,
     private val toastsState: ToastsState,
     private val avatarDao: AvatarDao,
+    private val unreadMessagesDao: UnreadMessagesDao,
+    private val profileState: ProfileState,
     @ApplicationContext private val applicationContext: Context
 ): ViewModel() {
 
@@ -191,6 +196,7 @@ class RefreshStateListenersViewModel @Inject constructor(
     private val messagesMutes = Mutex()
     private val actionsMessagesListener = object : EventListener<List<MessageResponse>> {
         override fun onEvent(event: List<MessageResponse>) {
+            val myId = profileState.getUserId()
             viewModelScope.launch {
                 messagesMutes.withLock {
                     val state = statesTimePointsDao.getStateTimePointByType(StateTypes.MESSAGES.ordinal)!!
@@ -198,7 +204,29 @@ class RefreshStateListenersViewModel @Inject constructor(
                     for (message in messages) {
                         if (message.deleted == false) {
                             messageDao.insert(message)
+                            // показать уведомление если надо
                             toastsState.newMessage(message, viewModelScope)
+
+                            // если это мое сообщение то оно всегда считается прочитанным
+                            if (message.senderId == myId) {
+                                continue
+                            }
+
+                            // если чат с этим пользователем открыт то не увеличивать счетчик
+                            val opponentId = message.getOpponentId(myId)
+                            val openedChat = chatState.chat.value
+                            if (openedChat != null && openedChat.getChatWithId(myId) == opponentId) {
+                                continue
+                            }
+
+                            // увеличить счетчик непрочитанных сообщений
+                            val currentUnread = unreadMessagesDao.findByUserId(opponentId)
+                            if (currentUnread == null) {
+                                unreadMessagesDao.insert(UnreadMessages(userId = opponentId, count = 1))
+                            } else {
+                                unreadMessagesDao.insert(UnreadMessages(userId = opponentId, count = currentUnread.count + 1))
+                            }
+
                         }
                     }
                     if (event.isNotEmpty()) {

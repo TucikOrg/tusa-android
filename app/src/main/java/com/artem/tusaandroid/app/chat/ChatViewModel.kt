@@ -7,43 +7,20 @@ import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import android.media.ExifInterface
 import android.net.Uri
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ElevatedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.focus.FocusManager
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
-import coil.compose.AsyncImage
 import com.artem.tusaandroid.app.AlineTwoLongsIds
 import com.artem.tusaandroid.app.IsOnlineState
 import com.artem.tusaandroid.app.action.friends.FriendsState
-import com.artem.tusaandroid.app.beauty.ShimmerBox
+import com.artem.tusaandroid.app.beauty.RecentlyUsedGif
+import com.artem.tusaandroid.app.beauty.RecentlyUsedGifsDao
 import com.artem.tusaandroid.app.image.ImageAttached
 import com.artem.tusaandroid.app.image.ImageState
 import com.artem.tusaandroid.app.image.ImageUploadWorker
@@ -89,15 +66,19 @@ open class ChatViewModel @Inject constructor(
     val customTucikEndpoints: CustomTucikEndpoints,
     val tempIdToUriDao: TempIdToUriDao,
     val imageUploadingStatusDao: ImageUploadingStatusDao,
-    val imageState: ImageState
+    val imageState: ImageState,
+    val recentlyUsedGifsDao: RecentlyUsedGifsDao
 ): ViewModel() {
     var page = 1
     private var messagesStatesMap: MutableMap<Pair<Long, Long>, StateFlow<List<MessageResponse>>> = mutableMapOf()
-    private var imagesStatusesStatesFlow: StateFlow<List<ImageUploadingStatusEntity>>? = null
     private var writingMessagesMap: MutableMap<Long, MutableState<String>> = mutableMapOf()
     private var updateWritingMessagesTime: MutableMap<Long, LocalDateTime> = mutableMapOf()
     private var chatAttaches: MutableMap<Long, MutableState<List<ImageAttached>>> = mutableMapOf()
+    var showGifSelection: MutableState<Boolean> = mutableStateOf(false)
 
+    fun isGifUrl(url: String): Boolean {
+        return MessagesConsts.isGifUrl(url)
+    }
 
     fun getIsFriendOnline(): MutableState<Boolean> {
         return isOnlineState.isUserOnline(getWithUserId())
@@ -204,9 +185,10 @@ open class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendMessage(message: String, context: Context, lifecycleOwner: LifecycleOwner) {
+    fun sendMessage(message: String, context: Context, lifecycleOwner: LifecycleOwner, isGif: Boolean = false) {
         val currentChat = chatsState.chat.value!!
         val toId = getWithUserId()
+
 
         val attachedTempIds = getAttaches().value.map { it.fileLocalId }
         val sendMessage = SendMessage(
@@ -219,6 +201,14 @@ open class ChatViewModel @Inject constructor(
         // временно сохраняем сообщение в базу данных
         // оно будет показываться в чате как сообщение для отправки
         viewModelScope.launch {
+            if (isGif) {
+                // cохраняем в недавно использованные гифки
+                recentlyUsedGifsDao.insert(RecentlyUsedGif(
+                    url = message,
+                    usedTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+                ))
+            }
+
             messagesDao.insert(MessageResponse(
                 id = null,
                 temporaryId = sendMessage.temporaryId,
@@ -359,7 +349,12 @@ open class ChatViewModel @Inject constructor(
         chatAttaches[withUserId]!!.value = chatAttaches[withUserId]!!.value.filter { it.uri != uri }
     }
 
-    fun getGifByUrl(url: String, context: Context): MutableState<Bitmap?> {
-        return imageState.getGifByUrl(url, context, viewModelScope)
+    fun onGifClick(gifSelected: String, context: Context, lifecycleOwner: LifecycleOwner) {
+        sendMessage(gifSelected, context, lifecycleOwner, isGif = true)
+    }
+
+    fun clearFocus(focusManager: FocusManager) {
+        focusManager.clearFocus()
+        showGifSelection.value = false
     }
 }

@@ -2,6 +2,8 @@ package com.artem.tusaandroid.room
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import com.artem.tusaandroid.app.beauty.RecentlyUsedGif
+import com.artem.tusaandroid.app.beauty.RecentlyUsedGifsDao
 import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.app.image.ImageEntity
 import com.artem.tusaandroid.app.image.TempIdToUriDao
@@ -14,6 +16,8 @@ import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.ImageUploadingStatusEntity
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessages
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 
 @Database(
     entities = [
@@ -25,7 +29,9 @@ import com.artem.tusaandroid.room.messenger.MessageDao
         MessageResponse::class,
         TempIdToUriEntity::class,
         ImageEntity::class,
-        ImageUploadingStatusEntity::class
+        ImageUploadingStatusEntity::class,
+        RecentlyUsedGif::class,
+        UnreadMessages::class
     ], version = 1, exportSchema = false)
 abstract class TucikDatabase: RoomDatabase() {
     abstract fun friendDao(): FriendDao
@@ -37,4 +43,6 @@ abstract class TucikDatabase: RoomDatabase() {
     abstract fun tempLocalIdToUriDao(): TempIdToUriDao
     abstract fun imageDao(): ImageDao
     abstract fun imageUploadingStatusDao(): ImageUploadingStatusDao
+    abstract fun recentlyUsedGifDao(): RecentlyUsedGifsDao
+    abstract fun unreadMessagesDao(): UnreadMessagesDao
 }

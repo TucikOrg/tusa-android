@@ -32,6 +32,7 @@ import com.artem.tusaandroid.room.AvatarDao
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 import com.artem.tusaandroid.socket.SocketConnect
 import com.artem.tusaandroid.socket.SocketConnectionState
 import com.artem.tusaandroid.socket.SocketListener
@@ -164,14 +165,16 @@ class AppModule {
         chatDao: ChatDao,
         friendDao: FriendDao,
         socketListener: SocketListener,
-        messagesDao: MessageDao
+        messagesDao: MessageDao,
+        unreadMessagesDao: UnreadMessagesDao
     ): ChatState {
         return ChatState(
             profileState,
             chatDao,
             friendDao,
             socketListener,
-            messagesDao
+            messagesDao,
+            unreadMessagesDao
         )
     }
 

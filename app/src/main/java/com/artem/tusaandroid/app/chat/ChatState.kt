@@ -11,6 +11,8 @@ import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessages
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 import com.artem.tusaandroid.socket.SocketListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -24,7 +26,8 @@ class ChatState(
     private val chatDao: ChatDao,
     private val friendDao: FriendDao,
     private val socketListener: SocketListener,
-    private val messagesDao: MessageDao
+    private val messagesDao: MessageDao,
+    private val unreadMessagesDao: UnreadMessagesDao
 ) {
     var chat: MutableState<ChatResponse?> = mutableStateOf(null)
     val modalOpened = mutableStateOf(false)
@@ -44,7 +47,6 @@ class ChatState(
         val meId = profileState.getUserId()
 
         viewModelScope.launch {
-
             var useChat = chatDao.findChatByUsers(ids.first, ids.second)
             if (useChat == null) {
 
@@ -97,9 +99,13 @@ class ChatState(
         socketListener.getSendMessage()?.sendChatMessage(sendMessage)
     }
 
-    fun openChat(chat: ChatResponse) {
+    suspend fun openChat(chat: ChatResponse) {
         this.chat.value = chat
         modalOpened.value = true
+
+        // помечаем сообщения как прочитанные
+        val opponentId = if (chat.firstUserId == profileState.getUserId()) chat.secondUserId else chat.firstUserId
+        unreadMessagesDao.insert(UnreadMessages(opponentId, 0))
     }
 }
 

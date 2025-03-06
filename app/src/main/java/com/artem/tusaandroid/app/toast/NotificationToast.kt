@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
+import com.artem.tusaandroid.app.beauty.GifWrapper
+import com.artem.tusaandroid.app.chat.MessagesConsts
 import kotlinx.coroutines.delay
 
 data class ToastItem(
@@ -75,7 +77,7 @@ fun NotificationToast(
                     .padding(12.dp)
             ) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Top,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     FriendAvatar(
@@ -98,11 +100,34 @@ fun NotificationToast(
                             fontSize = 16.sp,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
+
+                        val message = toastItem.message
+                        // находи ссылки
+                        val matches = MessagesConsts.findUrls(message)
+                        // ищем гифки
+                        val gifsIn = matches.filter {
+                            val url = it.value
+                            return@filter MessagesConsts.isGifUrl(url)
+                        }.toList()
+
+                        var messageReadyText = message
+                        gifsIn.forEach {
+                            messageReadyText = messageReadyText.replace(it.value, "")
+                        }
+
                         Text(
-                            text = toastItem.message,
+                            text = messageReadyText,
                             fontSize = 14.sp,
                             modifier = Modifier.padding(top = 4.dp)
                         )
+
+                        gifsIn.forEach { match ->
+                            val url = match.value
+                            GifWrapper(
+                                modifier = Modifier.fillMaxWidth().height(300.dp),
+                                url = url
+                            )
+                        }
                     }
                 }
             }

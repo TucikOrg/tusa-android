@@ -16,4 +16,8 @@ data class ChatResponse(
     val secondUserUniqueName: String?,
     val updateTime: Long,
     val deleted: Boolean
-)
+) {
+    fun getChatWithId(meId: Long) : Long {
+        return if (firstUserId == meId) secondUserId else firstUserId
+    }
+}

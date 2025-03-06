@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -60,14 +62,6 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
             ),
         ) {
             val chats by model.chats.collectAsState()
-//            val listState = model.lazyListState
-//            val isAtEnd = remember {
-//                derivedStateOf {
-//                    val visibleItems = listState.layoutInfo.visibleItemsInfo
-//                    val lastVisibleItemIndex = visibleItems.lastOrNull()?.index ?: -1
-//                    lastVisibleItemIndex == chats.value.size - 1
-//                }
-//            }
 
             LazyColumn(
                 modifier = modifier.fillMaxWidth(),
@@ -95,19 +89,36 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
         }
     }
 
-    FloatingActionButton(
-        onClick = {
-            model.showModal.value = true
-        },
-        modifier = modifier
+    val unreadMessages by model.getUnreadMessagesCount().collectAsState()
+    BadgedBox(
+        badge = {
+            if (unreadMessages > 0) {
+                var useNumber = unreadMessages.toString()
+                if (unreadMessages > 99) {
+                    useNumber = "99+"
+                }
+                Badge {
+                    Text(useNumber)
+                }
+            }
+        }
     ) {
-        Icon(painter = painterResource(id = R.drawable.chat), contentDescription = "Чаты")
+        FloatingActionButton(
+            onClick = {
+                model.showModal.value = true
+            },
+            modifier = modifier
+        ) {
+            Icon(painter = painterResource(id = R.drawable.chat), contentDescription = "Чаты")
+        }
     }
+
 }
 
 @Composable
 fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
     val lastMessage by model.getLastMessageFlow(chat).collectAsState()
+    val unreadMessages by model.getUnreadMessagesOfChatCount(chat).collectAsState()
 
     ElevatedButton(
         modifier = Modifier.fillMaxSize(),
@@ -161,6 +172,18 @@ fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
                         color = Color.Gray
                     )
                 }
+            }
+
+            if (unreadMessages > 0) {
+                var useText = unreadMessages.toString()
+                if (unreadMessages > 99) {
+                    useText = "99+"
+                }
+                Spacer(modifier = Modifier.width(5.dp))
+                Badge {
+                    Text(useText)
+                }
+                Spacer(modifier = Modifier.width(5.dp))
             }
         }
     }

@@ -23,4 +23,8 @@ data class MessageResponse(
         if (payload.isEmpty()) return emptyList()
         return payload.split(",")
     }
+
+    fun getOpponentId(myId: Long): Long {
+        return if (firstUserId == myId) secondUserId else firstUserId
+    }
 }

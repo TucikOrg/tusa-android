@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -33,15 +34,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.vectorResource
-import androidx.lifecycle.LifecycleOwner
 import coil.compose.AsyncImage
 import com.artem.tusaandroid.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.artem.tusaandroid.app.beauty.GiphySearchScreen
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -51,7 +55,9 @@ fun ChatInput(chatViewModel: ChatViewModel) {
     ) {
         InputMessage(chatViewModel)
         val attaches by chatViewModel.getAttaches()
-        if (attaches.isNotEmpty()) {
+        if (chatViewModel.showGifSelection.value) {
+            GiphySearchScreen(modifier = Modifier.fillMaxWidth().height(400.dp), chatViewModel)
+        } else if (attaches.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth()
                     .background(MaterialTheme.colorScheme.surface)
@@ -93,8 +99,10 @@ fun ChatInput(chatViewModel: ChatViewModel) {
 
 @Composable
 fun InputMessage(chatViewModel: ChatViewModel) {
+    val keyboard = LocalSoftwareKeyboardController.current
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val focusManager = LocalFocusManager.current
     var message by remember { mutableStateOf("") }
     val pickAvatarLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia(),
@@ -121,6 +129,7 @@ fun InputMessage(chatViewModel: ChatViewModel) {
         if (attaches.size < 1) {
             IconButton(
                 onClick = {
+                    chatViewModel.showGifSelection.value = false
                     pickAvatarLauncher.launch(
                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                     )
@@ -132,6 +141,19 @@ fun InputMessage(chatViewModel: ChatViewModel) {
                 )
             }
         }
+        IconButton(
+            onClick = {
+                chatViewModel.showGifSelection.value = !chatViewModel.showGifSelection.value
+                keyboard?.hide()
+                focusManager.clearFocus()
+            }
+        ) {
+            Icon(
+                imageVector = ImageVector.vectorResource(id = R.drawable.gif),
+                contentDescription = "Gif"
+            )
+        }
+
         val textInputColor = lerp(MaterialTheme.colorScheme.surface, Color.White, 0.15f)
         TextField(
             value = message,
@@ -140,7 +162,13 @@ fun InputMessage(chatViewModel: ChatViewModel) {
                 chatViewModel.writingMessage(message)
             },
             placeholder = { Text(text = "Сообщение") },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier
+                .weight(1f)
+                .onFocusChanged {
+                    if (it.isFocused) {
+                        chatViewModel.showGifSelection.value = false
+                    }
+                },
             shape = RoundedCornerShape(16.dp), // Rounded corners
             colors = TextFieldDefaults.colors(
                 cursorColor = MaterialTheme.colorScheme.primary,

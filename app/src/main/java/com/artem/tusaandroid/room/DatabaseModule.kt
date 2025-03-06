@@ -2,11 +2,13 @@ package com.artem.tusaandroid.room
 
 import android.content.Context
 import androidx.room.Room
+import com.artem.tusaandroid.app.beauty.RecentlyUsedGifsDao
 import com.artem.tusaandroid.app.image.ImageDao
 import com.artem.tusaandroid.app.image.TempIdToUriDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.ImageUploadingStatusDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -25,6 +27,11 @@ object DatabaseModule {
             TucikDatabase::class.java,
             "tucik_database"
         ).allowMainThreadQueries().build()
+    }
+
+    @Provides
+    fun provideRecentlyUsedGifDao(database: TucikDatabase): RecentlyUsedGifsDao {
+        return database.recentlyUsedGifDao()
     }
 
     @Provides
@@ -65,6 +72,11 @@ object DatabaseModule {
     @Provides
     fun provideMessageDao(database: TucikDatabase): MessageDao {
         return database.messageDao()
+    }
+
+    @Provides
+    fun provideUnreadMessagesDao(database: TucikDatabase): UnreadMessagesDao {
+        return database.unreadMessagesDao()
     }
 
     @Provides

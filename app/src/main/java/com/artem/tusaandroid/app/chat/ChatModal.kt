@@ -78,6 +78,7 @@ import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
 import com.artem.tusaandroid.app.action.friends.PreviewFriendAvatarViewModel
+import com.artem.tusaandroid.app.beauty.GifWrapper
 import com.artem.tusaandroid.app.beauty.ShimmerBox
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.MessageResponse
@@ -206,7 +207,7 @@ fun MessagesArea(
     modifier: Modifier,
     chatViewModel: ChatViewModel
 ) {
-    val focusManager = LocalFocusManager.current
+
     val mutableIndicationSource = remember { MutableInteractionSource()}
     val messages by chatViewModel.getMessages().collectAsState()
 
@@ -243,12 +244,13 @@ fun MessagesArea(
         }
     }
 
+    val focusManager = LocalFocusManager.current
     LazyColumn(
         modifier = modifier.fillMaxWidth().clickable(
             indication = null,
             interactionSource = mutableIndicationSource,
             onClick = {
-                focusManager.clearFocus()
+                chatViewModel.clearFocus(focusManager)
             }
         ),
         reverseLayout = true,
@@ -318,6 +320,7 @@ fun WritingMessageOnlineShow(message: MutableState<String>) {
 
 }
 
+
 @Composable
 fun MessageItem(messageResponse: MessageResponse, userId: Long,
                 chatViewModel: ChatViewModel
@@ -325,24 +328,26 @@ fun MessageItem(messageResponse: MessageResponse, userId: Long,
     val isMyMessage = messageResponse.senderId == userId
     val message = messageResponse.message
 
-    val urlPattern = "(https?://[\\w.-]+(:\\d+)?(/[\\w-./?%&=]*)?)".toRegex()
+    // находи ссылки
+    val matches = MessagesConsts.findUrls(message)
+
+    // ищем гифки
+    val gifsIn = matches.filter {
+        val url = it.value
+        return@filter chatViewModel.isGifUrl(url)
+    }.toList()
+
     val annotatedString = buildAnnotatedString {
-        // Находим ссылки с помощью регулярного выражения
-        val matches = urlPattern.findAll(message)
         var messageToAppend = message
-        matches.filter {
-            val url = it.value
-            return@filter url.endsWith(".gif")
-        }.toList().forEach {
+
+        // удаляем гифки из сообщения
+        gifsIn.forEach {
             messageToAppend = messageToAppend.replace(it.value, "")
         }
         append(messageToAppend)
 
         matches.forEach { match ->
             val url = match.value
-            if (url.endsWith(".gif")) {
-                return@forEach
-            }
             addStyle(
                 style = SpanStyle(
                     color = Color.Blue,
@@ -391,49 +396,12 @@ fun MessageItem(messageResponse: MessageResponse, userId: Long,
                         color = if (isMyMessage) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primary,
                     )
                 }
-                val context = LocalContext.current
-                val findIn = message.replace("\n", "")
-                urlPattern.findAll(findIn).forEach { match ->
+                gifsIn.forEach { match ->
                     val url = match.value
-                    if (url.endsWith(".gif")) {
-                        val colorPainter = ColorPainter(MaterialTheme.colorScheme.surface)
-
-                        SubcomposeAsyncImage(
-                            model = ImageRequest.Builder(context)
-                                .data(url)
-                                .decoderFactory(GifDecoder.Factory()) // Поддержка GIF-анимации
-                                .memoryCachePolicy(CachePolicy.ENABLED)
-                                .diskCachePolicy(CachePolicy.ENABLED)
-                                .build(),
-                            contentDescription = "GIF from chat",
-                            modifier = Modifier.fillMaxWidth().height(300.dp),
-                            contentScale = ContentScale.Crop,
-                            loading = {
-                                // Показываем статичный первый кадр или серый фон во время загрузки
-                                var imageBitmap by remember { chatViewModel.getGifByUrl(url, context) }
-                                if (imageBitmap != null) {
-                                    Image(
-                                        painter = BitmapPainter(imageBitmap!!.asImageBitmap()),
-                                        contentDescription = null,
-                                        modifier = Modifier.fillMaxWidth().height(300.dp),
-                                        contentScale = ContentScale.Crop
-                                    )
-                                } else {
-                                    ShimmerBox(modifier = Modifier.fillMaxWidth().height(300.dp))
-                                }
-
-                            },
-                            error = {
-                                // В случае ошибки показываем серый фон
-                                Image(
-                                    painter = colorPainter,
-                                    contentDescription = "Error loading GIF",
-                                    modifier = Modifier.fillMaxWidth().height(300.dp),
-                                    contentScale = ContentScale.Crop
-                                )
-                            }
-                        )
-                    }
+                    GifWrapper(
+                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        url = url
+                    )
                 }
             }
 

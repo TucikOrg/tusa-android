@@ -16,11 +16,13 @@ import com.artem.tusaandroid.dto.messenger.ChatResponse
 import com.artem.tusaandroid.room.FriendDao
 import com.artem.tusaandroid.room.messenger.ChatDao
 import com.artem.tusaandroid.room.messenger.MessageDao
+import com.artem.tusaandroid.room.messenger.UnreadMessagesDao
 import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -32,12 +34,20 @@ open class ChatsViewModel @Inject constructor(
     private val friendDao: FriendDao,
     private val chatDao: ChatDao,
     private val profileState: ProfileState,
-    private val messageDao: MessageDao
+    private val messageDao: MessageDao,
+    private val unreadMessagesDao: UnreadMessagesDao
 ): ViewModel() {
     val showModal = mutableStateOf(false)
     val lazyListState = LazyListState()
     val chatFriend = mutableStateOf<FriendDto?>(null)
     private val lastMessageStateMap = mutableMapOf<Pair<Long, Long>, StateFlow<MessageResponse?>>()
+    private val messagesCountStateMap = mutableMapOf<Long, StateFlow<Int>>()
+
+    private val unreadMessagesCount = unreadMessagesDao.getCountFlow().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
 
     fun getLastMessageFlow(chatResponse: ChatResponse): StateFlow<MessageResponse?> {
         val ids = AlineTwoLongsIds.aline(chatResponse.firstUserId, chatResponse.secondUserId)
@@ -63,12 +73,35 @@ open class ChatsViewModel @Inject constructor(
         )
 
     fun openChat(chat: ChatResponse) {
-        chatState.openChat(chat)
+        viewModelScope.launch {
+            chatState.openChat(chat)
+        }
     }
 
     fun getMeId() = profileState.getUserId()
 
     fun dismiss() {
         showModal.value = false
+    }
+
+    fun getUnreadMessagesOfChatCount(chat: ChatResponse): StateFlow<Int> {
+        val userId = if (chat.firstUserId == profileState.getUserId()) chat.secondUserId else chat.firstUserId
+
+        var state = messagesCountStateMap[userId]
+        if (state == null) {
+            state = unreadMessagesDao.getUnreadMessagesCountFlow(userId)
+                .stateIn(
+                    scope = viewModelScope,
+                    started = SharingStarted.WhileSubscribed(5000),
+                    initialValue = 0
+                )
+            messagesCountStateMap[userId] = state
+        }
+
+        return state
+    }
+
+    fun getUnreadMessagesCount(): StateFlow<Int> {
+        return unreadMessagesCount
     }
 }

@@ -118,7 +118,10 @@ class ImageState(
                     .build()
                 val imageLoader = ImageLoader.Builder(context).build()
                 val drawable = imageLoader.execute(requestImage).drawable
-                val bitmap = drawable!!.toBitmap()
+                if (drawable == null) {
+                    return@launch
+                }
+                val bitmap = drawable.toBitmap()
                 imageBitmapsMap[url]!!.value = bitmap
 
                 ByteArrayOutputStream().use {
