@@ -107,7 +107,15 @@ class RefreshStateListenersViewModel @Inject constructor(
                             friendDao.deleteById(friend.id)
                             locationState.removeLocation(friend.id)
                         } else {
+                            // вставка друга вызывается каждый раз потому что обновляется последнее время онлайна
+                            val exist = friendDao.findById(friend.id) != null
                             friendDao.insert(friend)
+
+                            if (exist == false) {
+                                // уведомление о новом друге
+                                toastsState.newFriend(friend, viewModelScope)
+                            }
+
                         }
                     }
                     if (event.isNotEmpty()) {
@@ -156,6 +164,9 @@ class RefreshStateListenersViewModel @Inject constructor(
                             friendRequestDao.deleteById(friendRequest.userId)
                         } else {
                             friendRequestDao.insert(friendRequest)
+
+                            // новая заявка в друзья
+                            toastsState.newFriendRequest(friendRequest, viewModelScope)
                         }
                     }
                     if (event.isNotEmpty()) {

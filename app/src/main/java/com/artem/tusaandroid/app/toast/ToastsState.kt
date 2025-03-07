@@ -5,6 +5,8 @@ import androidx.compose.runtime.mutableStateListOf
 import com.artem.tusaandroid.app.action.friends.FriendsState
 import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.app.profile.ProfileState
+import com.artem.tusaandroid.dto.FriendDto
+import com.artem.tusaandroid.dto.FriendRequestDto
 import com.artem.tusaandroid.dto.MessageResponse
 import com.artem.tusaandroid.room.FriendDao
 import kotlinx.coroutines.CoroutineScope
@@ -45,15 +47,52 @@ class ToastsState(
                 return@launch
             }
 
+            // берем имя друга чтобы показать уведомление
             val senderId = message.senderId
             val friend = friendsDao.findById(senderId)
             if (friend == null) return@launch
-
             val title = friend.getTitleOfFriend()
+
             add(
                 title = title,
                 message = message.message,
                 avatarId = senderId
+            )
+        }
+    }
+
+    fun newFriend(friend: FriendDto, viewModelScope: CoroutineScope) {
+        viewModelScope.launch {
+            val currentTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+            val difference = currentTime - friend.updateTime
+            if (difference > 10) {
+                // если друг уже давно добавлен то не надо показывать уведомление о нем
+                return@launch
+            }
+
+            val friendTitle = friend.getTitleOfFriend()
+            add(
+                title = "Новый друг",
+                message = friendTitle,
+                avatarId = friend.id
+            )
+        }
+    }
+
+    fun newFriendRequest(friendRequest: FriendRequestDto, viewModelScope: CoroutineScope) {
+        viewModelScope.launch {
+            val currentTime = LocalDateTime.now(ZoneOffset.UTC).toEpochSecond(ZoneOffset.UTC)
+            val difference = currentTime - friendRequest.updateTime
+            if (difference > 10) {
+                // если запрос уже давно отправлен то не надо показывать уведомление о нем
+                return@launch
+            }
+
+            val titleOfUser = friendRequest.getTitleOf()
+            add(
+                title = "Запрос в друзья",
+                message = titleOfUser,
+                avatarId = friendRequest.userId
             )
         }
     }

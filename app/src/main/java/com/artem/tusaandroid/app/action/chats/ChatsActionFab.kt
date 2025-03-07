@@ -1,5 +1,6 @@
 package com.artem.tusaandroid.app.action.chats
 
+import android.provider.CalendarContract.Colors
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Arrangement
@@ -36,12 +37,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.app.action.friends.FriendAvatar
+import com.artem.tusaandroid.app.beauty.NewMessagesBadge
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.dto.messenger.ChatResponse
 
@@ -92,15 +95,10 @@ fun ChatsActionFab(modifier: Modifier, model: ChatsViewModel) {
     val unreadMessages by model.getUnreadMessagesCount().collectAsState()
     BadgedBox(
         badge = {
-            if (unreadMessages > 0) {
-                var useNumber = unreadMessages.toString()
-                if (unreadMessages > 99) {
-                    useNumber = "99+"
-                }
-                Badge {
-                    Text(useNumber)
-                }
-            }
+            NewMessagesBadge(
+                unreadMessages = unreadMessages,
+                modifier = Modifier
+            )
         }
     ) {
         FloatingActionButton(
@@ -174,17 +172,10 @@ fun ChatItem(chat: ChatResponse, model: ChatsViewModel) {
                 }
             }
 
-            if (unreadMessages > 0) {
-                var useText = unreadMessages.toString()
-                if (unreadMessages > 99) {
-                    useText = "99+"
-                }
-                Spacer(modifier = Modifier.width(5.dp))
-                Badge {
-                    Text(useText)
-                }
-                Spacer(modifier = Modifier.width(5.dp))
-            }
+            NewMessagesBadge(
+                unreadMessages,
+                modifier = Modifier.padding(5.dp)
+            )
         }
     }
 

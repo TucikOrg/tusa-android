@@ -41,6 +41,7 @@ import com.artem.tusaandroid.isPreview
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.artem.tusaandroid.app.beauty.NewMessagesBadge
 import com.artem.tusaandroid.dto.FriendDto
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -88,9 +89,10 @@ fun FriendsModal(model: FriendViewModel) {
                             Spacer(modifier = Modifier.width(5.dp))
                             BadgedBox(
                                 badge = {
-                                    Badge {
-                                        Text(requests.size.toString())
-                                    }
+                                    NewMessagesBadge(
+                                        unreadMessages = requests.size,
+                                        modifier = Modifier
+                                    )
                                 }
                             ) {
                                 Icon(

@@ -13,4 +13,12 @@ data class FriendRequestDto(
     val isRequestSender: Boolean,
     val updateTime: Long,
     val deleted: Boolean
-)
+) {
+    fun getTitleOf(): String {
+        return if (userName.isEmpty()) {
+            userUniqueName ?: ""
+        } else {
+            userName
+        }
+    }
+}

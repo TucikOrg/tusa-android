@@ -71,8 +71,7 @@ class SocketListener(
     override fun onFailure(webSocket: WebSocket, t: Throwable, response: okhttp3.Response?) {
         super.onFailure(webSocket, t, response)
         socketConnectionState.failed()
-        println("Error: ${t.message}")
-        Log.e("SocketListener", "Error: ${t.message}")
+        Log.e("SocketListener", "onFailure() Error: ${t.message} ${t.javaClass}")
 
         val connectionLoosed =
                 t is java.net.SocketException ||
