@@ -9,8 +9,12 @@ import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.app.systemui.SystemUIState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationsState
+import com.artem.tusaandroid.room.FriendRequestDao
 import com.artem.tusaandroid.socket.EventListener
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
 @HiltViewModel
@@ -23,7 +27,11 @@ class MainActivityViewModel @Inject constructor(
     val avatarState: AvatarState,
     val meAvatarState: MeAvatarState,
     val locationsState: LocationsState,
+    val friendsRequestsDao: FriendRequestDao,
 ): ViewModel() {
+
+
+
     fun initStateListeners() {
         imageState.initListener(viewModelScope)
         avatarState.initListeners(viewModelScope)

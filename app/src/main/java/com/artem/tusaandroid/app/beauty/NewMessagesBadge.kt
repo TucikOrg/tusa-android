@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun NewMessagesBadge(unreadMessages: Int, modifier: Modifier) {
@@ -15,7 +16,8 @@ fun NewMessagesBadge(unreadMessages: Int, modifier: Modifier) {
     if (unreadMessages > 0) {
         Badge(
             modifier = modifier,
-            containerColor = MaterialTheme.colorScheme.error
+            containerColor = MaterialTheme.colorScheme.error,
+            contentColor = Color.White
         ) {
             Text(
                 useNumber,

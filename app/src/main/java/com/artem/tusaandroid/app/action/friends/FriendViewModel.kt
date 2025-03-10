@@ -19,6 +19,16 @@ open class FriendViewModel @Inject constructor(
     private val friendsDao: FriendDao,
     private val friendsRequestDao: FriendRequestDao
 ): ViewModel() {
+    fun getNewFriendsRequestsCount(): StateFlow<Int> {
+        return newFriendsRequestsCount
+    }
+
+    private val newFriendsRequestsCount = friendsRequestDao.getRequestsToMeCountFlow().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = 0
+    )
+
     val showModal = mutableStateOf(false)
 
     val friends: StateFlow<List<FriendDto>> = friendsDao.getAllFlow()

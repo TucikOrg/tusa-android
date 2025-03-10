@@ -32,4 +32,7 @@ interface FriendRequestDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(requests: List<FriendRequestDto>)
+
+    @Query("SELECT COUNT(*) FROM friend_request where isRequestSender = true")
+    fun getRequestsToMeCountFlow(): Flow<Int>
 }
