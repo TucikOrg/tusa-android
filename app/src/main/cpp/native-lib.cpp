@@ -46,6 +46,18 @@ Java_com_artem_tusaandroid_NativeLibrary_render(JNIEnv *env, jclass clazz, jbool
 
 extern "C"
 JNIEXPORT void JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_renderParallel(JNIEnv *env, jclass clazz) {
+    renderer->renderParallel();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_artem_tusaandroid_NativeLibrary_initParallel(JNIEnv *env, jclass clazz) {
+    renderer->initParallel();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
 Java_com_artem_tusaandroid_NativeLibrary_onSurfaceChanged(JNIEnv *env, jclass clazz, jint width,
                                                           jint height) {
     renderer->onSurfaceChanged(width, height);

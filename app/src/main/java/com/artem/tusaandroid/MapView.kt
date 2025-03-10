@@ -2,6 +2,8 @@ package com.artem.tusaandroid
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.opengl.EGL14
+import android.opengl.EGL15
 import android.opengl.GLSurfaceView
 import android.os.Handler
 import android.os.Looper
@@ -40,6 +42,7 @@ class MapView(
 
     private var scaleListener: ScaleListener? = null
     private var gestureListener: GestureListener? = null
+    private var planetRenderer:  com.artem.tusaandroid.Renderer? = null
 
     init {
         // Настраиваем карту первоначально перед запуском
@@ -49,22 +52,24 @@ class MapView(
 
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
-        setRenderer(Renderer(
+
+        planetRenderer =  com.artem.tusaandroid.Renderer(
             resources.assets,
             meAvatarState,
             lastLocationState,
             socketListener,
             avatarState,
             locationsState
-        ))
+        )
+        setRenderer(planetRenderer)
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         super.surfaceCreated(holder)
-        val width = holder.surfaceFrame.width().toFloat()
-        val height = holder.surfaceFrame.height().toFloat()
+        val width = holder.surfaceFrame.width()
+        val height = holder.surfaceFrame.height()
 
-        scaleListener = ScaleListener(width, height)
+        scaleListener = ScaleListener(width.toFloat(), height.toFloat())
         gestureListener = GestureListener() {
             // on scroll stop
             updateMapTitleState?.updateMapTitle()
@@ -80,6 +85,8 @@ class MapView(
         // похоже очень что чистит сам GLSurfaceView
         // и не нужно читстить самому open gl сущности
         super.surfaceDestroyed(holder)
+
+        planetRenderer?.destroySecondaryGLThread()
     }
 
     override fun onDetachedFromWindow() {

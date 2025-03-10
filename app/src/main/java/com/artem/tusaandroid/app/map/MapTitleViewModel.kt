@@ -38,12 +38,17 @@ open class MapTitleViewModel @Inject constructor(
                     )
                     .get()
                     .build()
-                val response = okHttpClient.newCall(request).execute()
-                if (response.isSuccessful) {
-                    val body = response.body?.string()!!
-                    title = body
-                } else {
-                    title = ""
+                try {
+                    val response = okHttpClient.newCall(request).execute()
+                    if (response.isSuccessful) {
+                        val body = response.body?.string()!!
+                        title = body
+                    } else {
+                        title = ""
+                    }
+                } catch (exception: Exception) {
+                    // в левом верхнем углу экрана не будет отображаться название местности
+                    // город страна регион и тд
                 }
             }
         }

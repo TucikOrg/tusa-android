@@ -1,6 +1,7 @@
 package com.artem.tusaandroid
 
 import android.content.res.AssetManager
+import android.opengl.EGL14
 import android.opengl.GLSurfaceView
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.avatar.AvatarState
@@ -20,9 +21,17 @@ class Renderer(
     private val locationsState: LocationsState?
 ) : GLSurfaceView.Renderer {
     private var meAvatarKey = meAvatarState?.getMeId()?: 0L
+    private var secondaryGLThread: SecondaryGLThread? = null
+
+    fun destroySecondaryGLThread() {
+        secondaryGLThread?.destroy()
+    }
 
     override fun onSurfaceCreated(gl: GL10, config: EGLConfig) {
         NativeLibrary.surfaceCreated(_assetManager)
+
+        val sharedEglContext = EGL14.eglGetCurrentContext()
+        secondaryGLThread = SecondaryGLThread(sharedEglContext, 8192, 8192)
     }
 
     override fun onSurfaceChanged(gl: GL10, width: Int, height: Int) {
