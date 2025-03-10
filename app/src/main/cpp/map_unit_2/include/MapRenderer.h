@@ -58,10 +58,9 @@ private:
 
     float forwardRenderingToWorldZoom = 6.0f;
     float planeSize = 10000000;
-    int textureTileSizeUnit = 1024;
+    //int textureMapSize = 8192;
+    int textureMapSize = 4096;
     std::string textureKey;
-
-
 
     void drawTestTexture(GLuint textureId, float width, float height, float shift = 0.1);
 };

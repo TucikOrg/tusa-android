@@ -12,7 +12,7 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapFpsCounter.newFrame();
     auto mn = MapNumbers(
             mapControls, mapCamera, planeSize,
-            textureTileSizeUnit, forwardRenderingToWorldZoom
+            textureMapSize, forwardRenderingToWorldZoom
     );
 
     animateCameraTo.animateTick(mapFpsCounter, mapControls);
@@ -65,7 +65,6 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
             std::to_string(mn.visTileXEndInf) +
             std::to_string(mn.tileZ) +
             std::to_string(backgroundTiles.size()) +
-            std::to_string(textureTileSizeUnit) +
             std::to_string(existTiles);
 
     glEnable(GL_BLEND);
@@ -152,9 +151,11 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
 
 //    mapTest.drawCenterPoint(shadersBucket, pvFloat);
 //    mapTest.drawTextureTest(shadersBucket, mapCamera, mapTileRender.getMapTexture(), 2, 2);
-    //drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
+//    атлас аватарок
+//    drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
 
-    //drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.2);
+//  текстура карты
+    drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.05);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {

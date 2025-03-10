@@ -20,7 +20,7 @@ public:
             MapControls &mapControls,
             MapCamera &mapCamera,
             float planeSize,
-            int textureTileSizeUnit,
+            int textureMapSize,
             float forwardRenderingToWorldZoom
     );
 

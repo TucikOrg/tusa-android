@@ -8,7 +8,7 @@ MapNumbers::MapNumbers(
         MapControls &mapControls,
         MapCamera &mapCamera,
         float planeSize,
-        int textureTileSizeUnit,
+        int textureMapSize,
         float forwardRenderingToWorldZoom
 ) {
     screenWidth = mapCamera.getScreenW();
@@ -76,7 +76,7 @@ MapNumbers::MapNumbers(
     planeModelMatrixFloat = planeModelMatrix.cast<float>();
     sphereModelMatrixFloat = sphereModelMatrix.cast<float>();
 
-    textureTileSize = textureTileSizeUnit;
+    textureTileSize = textureMapSize;
     visYTilesDelta = 1.0;
     visXTilesDelta = 1.0;
     if (n == 1) {
