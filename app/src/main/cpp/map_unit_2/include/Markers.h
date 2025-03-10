@@ -74,9 +74,23 @@ private:
     bool manualRefreshAllAvatars = false;
     float screenWidthT;
     float screenHeightT;
+    float atlasWidthT;
+    float atlasHeightT;
     float radiusT = 0.0;
     float cameraLongitudeT;
     Eigen::Matrix4d pvT;
+    std::unordered_map<uint64_t, MapTile*> tilesT;
+    float zoomT;
+    double camLatitudeT;
+    double camLongitudeNormalizedT;
+    int tileZT;
+    bool canRefreshMarkersT;
+    std::vector<float> symbolsDataT;
+    std::vector<unsigned int> indicesT;
+    size_t iboSize;
+    bool symbolDataChanged = false;
+    float animationTime = 0.5;
+
     std::vector<float> testAvatarsVertices = {};
     float scaleT;
     std::vector<Avatars::Circle> circles;
@@ -107,7 +121,6 @@ private:
 
     GLuint titlesVBO;
     GLuint titlesIBO;
-    size_t iboSize = 0;
     size_t refreshTitlesKey = 0;
 
     std::unordered_map<GLuint, void*> refreshGroup = {};
