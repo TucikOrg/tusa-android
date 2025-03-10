@@ -10,6 +10,10 @@
 
 void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapFpsCounter.newFrame();
+    
+    // матрица вида текущего кадра
+    Eigen::Matrix4f viewScreen = mapCamera.createView();
+
     auto mn = MapNumbers(
             mapControls, mapCamera, planeSize,
             textureMapSize, forwardRenderingToWorldZoom
@@ -70,9 +74,6 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     glEnable(GL_BLEND);
     glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
-    float topY = mn.visTileYStart;
-    float leftX = Utils::normalizeXTile(mn.visTileXStartInf, mn.n);
-
     //////////////////////////////////
     ////                            //
     ////       Render texture       //
@@ -84,19 +85,16 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
                 mn.textureTileSize,
                 mn.xTilesAmount,
                 mn.yTilesAmount,
-                mapCamera,
                 backgroundTiles,
                 tiles,
                 mn.zoom,
-                shadersBucket,
                 mn.forwardRenderingToWorld,
                 mn.tileZ,
-                mn.n, leftX, topY, mn.visTileYStart, mn.visTileYEnd,
-                mn.visTileXStartInf, mn.visTileXEndInf,
-                mapSymbols, mn
+                mn.n, mn.leftX, mn.topY, mn.visTileYStart, mn.visTileYEnd,
+                mn.visTileXStartInf, mn.visTileXEndInf
         };
 
-        mapTileRender.renderTexture(data);
+        mapTileRender.renderTexture(data, mapCamera, shadersBucket);
     }
 
     //////////////////////////////////
@@ -105,14 +103,7 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     ////                            //
     //////////////////////////////////
     DrawMapData drawMapData = {
-        mn.forwardRenderingToWorld, mn.tilesSwiped, mn.EPSGLonNormInfNegative, mn.planeModelMatrix,
-        mn.leftXVertex, mn.topYVertex, mn.rightXVertex, mn.bottomYVertex, mn.yTilesAmount,
-        mn.pv, mn.visXTilesDelta, mapCamera, backgroundTiles, tiles, mn.tileZ, mn.n,
-        leftX, topY, mapTileRender, mn.view, mn.projection, shadersBucket, mn.zoom,
-        mn.visTileYStart, mn.visTileYEnd, mn.visTileXStartInf, mn.visTileXEndInf, mn.segments,
-        mn.planetVStart, mn.planetVEnd, mn.planetUStart, mn.planetUEnd, mn.planetVDelta, planeSize, mn.verticesShift,
-        mn.planetUDelta, mn.sphereModelMatrixFloat, mn.transition, mn.EPSG3857CamLat,
-        mn.shiftUTex, mn.scaleUTex, mapEnvironment, mapSymbols, mapFpsCounter, mn
+        backgroundTiles, tiles, mn
     };
 
     mapEnvironment.selectClearColor(mn.zoom);
@@ -121,10 +112,10 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapEnvironment.draw(mn, shadersBucket);
     if (mn.forwardRenderingToWorld) {
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
-        drawMap.drawMapForward(drawMapData);
+        drawMap.drawMapForward(drawMapData, mapCamera, mapTileRender, mapSymbols, mapFpsCounter, shadersBucket);
     } else {
         glBindTexture(GL_TEXTURE_2D, mapTileRender.getMapTexture());
-        drawMap.drawMapViaTexture(drawMapData);
+        drawMap.drawMapViaTexture(drawMapData, shadersBucket);
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     }
 

@@ -181,26 +181,26 @@ void MapTileRender::initTilesTexture() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 }
 
-void MapTileRender::renderTexture(RenderTextureData &data) {
-    auto& textureTileSize = data.textureTileSize;
-    auto&  xTilesAmount = data.xTilesAmount;
-    auto&  yTilesAmount = data.yTilesAmount;
-    auto& mapCamera = data.mapCamera;
-    auto&  backgroundTiles = data.backgroundTiles;
-    auto& tiles = data.tiles;
-    auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
-    auto& tileZ = data.tileZ;
-    auto& zoom = data.zoom;
-    auto& shadersBucket = data.shadersBucket;
-    auto& n = data.n;
-    auto& leftX = data.leftX;
-    auto& topY = data.topY;
-    auto& visTileYStart = data.visTileYStart;
-    auto& visTileYEnd = data.visTileYEnd;
-    auto& visTileXStartInf = data.visTileXStartInf;
-    auto& visTileXEndInf = data.visTileXEndInf;
-    auto& mapSymbols = data.mapSymbols;
-    auto& mapNumbers = data.mapNumbers;
+void MapTileRender::renderTexture(
+        RenderTextureData data,
+        MapCamera& mapCamera,
+        ShadersBucket& shadersBucket
+) {
+    auto textureTileSize = data.textureTileSize;
+    auto  xTilesAmount = data.xTilesAmount;
+    auto  yTilesAmount = data.yTilesAmount;
+    auto  backgroundTiles = data.backgroundTiles;
+    auto tiles = data.tiles;
+    auto forwardRenderingToWorld = data.forwardRenderingToWorld;
+    auto tileZ = data.tileZ;
+    auto zoom = data.zoom;
+    auto n = data.n;
+    auto leftX = data.leftX;
+    auto topY = data.topY;
+    auto visTileYStart = data.visTileYStart;
+    auto visTileYEnd = data.visTileYEnd;
+    auto visTileXStartInf = data.visTileXStartInf;
+    auto visTileXEndInf = data.visTileXEndInf;
 
 
     float textureWidth = textureTileSize * xTilesAmount;
@@ -247,14 +247,11 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
             renderTile(
                     shadersBucket,
                     backgroundTile,
-                    mapCamera,
                     projectionTexture,
                     vTileMatrix,
                     pvTileMatrix,
                     zoom,
-                    forwardRenderingToWorld,
-                    mapSymbols,
-                    mapNumbers
+                    forwardRenderingToWorld
             );
         }
     }
@@ -280,14 +277,11 @@ void MapTileRender::renderTexture(RenderTextureData &data) {
             renderTile(
                     shadersBucket,
                     tile,
-                    mapCamera,
                     projectionTexture,
                     vTileMatrix,
                     pvTileMatrix,
                     zoom,
-                    forwardRenderingToWorld,
-                    mapSymbols,
-                    mapNumbers
+                    forwardRenderingToWorld
             );
         }
     }
@@ -456,15 +450,11 @@ void MapTileRender::renderPathText(MapTile* tile, MapSymbols& mapSymbols,
 void MapTileRender::renderTile(
         ShadersBucket &shadersBucket,
         MapTile *tile,
-        MapCamera &mapCamera,
         Eigen::Matrix4f p,
         Eigen::Matrix4f vm,
         Eigen::Matrix4f pvm,
         float zoom,
         bool isForwardRendering,
-        MapSymbols& mapSymbols,
-        MapNumbers& mapNumbers,
-        float elapsedTime,
         unsigned short from,
         unsigned short to
 ) {

@@ -18,38 +18,40 @@ void DrawMap::destroy() {
     glDeleteBuffers(1, &EPSG3857_VBO);
 }
 
-void DrawMap::drawMapForward(DrawMapData &data) {
+void DrawMap::drawMapForward(DrawMapData data,
+                             MapCamera& mapCamera,
+                             MapTileRender& mapTileRender,
+                             MapSymbols& mapSymbols,
+                             MapFpsCounter& mapFpsCounter,
+                             ShadersBucket& shadersBucket
+) {
+    auto& mapNumbers = data.mapNumbers;
 
-    auto& forwardRenderingToWorld = data.forwardRenderingToWorld;
-    auto& tilesSwiped = data.tilesSwiped;
-    auto& EPSGLonNormInfNegative = data.EPSGLonNormInfNegative;
-    auto& planeModelMatrix = data.planeModelMatrix;
-    auto& leftXVertex = data.leftXVertex;
-    auto& topYVertex = data.topYVertex;
-    auto& rightXVertex = data.rightXVertex;
-    auto& bottomYVertex = data.bottomYVertex;
-    auto& yTilesAmount = data.yTilesAmount;
-    auto& pv = data.pv;
-    auto& mapCamera = data.mapCamera;
-    auto& visXTilesDelta = data.visXTilesDelta;
+    auto& forwardRenderingToWorld = mapNumbers.forwardRenderingToWorld;
+    auto& tilesSwiped = mapNumbers.tilesSwiped;
+    auto& EPSGLonNormInfNegative = mapNumbers.EPSGLonNormInfNegative;
+    auto& planeModelMatrix = mapNumbers.planeModelMatrix;
+    auto& leftXVertex = mapNumbers.leftXVertex;
+    auto& topYVertex = mapNumbers.topYVertex;
+    auto& rightXVertex = mapNumbers.rightXVertex;
+    auto& bottomYVertex = mapNumbers.bottomYVertex;
+    auto& yTilesAmount = mapNumbers.yTilesAmount;
+    auto& pv = mapNumbers.pv;
+    auto& visXTilesDelta = mapNumbers.visXTilesDelta;
     auto& backgroundTiles = data.backgroundTiles;
     auto& tiles = data.tiles;
-    auto& tileZ = data.tileZ;
-    auto& n = data.n;
-    auto& leftX = data.leftX;
-    auto& topY = data.topY;
-    auto& mapTileRender = data.mapTileRender;
-    auto& view = data.view;
-    auto& projection = data.projection;
-    auto& shadersBucket = data.shadersBucket;
-    auto& zoom = data.zoom;
-    auto& visTileYStart = data.visTileYStart;
-    auto& visTileYEnd = data.visTileYEnd;
-    auto& visTileXStartInf = data.visTileXStartInf;
-    auto& visTileXEndInf = data.visTileXEndInf;
-    auto& mapSymbols = data.mapSymbols;
-    auto& mapFpsCounter = data.mapFpsCounter;
-    auto& mapNumbers = data.mapNumbers;
+    auto& tileZ = mapNumbers.tileZ;
+    auto& n = mapNumbers.n;
+    auto& leftX = mapNumbers.leftX;
+    auto& topY = mapNumbers.topY;
+    auto& view = mapNumbers.view;
+    auto& projection = mapNumbers.projection;
+    auto& zoom = mapNumbers.zoom;
+    auto& visTileYStart = mapNumbers.visTileYStart;
+    auto& visTileYEnd = mapNumbers.visTileYEnd;
+    auto& visTileXStartInf = mapNumbers.visTileXStartInf;
+    auto& visTileXEndInf = mapNumbers.visTileXEndInf;
+
     float scaleText = mapTileRender.getScaleText(mapNumbers);
 
     double shiftXTileP = fmod(tilesSwiped, 1.0) + EPSGLonNormInfNegative;
@@ -111,14 +113,11 @@ void DrawMap::drawMapForward(DrawMapData &data) {
             mapTileRender.renderTile(
                     shadersBucket,
                     backgroundTile,
-                    mapCamera,
                     projection.cast<float>(),
                     vTileMatrix.cast<float>(),
                     pvTileMatrix.cast<float>(),
                     zoom,
-                    forwardRenderingToWorld,
-                    mapSymbols,
-                    mapNumbers
+                    forwardRenderingToWorld
             );
         }
     }
@@ -148,15 +147,11 @@ void DrawMap::drawMapForward(DrawMapData &data) {
             mapTileRender.renderTile(
                     shadersBucket,
                     tile,
-                    mapCamera,
                     projection.cast<float>(),
                     vTileMatrix.cast<float>(),
                     pvTileMatrix.cast<float>(),
                     zoom,
-                    forwardRenderingToWorld,
-                    mapSymbols,
-                    mapNumbers,
-                    mapFpsCounter.getTimeElapsed()
+                    forwardRenderingToWorld
             );
 
             // для последующего рендринга текста
@@ -206,29 +201,31 @@ void DrawMap::drawMapForward(DrawMapData &data) {
 }
 
 
-void DrawMap::drawMapViaTexture(DrawMapData &data) {
-    auto& planeModelMatrix = data.planeModelMatrix;
-    auto& pv = data.pv;
-    auto& mapTileRender = data.mapTileRender;
-    auto& shadersBucket = data.shadersBucket;
-    auto& segments = data.segments;
-    auto& planetVStart = data.planetVStart;
-    auto& planetUStart = data.planetUStart;
-    auto& planetVDelta = data.planetVDelta;
-    auto& planetUDelta = data.planetUDelta;
-    auto& planeSize = data.planeSize;
-    auto& verticesShift = data.verticesShift;
-    auto& sphereModelMatrixFloat = data.sphereModelMatrixFloat;
-    auto& transition = data.transition;
-    auto& EPSG3857CamLat = data.EPSG3857CamLat;
-    auto& shiftUTex = data.shiftUTex;
-    auto& scaleUTex = data.scaleUTex;
+void DrawMap::drawMapViaTexture(
+        DrawMapData &data,
+        ShadersBucket& shadersBucket
+) {
+    auto& mapNumbers = data.mapNumbers;
+    auto& planeModelMatrix = mapNumbers.planeModelMatrix;
+    auto& pv = mapNumbers.pv;
+    auto& segments = mapNumbers.segments;
+    auto& planetVStart = mapNumbers.planetVStart;
+    auto& planetUStart = mapNumbers.planetUStart;
+    auto& planetVDelta = mapNumbers.planetVDelta;
+    auto& planetUDelta = mapNumbers.planetUDelta;
+    auto& planeSize = mapNumbers.planeSize;
+    auto& verticesShift = mapNumbers.verticesShift;
+    auto& sphereModelMatrixFloat = mapNumbers.sphereModelMatrixFloat;
+    auto& transition = mapNumbers.transition;
+    auto& EPSG3857CamLat = mapNumbers.EPSG3857CamLat;
+    auto& shiftUTex = mapNumbers.shiftUTex;
+    auto& scaleUTex = mapNumbers.scaleUTex;
 
 
-    if(segments != savedSegmentsAmount || data.tileZ != savedTileZ || data.topY != savedTopY) {
+    if(segments != savedSegmentsAmount || mapNumbers.tileZ != savedTileZ || mapNumbers.topY != savedTopY) {
         savedSegmentsAmount = segments;
-        savedTileZ = data.tileZ;
-        savedTopY = data.topY;
+        savedTileZ = mapNumbers.tileZ;
+        savedTopY = mapNumbers.topY;
         std::vector<float> planetEPSG3857;
         std::vector<float> planetTexUV;
         std::vector<float> planetVertices;

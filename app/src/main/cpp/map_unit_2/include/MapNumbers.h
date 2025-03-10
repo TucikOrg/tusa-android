@@ -86,6 +86,8 @@ public:
     float screenWidth;
     float screenHeight;
     Eigen::Matrix4f pvScreen;
+    float leftX;
+    float topY;
 };
 
 

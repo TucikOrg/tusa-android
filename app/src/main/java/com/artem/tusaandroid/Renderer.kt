@@ -8,7 +8,6 @@ import com.artem.tusaandroid.app.avatar.AvatarState
 import com.artem.tusaandroid.location.LastLocationState
 import com.artem.tusaandroid.location.LocationsState
 import com.artem.tusaandroid.socket.SocketListener
-import java.util.concurrent.Executors
 import javax.microedition.khronos.egl.EGLConfig
 import javax.microedition.khronos.opengles.GL10
 

@@ -134,6 +134,9 @@ MapNumbers::MapNumbers(
     leftXVertex = leftPlanetU * planeSize - verticesShift;
     bottomYVertex = bottomPlanetV * planeSize - verticesShift;
     rightXVertex = rightPlanetU * planeSize - verticesShift;
+
+    leftX = Utils::normalizeXTile(visTileXStartInf, n);
+    topY = visTileYStart;
 }
 
 

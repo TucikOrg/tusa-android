@@ -34,20 +34,20 @@ public:
     void renderTile(
             ShadersBucket& shadersBucket,
             MapTile* tile,
-            MapCamera& mapCamera,
             Eigen::Matrix4f p,
             Eigen::Matrix4f vm,
             Eigen::Matrix4f pvm,
             float zoom,
             bool isForwardRendering,
-            MapSymbols& mapSymbols,
-            MapNumbers& mapNumbers,
-            float elapsedTime = 0,
             unsigned short from = 0,
             unsigned short to = 0
     );
 
-    void renderTexture(RenderTextureData &data);
+    void renderTexture(
+            RenderTextureData data,
+            MapCamera& mapCamera,
+            ShadersBucket& shadersBucket
+    );
 
     void drawLayer(
             ShadersBucket& shadersBucket,

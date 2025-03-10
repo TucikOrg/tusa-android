@@ -15,8 +15,16 @@
 class DrawMap {
 public:
     void onSurfaceCreated();
-    void drawMapForward(DrawMapData& data);
-    void drawMapViaTexture(DrawMapData& data);
+    void drawMapForward(DrawMapData data,
+                        MapCamera& mapCamera,
+                        MapTileRender& mapTileRender,
+                        MapSymbols& mapSymbols,
+                        MapFpsCounter& mapFpsCounter,
+                        ShadersBucket& shadersBucket
+                        );
+    void drawMapViaTexture(DrawMapData &data,
+                           ShadersBucket& shadersBucket
+                           );
     void destroy();
 private:
     float extent = 4096;
