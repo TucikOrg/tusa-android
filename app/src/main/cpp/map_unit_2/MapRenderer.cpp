@@ -10,14 +10,46 @@
 
 void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapFpsCounter.newFrame();
-    
+
     // матрица вида текущего кадра
     Eigen::Matrix4f viewScreen = mapCamera.createView();
+    Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, mapCamera.getScreenW(), mapCamera.getScreenH(), 0, 0.1, 2);
+    Eigen::Matrix4f pvScreen = projectionScreen * viewScreen;
 
-    auto mn = MapNumbers(
-            mapControls, mapCamera, planeSize,
-            textureMapSize, forwardRenderingToWorldZoom
-    );
+    double distortion = mapControls.getVisPointDistortion();
+    double invDistortion = 1.0 / distortion;
+
+    float impact = mapControls.getCamDistDistortionImpact();
+    float distortionDistanceToMapPortion = invDistortion * impact + (1.0 - impact); // вдияние дисторции на дистанцию до карты
+    float distanceToMap = mapControls.getDistanceToMap(distortionDistanceToMapPortion);
+
+    float mapNearPlaneDelta = 1.0;
+    float nearPlane = distanceToMap - mapNearPlaneDelta;
+    float farPlane = distanceToMap + planeSize * 4.0;
+    Eigen::Matrix4d projection = mapCamera.createPerspectiveProjectionD(nearPlane, farPlane);
+
+    Eigen::Matrix4d view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0, Eigen::Vector3d(0.0, 1.0, 0.0));
+    Eigen::Matrix4d pv = projection * view;
+    Eigen::Matrix4f pvFloat = pv.cast<float>();
+
+
+
+    if (savedTestMN == nullptr) {
+        savedTestMN = new MapNumbers(
+                mapControls, mapCamera, planeSize,
+                textureMapSize, forwardRenderingToWorldZoom,
+                distortionDistanceToMapPortion, projection
+        );
+    }
+
+    //    auto mn = MapNumbers(
+//            mapControls, mapCamera, planeSize,
+//            textureMapSize, forwardRenderingToWorldZoom,
+//            distortionDistanceToMapPortion, projection
+//    );
+
+    auto mn = *savedTestMN;
+
 
     animateCameraTo.animateTick(mapFpsCounter, mapControls);
 
@@ -109,22 +141,26 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapEnvironment.selectClearColor(mn.zoom);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    mapEnvironment.draw(mn, shadersBucket);
+    mapEnvironment.draw(mn, shadersBucket, pvFloat);
     if (mn.forwardRenderingToWorld) {
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
-        drawMap.drawMapForward(drawMapData, mapCamera, mapTileRender, mapSymbols, mapFpsCounter, shadersBucket);
+        drawMap.drawMapForward(drawMapData, mapCamera,
+                               mapTileRender, mapSymbols,
+                               mapFpsCounter, shadersBucket,
+                               pvScreen, pv, view
+                               );
     } else {
         glBindTexture(GL_TEXTURE_2D, mapTileRender.getMapTexture());
-        drawMap.drawMapViaTexture(drawMapData, shadersBucket);
+        drawMap.drawMapViaTexture(drawMapData, shadersBucket, pv);
         glBindTexture(GL_TEXTURE_2D, mapSymbols.getAtlasTexture());
     }
 
 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     bool canRefreshTitles = backgroundTiles.size() == 0;
-    markers.drawMarkers(shadersBucket, mn.pv,
+    markers.drawMarkers(shadersBucket, pv,
                         mn, tiles, mapSymbols, mapCamera,
-                        canRefreshTitles
+                        canRefreshTitles, pvScreen
     );
 
     if (isDebugBuildVariant) {
@@ -146,7 +182,7 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
 //    drawTestTexture(markers.nextPlaceForAvatar.atlasId, 0.8, 0.8, 0.2);
 
 //  текстура карты
-    drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.05);
+//    drawTestTexture(mapTileRender.getMapTexture(), 0.8, 0.8, 0.05);
 }
 
 void MapRenderer::init(AAssetManager *assetManager, JNIEnv *env, jobject &request_tile) {

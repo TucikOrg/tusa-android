@@ -20,10 +20,14 @@ public:
                         MapTileRender& mapTileRender,
                         MapSymbols& mapSymbols,
                         MapFpsCounter& mapFpsCounter,
-                        ShadersBucket& shadersBucket
+                        ShadersBucket& shadersBucket,
+                        Eigen::Matrix4f pvScreen,
+                        Eigen::Matrix4d pv,
+                        Eigen::Matrix4d view
                         );
     void drawMapViaTexture(DrawMapData &data,
-                           ShadersBucket& shadersBucket
+                           ShadersBucket& shadersBucket,
+                           Eigen::Matrix4d pv
                            );
     void destroy();
 private:

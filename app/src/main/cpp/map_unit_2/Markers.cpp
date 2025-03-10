@@ -418,7 +418,8 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
                           std::unordered_map<uint64_t, MapTile*> tiles,
                           MapSymbols& mapSymbols,
                           MapCamera& mapCamera,
-                          bool canRefreshMarkers
+                          bool canRefreshMarkers,
+                          Eigen::Matrix4f pvScreen
 ) {
     Eigen::Matrix4f pv = pvD.cast<float>();
     FromLatLonToSphereDoublePos fromLatLonToSphereDoublePos = FromLatLonToSphereDoublePos();
@@ -553,7 +554,6 @@ void Markers::drawMarkers(ShadersBucket& shadersBucket,
         auto color = MapColors::getAvatarsBorderColor();
         float scale = mapNumbers.scale * mapNumbers.distortionDistanceToMapPortion;
 
-        Eigen::Matrix4f pvScreen = mapNumbers.pvScreen;
 
         // при больших зумах нужно каждый маркер рисовать отдельно так как не хватает точности float
         // и считать точку нахождения в CPU

@@ -214,11 +214,12 @@ void MapEnvironment::drawBottomCap(
 
 void MapEnvironment::drawStars(
         MapNumbers& mapNumbers,
-        ShadersBucket &shadersBucket
+        ShadersBucket &shadersBucket,
+        Eigen::Matrix4f pvFloat
 ) {
     Eigen::Matrix4f rotateLatitude = EigenGL::createRotationMatrixAxis(FLOAT(mapNumbers.camLatitude), Eigen::Vector3f {1.0f, 0.0f, 0.0f});
     Eigen::Matrix4f rotateLongitude = EigenGL::createRotationMatrixAxis(FLOAT(mapNumbers.camLongitude), Eigen::Vector3f {0.0f, -1.0f, 0.0f});
-    Eigen::Matrix4f pvm = mapNumbers.pvFloat * rotateLatitude * rotateLongitude;
+    Eigen::Matrix4f pvm = pvFloat * rotateLatitude * rotateLongitude;
     auto starsColor = MapColors::getStarsColor();
     auto starsColorGl = CommonUtils::toOpenGlColor(starsColor);
     auto shader = shadersBucket.starsShader.get();
@@ -240,16 +241,17 @@ void MapEnvironment::drawStars(
 
 void MapEnvironment::draw(
         MapNumbers& mn,
-        ShadersBucket &shadersBucket
+        ShadersBucket &shadersBucket,
+        Eigen::Matrix4f pvFloat
 ) {
     float planeSize = mn.planeSize;
     if (mn.zoom < drawSpaceZoomBorder) {
-        drawStars(mn, shadersBucket);
-        drawGlowing(mn, shadersBucket);
+        drawStars(mn, shadersBucket, pvFloat);
+        drawGlowing(mn, shadersBucket, pvFloat);
     }
     glEnable(GL_DEPTH_TEST);
-    drawTopCap(mn.pvFloat, mn.sphereModelMatrixFloat, mn.zoom, planeSize, shadersBucket);
-    drawBottomCap(mn.pvFloat, mn.sphereModelMatrixFloat, mn.zoom, planeSize, shadersBucket);
+    drawTopCap(pvFloat, mn.sphereModelMatrixFloat, mn.zoom, planeSize, shadersBucket);
+    drawBottomCap(pvFloat, mn.sphereModelMatrixFloat, mn.zoom, planeSize, shadersBucket);
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -265,11 +267,12 @@ void MapEnvironment::selectClearColor(float zoom) {
 
 void MapEnvironment::drawGlowing(
         MapNumbers &mapNumbers,
-        ShadersBucket &shadersBucket
+        ShadersBucket &shadersBucket,
+        Eigen::Matrix4f pvFloat
 ) {
     float radius = mapNumbers.radius;
     float glowRadius = radius * 2.0f;
-    Eigen::Matrix4f pv = mapNumbers.pvFloat;
+    Eigen::Matrix4f pv = pvFloat;
     std::vector<float> verticesPlanetGlow = {
             -glowRadius, -glowRadius, -radius,
             glowRadius, -glowRadius, -radius,
@@ -286,7 +289,7 @@ void MapEnvironment::drawGlowing(
 
     auto glowShader = shadersBucket.planetGlowShader.get();
     glUseProgram(glowShader->program);
-    glUniformMatrix4fv(glowShader->getMatrixLocation(), 1, GL_FALSE, mapNumbers.pvFloat.data());
+    glUniformMatrix4fv(glowShader->getMatrixLocation(), 1, GL_FALSE, pvFloat.data());
     glVertexAttribPointer(glowShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, verticesPlanetGlow.data());
     glEnableVertexAttribArray(glowShader->getPosLocation());
     glVertexAttribPointer(glowShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());
@@ -303,7 +306,7 @@ void MapEnvironment::drawGlowing(
 
     auto spaceDarkShader = shadersBucket.spaceDarkShader.get();
     glUseProgram(spaceDarkShader->program);
-    glUniformMatrix4fv(spaceDarkShader->getMatrixLocation(), 1, GL_FALSE, mapNumbers.pvFloat.data());
+    glUniformMatrix4fv(spaceDarkShader->getMatrixLocation(), 1, GL_FALSE, pvFloat.data());
     glVertexAttribPointer(spaceDarkShader->getPosLocation(), 3, GL_FLOAT, GL_FALSE, 0, verticesSpaceDark.data());
     glEnableVertexAttribArray(spaceDarkShader->getPosLocation());
     glVertexAttribPointer(spaceDarkShader->getUVLocation(), 2, GL_FLOAT, GL_FALSE, 0, uv.data());

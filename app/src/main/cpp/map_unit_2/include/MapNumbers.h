@@ -21,10 +21,11 @@ public:
             MapCamera &mapCamera,
             float planeSize,
             int textureMapSize,
-            float forwardRenderingToWorldZoom
+            float forwardRenderingToWorldZoom,
+            float distortionDistanceToMapPortion,
+            Eigen::Matrix4d projection
     );
 
-    MapControls *mapControls;
     float planeSize;
     int textureTileSize;
     int n;
@@ -40,19 +41,11 @@ public:
     double distortion;
     float radius;
     double camXNorm;
-    float distanceToMap;
-    float maxDistanceToMap;
-    float mapNearPlaneDelta;
     float zoomingDelta;
     float scale;
     float distortionDistanceToMapPortion;
-    Eigen::Matrix4d planeModelMatrix;
     Eigen::Matrix4d sphereModelMatrix;
     Eigen::Matrix4d projection;
-    Eigen::Matrix4d view;
-    Eigen::Matrix4d pv;
-    Eigen::Matrix4f pvFloat;
-    Eigen::Matrix4f planeModelMatrixFloat;
     Eigen::Matrix4f sphereModelMatrixFloat;
     double visYTilesDelta;
     double visXTilesDelta;
@@ -85,9 +78,10 @@ public:
     float shiftUTex;
     float screenWidth;
     float screenHeight;
-    Eigen::Matrix4f pvScreen;
     float leftX;
     float topY;
+    Eigen::Matrix4d scalePlane;
+    Eigen::Matrix4d planeModelMatrix;
 };
 
 

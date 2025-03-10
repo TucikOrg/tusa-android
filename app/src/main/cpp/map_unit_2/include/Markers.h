@@ -43,7 +43,8 @@ public:
                      std::unordered_map<uint64_t, MapTile*> tiles,
                      MapSymbols& mapSymbols,
                      MapCamera& mapCamera,
-                     bool canRefreshMarkers
+                     bool canRefreshMarkers,
+                     Eigen::Matrix4f pvScreen
     );
     bool hasMarker(int64_t key);
     void doubleTap();

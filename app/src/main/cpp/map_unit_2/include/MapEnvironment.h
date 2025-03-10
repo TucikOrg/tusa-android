@@ -35,17 +35,20 @@ public:
 
     void drawStars(
             MapNumbers &mapNumbers,
-            ShadersBucket &shadersBucket
+            ShadersBucket &shadersBucket,
+            Eigen::Matrix4f pvFloat
     );
 
     void drawGlowing(
             MapNumbers &mapNumbers,
-            ShadersBucket &shadersBucket
+            ShadersBucket &shadersBucket,
+            Eigen::Matrix4f pvFloat
     );
 
     void draw(
             MapNumbers& mapNumbers,
-            ShadersBucket& shadersBucket
+            ShadersBucket& shadersBucket,
+            Eigen::Matrix4f pvFloat
     );
 
     void selectClearColor(float zoom);

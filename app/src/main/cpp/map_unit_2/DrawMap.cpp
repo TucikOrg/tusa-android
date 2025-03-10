@@ -23,20 +23,22 @@ void DrawMap::drawMapForward(DrawMapData data,
                              MapTileRender& mapTileRender,
                              MapSymbols& mapSymbols,
                              MapFpsCounter& mapFpsCounter,
-                             ShadersBucket& shadersBucket
+                             ShadersBucket& shadersBucket,
+                             Eigen::Matrix4f pvScreen,
+                             Eigen::Matrix4d pv,
+                             Eigen::Matrix4d view
 ) {
     auto& mapNumbers = data.mapNumbers;
 
+    Eigen::Matrix4d planeModelMatrix = mapNumbers.planeModelMatrix;
     auto& forwardRenderingToWorld = mapNumbers.forwardRenderingToWorld;
     auto& tilesSwiped = mapNumbers.tilesSwiped;
     auto& EPSGLonNormInfNegative = mapNumbers.EPSGLonNormInfNegative;
-    auto& planeModelMatrix = mapNumbers.planeModelMatrix;
     auto& leftXVertex = mapNumbers.leftXVertex;
     auto& topYVertex = mapNumbers.topYVertex;
     auto& rightXVertex = mapNumbers.rightXVertex;
     auto& bottomYVertex = mapNumbers.bottomYVertex;
     auto& yTilesAmount = mapNumbers.yTilesAmount;
-    auto& pv = mapNumbers.pv;
     auto& visXTilesDelta = mapNumbers.visXTilesDelta;
     auto& backgroundTiles = data.backgroundTiles;
     auto& tiles = data.tiles;
@@ -44,7 +46,6 @@ void DrawMap::drawMapForward(DrawMapData data,
     auto& n = mapNumbers.n;
     auto& leftX = mapNumbers.leftX;
     auto& topY = mapNumbers.topY;
-    auto& view = mapNumbers.view;
     auto& projection = mapNumbers.projection;
     auto& zoom = mapNumbers.zoom;
     auto& visTileYStart = mapNumbers.visTileYStart;
@@ -172,7 +173,7 @@ void DrawMap::drawMapForward(DrawMapData data,
             mapTileRender.savedN = mapNumbers.n;
             mapTileRender.savedTileZ = mapNumbers.tileZ;
             mapTileRender.savedTiles = tiles;
-            mapTileRender.savedPVScreen = mapNumbers.pvScreen;
+            mapTileRender.savedPVScreen = pvScreen;
         }
 
         for (OnTilePathText &drawTile: onTilePathText) {
@@ -203,11 +204,11 @@ void DrawMap::drawMapForward(DrawMapData data,
 
 void DrawMap::drawMapViaTexture(
         DrawMapData &data,
-        ShadersBucket& shadersBucket
+        ShadersBucket& shadersBucket,
+        Eigen::Matrix4d pv
 ) {
     auto& mapNumbers = data.mapNumbers;
-    auto& planeModelMatrix = mapNumbers.planeModelMatrix;
-    auto& pv = mapNumbers.pv;
+    Eigen::Matrix4d planeModelMatrix = mapNumbers.planeModelMatrix;
     auto& segments = mapNumbers.segments;
     auto& planetVStart = mapNumbers.planetVStart;
     auto& planetUStart = mapNumbers.planetUStart;

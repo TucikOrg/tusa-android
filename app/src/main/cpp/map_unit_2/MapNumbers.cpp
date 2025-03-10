@@ -9,19 +9,17 @@ MapNumbers::MapNumbers(
         MapCamera &mapCamera,
         float planeSize,
         int textureMapSize,
-        float forwardRenderingToWorldZoom
+        float forwardRenderingToWorldZoom,
+        float distortionDistanceToMapPortion,
+        Eigen::Matrix4d projection
 ) {
+    this->projection = projection;
+
     screenWidth = mapCamera.getScreenW();
     screenHeight = mapCamera.getScreenH();
 
-    Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, screenWidth, screenHeight, 0, 0.1, 2);
-    Eigen::Matrix4f viewScreen = mapCamera.createView();
-    pvScreen = projectionScreen * viewScreen;
-
-    this->mapControls = &mapControls;
     this->planeSize = planeSize;
     radius = planeSize / (2.0f * M_PI);
-
 
     EPSG3857LonNormInf = mapControls.getEPSG3857LongitudeNormInf();
     EPSG3857CamLatNorm = mapControls.getEPSG3857LatitudeNorm();
@@ -50,30 +48,18 @@ MapNumbers::MapNumbers(
     n = pow(2, tileZ);
 
     scale = mapControls.getScale();
-    float impact = mapControls.getCamDistDistortionImpact();
-    distortionDistanceToMapPortion = invDistortion * impact + (1.0 - impact); // вдияние дисторции на дистанцию до карты
-    distanceToMap = mapControls.getDistanceToMap(distortionDistanceToMapPortion);
-    maxDistanceToMap = mapControls.getMaxDistanceToMap();
+    this->distortionDistanceToMapPortion = distortionDistanceToMapPortion;
     zoomingDelta = mapControls.getZoomingDelta();
 
-    float planesDelta = distanceToMap / 1.1f;
-    mapNearPlaneDelta = 1.0;
-    float nearPlane = distanceToMap - mapNearPlaneDelta;
-    float farPlane = distanceToMap + planeSize * 4.0;
-    float extent = 4096;
 
     double shiftPlaneY = -1.0 * EPSG3857CamLatNorm * (planeSize * 0.5 / distortion);
-    Eigen::Matrix4d scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0);
     Eigen::Matrix4d translatePlane = EigenGL::createTranslationMatrix(0.0, shiftPlaneY, 0.0);
+    scalePlane = EigenGL::createScaleMatrix(invDistortion, invDistortion, 1.0);
+
     planeModelMatrix = translatePlane * scalePlane;
     sphereModelMatrix = EigenGL::createRotationMatrixAxis(EPSG4326CamLat, Eigen::Vector3d {1.0, 0.0, 0.0});
 
-    projection = mapCamera.createPerspectiveProjectionD(nearPlane, farPlane);
-    view = mapCamera.createViewD(0, 0, distanceToMap, 0, 0, 0, Eigen::Vector3d(0.0, 1.0, 0.0));
-    pv = projection * view;
 
-    pvFloat = pv.cast<float>();
-    planeModelMatrixFloat = planeModelMatrix.cast<float>();
     sphereModelMatrixFloat = sphereModelMatrix.cast<float>();
 
     textureTileSize = textureMapSize;
