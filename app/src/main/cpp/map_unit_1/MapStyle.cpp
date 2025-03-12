@@ -469,7 +469,7 @@ unsigned short MapStyle::determineStyle(std::string layerName, layer_map_type pr
         auto adminIso = props["iso_3166_1"];
         auto adminLevelVariant = props["admin_level"];
         std::string iso3166Admin = boost::apply_visitor(StringExtractor(), adminIso);
-        adminLevel = std::stoi(boost::get<std::string>(adminLevelVariant));
+        adminLevel = boost::get<std::uint64_t>(adminLevelVariant);
     }
 
     if (layerName == "landcover" || layerName == "landcover_big_zoom") {

@@ -38,30 +38,22 @@ android {
             )
             buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
             buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
-            buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tile/\"")
+            buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tiles\"")
             signingConfig = signingConfigs.getByName("debug")
             buildConfigField("Boolean", "MAP_DEBUG", "false")
         }
         debug {
             buildConfigField("String", "SERVICE_URL", "\"http://192.168.1.100:8080\"")
             buildConfigField("String", "SOCKET_URL", "\"ws://192.168.1.100:8080/stream\"")
-            buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tile/\"")
+            buildConfigField("String", "MAP_URL", "\"http://192.168.1.100:8080/api/v1/tiles\"")
             buildConfigField("Boolean", "MAP_DEBUG", "false")
         }
         create("debugReleaseURLS") {
             isDebuggable = true
             buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
             buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
-            buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tile/\"")
+            buildConfigField("String", "MAP_URL", "\"https://tucik.fun/api/v1/tiles\"")
             buildConfigField("Boolean", "MAP_DEBUG", "false")
-            signingConfig = signingConfigs.getByName("debug")
-        }
-        create("debugMap") {
-            isDebuggable = true
-            buildConfigField("String", "SERVICE_URL", "\"https://tucik.fun\"")
-            buildConfigField("String", "SOCKET_URL", "\"wss://tucik.fun/stream\"")
-            buildConfigField("String", "MAP_URL", "\"http://192.168.1.100:8081/api/v1/tile/\"")
-            buildConfigField("Boolean", "MAP_DEBUG", "true")
             signingConfig = signingConfigs.getByName("debug")
         }
     }

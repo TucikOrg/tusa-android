@@ -60,12 +60,8 @@ private:
     MapSymbols mapSymbols = MapSymbols();
     MapTest mapTest = MapTest();
 
-    MapNumbers* savedTestMN = nullptr;
-
-    float forwardRenderingToWorldZoom = 6.0f;
+    float forwardRenderingToWorldZoom = 3.0f;
     float planeSize = 10000000;
-    //int textureMapSize = 8192;
-    //int textureMapSize = 4096;
     int textureMapSize = 1024;
     std::string textureKey;
 

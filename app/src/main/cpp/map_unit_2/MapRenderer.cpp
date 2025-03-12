@@ -32,23 +32,11 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     Eigen::Matrix4d pv = projection * view;
     Eigen::Matrix4f pvFloat = pv.cast<float>();
 
-
-
-    if (savedTestMN == nullptr) {
-        savedTestMN = new MapNumbers(
-                mapControls, mapCamera, planeSize,
-                textureMapSize, forwardRenderingToWorldZoom,
-                distortionDistanceToMapPortion, projection
-        );
-    }
-
-    //    auto mn = MapNumbers(
-//            mapControls, mapCamera, planeSize,
-//            textureMapSize, forwardRenderingToWorldZoom,
-//            distortionDistanceToMapPortion, projection
-//    );
-
-    auto mn = *savedTestMN;
+    auto mn = MapNumbers(
+        mapControls, mapCamera, planeSize,
+        textureMapSize, forwardRenderingToWorldZoom,
+        distortionDistanceToMapPortion, projection
+    );
 
 
     animateCameraTo.animateTick(mapFpsCounter, mapControls);

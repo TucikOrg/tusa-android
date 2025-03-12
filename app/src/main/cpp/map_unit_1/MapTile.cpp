@@ -48,6 +48,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
         std::size_t feature_count = layer.num_features();
         extent = layer.extent();
         while (auto feature = layer.next_feature()) {
+            auto id = feature.id();
             auto props = create_properties_map<layer_map_type>(feature);
             auto geomType = feature.geometry_type();
 
@@ -109,7 +110,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                         //sumPoints.insert(sumPoints.begin(), point_array.begin(), point_array.end());
                         if (name != "") {
                             // Добавить названия на улицы
-                            auto id = boost::get<uint64_t>(props["id"]);
+                            //auto id = boost::get<uint64_t>(props["id"]);
                             parseRoadTitleText(wName, name, point_array, mapSymbols, id);
                         }
 
@@ -326,7 +327,7 @@ MapTile::MapTile(int x, int y, int z, vtzero::vector_tile& tile, MapSymbols& map
                     }
 
                     uint64_t placeLabelKey = CommonUtils::makeKeyFromFloats(latitude, longitude);
-                    auto id = boost::get<uint64_t>(props["id"]);
+                    //auto id = boost::get<uint64_t>(props["id"]);
                     resultMarkerTitles[placeLabelKey] = MarkerMapTitle(
                             wName,
                             latitude,

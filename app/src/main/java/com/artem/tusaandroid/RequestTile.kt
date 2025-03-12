@@ -29,7 +29,7 @@ class RequestTile(private val context: Context) {
 
         try {
             val base = BuildConfig.MAP_URL
-            val url = URL("$base$zoom/$x/$y.mvt")
+            val url = URL("$base/$zoom/$x/$y.mvt")
             ByteArrayOutputStream().use { result ->
                 val urlConnection = url.openConnection() as HttpURLConnection
                 urlConnection.inputStream.use { inputStream ->
