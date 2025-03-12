@@ -75,13 +75,13 @@ class LocationForegroundService: Service() {
         activityRecognition = ActivityRecognition.getClient(this)
 
         // нужно грохнуть текущий сервис
-        if (intent.action == ACTION_STOP) {
-            logsState.addRow("Stop LocationForegroundService", "")
-            lastLocationState.saveLocationForegroundServiceStarted(false)
-
-            stop()
-            return START_NOT_STICKY
-        }
+//        if (intent.action == ACTION_STOP) {
+//            logsState.addRow("Stop LocationForegroundService", "")
+//            lastLocationState.saveLocationForegroundServiceStarted(false)
+//
+//            stop()
+//            return START_NOT_STICKY
+//        }
 
         if (intent.action == ACTION_ACTIVITY_RESULT) {
             Log.i("Tucik", "Activity result")

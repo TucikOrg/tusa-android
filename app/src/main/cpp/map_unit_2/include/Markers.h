@@ -64,6 +64,8 @@ public:
 
     void destroy();
 
+    void removeMarkersAll();
+
 private:
     MapFpsCounter* mapFpsCounter = nullptr;
     int atlasAvatarSize = 2048;

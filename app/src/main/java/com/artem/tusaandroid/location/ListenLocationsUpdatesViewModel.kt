@@ -3,6 +3,7 @@ package com.artem.tusaandroid.location
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.artem.tusaandroid.app.avatar.AvatarState
+import com.artem.tusaandroid.dto.IsMyLocationVisibleStateDto
 import com.artem.tusaandroid.dto.LocationDto
 import com.artem.tusaandroid.dto.UpdateLocationDto
 import com.artem.tusaandroid.socket.EventListener
@@ -17,6 +18,14 @@ open class ListenLocationsUpdatesViewModel @Inject constructor(
     private val avatarState: AvatarState
 ) : ViewModel() {
     init {
+        socketListener.getReceiveMessage().updateLocationVisibleBus.addListener(object: EventListener<IsMyLocationVisibleStateDto> {
+            override fun onEvent(event: IsMyLocationVisibleStateDto) {
+                if (event.isMyLocationVisible == false) {
+                    locationsState.removeLocation(event.ownerId)
+                }
+            }
+        })
+
         socketListener.getReceiveMessage().updateLocationBus.addListener(object: EventListener<UpdateLocationDto> {
             override fun onEvent(event: UpdateLocationDto) {
                 val location = locationsState.friendLocations.find { it.ownerId == event.whoId }
@@ -39,6 +48,9 @@ open class ListenLocationsUpdatesViewModel @Inject constructor(
                         updateAvatar = true,
                         updateMarkerFlag = true
                     ))
+
+                    // аватарку загружаем
+                    avatarState.retrieveAvatar(event.whoId, viewModelScope)
                 }
             }
         })
@@ -46,6 +58,15 @@ open class ListenLocationsUpdatesViewModel @Inject constructor(
         // этот метод перегружает сначала все локации друзей
         socketListener.getReceiveMessage().locationsBus.addListener(object: EventListener<List<LocationDto>> {
             override fun onEvent(event: List<LocationDto>) {
+                // каких то друзей нету в списке
+                // их маркера нужно запрятать
+                val notExistNow = locationsState.friendLocations.filter { friendLocation ->
+                    event.none { eventItem -> eventItem.ownerId == friendLocation.ownerId }
+                }
+                for (location in notExistNow) {
+                    locationsState.removeLocation(location.ownerId)
+                }
+
                 locationsState.friendLocations = event.map { FriendLocation(
                     ownerId = it.ownerId,
                     latitude = it.latitude,

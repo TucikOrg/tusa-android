@@ -99,6 +99,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // Если было открыто через уведомление
+        val title = intent.getStringExtra("notification_title")
+        val message = intent.getStringExtra("notification_message")
+
         val sharedPreferences: SharedPreferences = getSharedPreferences("basic", Context.MODE_PRIVATE)
         profileState.load(sharedPreferences, -1)
         lastLocationState.load(sharedPreferences, profileState.getUserId())

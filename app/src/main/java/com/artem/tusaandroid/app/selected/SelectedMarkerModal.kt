@@ -97,9 +97,9 @@ fun SelectedMarkerModal(model: SelectedMarkerViewModel) {
                     }
                     IconButton(
                         onClick = {
-                            val location = model.locationsState?.getLocation(selectedMarker.value)
+                            val location = model.locationsState.getLocation(selectedMarker.value)
                             if (location != null) {
-                                model.cameraState?.moveTo(location.latitude, location.longitude, 15.1f)
+                                model.cameraState.moveTo(location.latitude, location.longitude, 15.1f)
                             }
                         }
                     ) {

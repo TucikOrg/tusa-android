@@ -7,7 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.dialog.AppDialogState
+import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.notification.NotificationsService
+import com.artem.tusaandroid.socket.SocketListener
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -16,7 +18,9 @@ open class LocationSetupCardViewModel @Inject constructor(
     private val lastLocationState: LastLocationState?,
     private val meAvatarState: MeAvatarState?,
     private val notificationsService: NotificationsService?,
-    private val appDialogState: AppDialogState?
+    private val appDialogState: AppDialogState?,
+    private val socketListener: SocketListener,
+    private val logsState: AppLogsState
 ): ViewModel() {
     var locationServiceStarted = lastLocationState?.getLocationForegroundServiceStartedState() ?: mutableStateOf(false)
 
@@ -54,11 +58,15 @@ open class LocationSetupCardViewModel @Inject constructor(
             locationServiceStarted.value = true
             meAvatarState?.updateMeMarkerInRender()
         } else {
+            socketListener.getSendMessage()?.setMeLocationVisibleState(false)
             val stopIntent = Intent(context, LocationForegroundService::class.java).apply {
                 action = LocationForegroundService.ACTION_STOP
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             context.stopService(stopIntent)
+            logsState.addRow("Stop LocationForegroundService", "")
+            lastLocationState?.saveLocationForegroundServiceStarted(false)
+
             locationServiceStarted.value = false
             meAvatarState?.hideMe()
         }

@@ -254,7 +254,7 @@ bool MapStyle::registerRoadLayer(std::string layerName, std::string className, i
     // сервисные дорожки которые соединяют какие-либо объекты
     // обеспечивают доступ к этим объектам
     // рендрим с низким приоритетом чтобы они не перекрывали другие дороги
-    if (layerName == "road" && (className == "service" || className == "living_street")) {
+    if (layerName == "road" && (className == "service" || className == "living_street" || className == "street")) {
         forwardRenderingOnly[currentIndex] = false;
         renderWideAfterZoom[currentIndex] = 14.0f;
         isWideLine[currentIndex] = true;

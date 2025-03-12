@@ -77,6 +77,7 @@ class SocketListener(
                 t is java.net.SocketException ||
                 t is java.net.SocketTimeoutException ||
                 t is java.io.EOFException ||
+                t is ConcurrentModificationException || // при открытии приложения бывает
                 t is java.io.IOException // при любой ошыбке пытаемся переподключиться
 
         val isWaitToReconnect = socketConnectionState.isWaitToReconnect()

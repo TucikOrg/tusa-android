@@ -7,6 +7,7 @@ import com.artem.tusaandroid.dto.FriendRequestDto
 import com.artem.tusaandroid.dto.FriendsInitializationState
 import com.artem.tusaandroid.dto.FriendsRequestsInitializationState
 import com.artem.tusaandroid.dto.ImageDto
+import com.artem.tusaandroid.dto.IsMyLocationVisibleStateDto
 import com.artem.tusaandroid.dto.IsOnlineDto
 import com.artem.tusaandroid.dto.LocationDto
 import com.artem.tusaandroid.dto.UpdateLocationDto
@@ -28,6 +29,7 @@ class ReceiveMessage() {
     val findUsersBus: EventBus<List<FriendDto>> = EventBus()
     val avatarBus: EventBus<AvatarDTO> = EventBus()
     val updateLocationBus: EventBus<UpdateLocationDto> = EventBus()
+    val updateLocationVisibleBus: EventBus<IsMyLocationVisibleStateDto> = EventBus()
     val locationsBus: EventBus<List<LocationDto>> = EventBus()
     val createdUser: EventBus<CreatedUser> = EventBus()
     val allUsers: EventBus<UsersPage> = EventBus()
@@ -66,6 +68,10 @@ class ReceiveMessage() {
             "locations" -> {
                 val locations = Cbor.decodeFromByteArray<List<LocationDto>>(socketBinaryMessage.data)
                 locationsBus.pushEvent(locations)
+            }
+            "update-location-visible" -> {
+                val updateLocationVisible = Cbor.decodeFromByteArray<IsMyLocationVisibleStateDto>(socketBinaryMessage.data)
+                updateLocationVisibleBus.pushEvent(updateLocationVisible)
             }
             "update-location" -> {
                 val updateLocation = Cbor.decodeFromByteArray<UpdateLocationDto>(socketBinaryMessage.data)

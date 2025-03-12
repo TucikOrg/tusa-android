@@ -39,6 +39,11 @@ class SendMessage(
     }
 
     @OptIn(ExperimentalSerializationApi::class)
+    fun setMeLocationVisibleState(visible: Boolean) {
+        sendMessage(SocketBinaryMessage("set-me-location-visible", Cbor.encodeToByteArray(visible)))
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
     fun removeFriend(id: Long) {
         sendMessage(SocketBinaryMessage("delete-friend", Cbor.encodeToByteArray(id)))
     }

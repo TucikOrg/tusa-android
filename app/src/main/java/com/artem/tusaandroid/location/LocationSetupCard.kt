@@ -29,12 +29,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.res.painterResource
 
-@Preview
-@Composable
-fun LocationSetupCardPreview() {
-    LocationSetupCard(model = PreviewLocationSetupCardViewModel())
-}
-
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun LocationSetupCard(model: LocationSetupCardViewModel) {

@@ -951,6 +951,17 @@ void Markers::removeMarker(int64_t key) {
     refreshGroup[markerGroup] = nullptr;
 }
 
+void Markers::removeMarkersAll() {
+    // ничего больше не рендрим
+    renderMarkersMap.clear();
+    renderMarkers.clear();
+
+    // пересобираем группу без этого маркера
+    for (auto& marker : storageMarkers) {
+        refreshGroup[marker.second.atlasPointer.atlasId] = nullptr;
+    }
+}
+
 void Markers::updateMarkerAvatar(int64_t key, unsigned char *imageData, off_t fileSize) {
     auto find = storageMarkers.find(key);
     if (find == storageMarkers.end()) {
@@ -1105,3 +1116,5 @@ void Markers::destroy() {
         auto& marker = markerPair.second;
     }
 }
+
+

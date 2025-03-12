@@ -42,7 +42,6 @@ class MapView(
 
     private var scaleListener: ScaleListener? = null
     private var gestureListener: GestureListener? = null
-    private var planetRenderer:  com.artem.tusaandroid.Renderer? = null
 
     init {
         // Настраиваем карту первоначально перед запуском
@@ -53,15 +52,14 @@ class MapView(
         setEGLContextClientVersion(2)
         setEGLConfigChooser(8, 8, 8, 8, 16, 8)
 
-        planetRenderer =  com.artem.tusaandroid.Renderer(
+        setRenderer(Renderer(
             resources.assets,
             meAvatarState,
             lastLocationState,
             socketListener,
             avatarState,
             locationsState
-        )
-        setRenderer(planetRenderer)
+        ))
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
@@ -85,8 +83,6 @@ class MapView(
         // похоже очень что чистит сам GLSurfaceView
         // и не нужно читстить самому open gl сущности
         super.surfaceDestroyed(holder)
-
-        planetRenderer?.destroySecondaryGLThread()
     }
 
     override fun onDetachedFromWindow() {

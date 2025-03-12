@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.location.LocationManager
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.ViewModel
+import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.dialog.AppDialogState
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.location.LastLocationState
@@ -23,7 +24,8 @@ open class TucikLifecycleEventsViewModel @Inject constructor(
     private val appDialogState: AppDialogState,
     private val lastLocationState: LastLocationState,
     private val profileState: ProfileState,
-    private val socketConnect: SocketConnect
+    private val socketConnect: SocketConnect,
+    private val meAvatarState: MeAvatarState
 ) : ViewModel() {
     fun makeOnCreate(context: Context) {
         // нету нужного гугл сервиса
@@ -45,7 +47,7 @@ open class TucikLifecycleEventsViewModel @Inject constructor(
         ) == PackageManager.PERMISSION_GRANTED
 
         if ( locationPermissionGranted && activityRecognitionPermissionGranted ) {
-            // Если сервис был запущен и разрешение на геолокацию есть и он был запущен, то запускаем сервис
+            // Если сервис был запущен и разрешение на геолокацию есть, то запускаем сервис
             // это еще так же значит что пользователь желает отображать себя на карте
             // + gps включен
             val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -56,6 +58,10 @@ open class TucikLifecycleEventsViewModel @Inject constructor(
                     flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 }
                 context.startForegroundService(startIntent)
+                // показать мой маркер на карте
+                // он будет показан если есть последняя локация или если нету то когда она обновится
+                // при старте (startIntent) всегда в самом начале обновляется локация
+                meAvatarState.updateMeMarkerInRender()
             }
         } else {
             // Если сервис был запущен, но разрешение на геолокацию или фитнесс отозвали, то останавливаем сервис

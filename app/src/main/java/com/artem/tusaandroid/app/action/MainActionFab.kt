@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.artem.tusaandroid.R
 import com.artem.tusaandroid.TucikViewModel
 import com.artem.tusaandroid.app.profile.PreviewProfileCardViewModel
@@ -31,7 +32,6 @@ import com.artem.tusaandroid.app.profile.ProfileCard
 import com.artem.tusaandroid.app.systemui.IsLightGlobal
 import com.artem.tusaandroid.isPreview
 import com.artem.tusaandroid.location.LocationSetupCard
-import com.artem.tusaandroid.location.PreviewLocationSetupCardViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun MainActionInModal(model: MainActionFabViewModel) {
         )
         Spacer(modifier = Modifier.height(12.dp))
         LocationSetupCard(
-            model = TucikViewModel(preview = model.isPreview(), previewModel = PreviewLocationSetupCardViewModel())
+            model = hiltViewModel()
         )
         Spacer(modifier = Modifier.height(80.dp))
     }

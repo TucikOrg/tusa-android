@@ -9,6 +9,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
 import androidx.credentials.exceptions.GetCredentialCustomException
+import com.artem.tusaandroid.NativeLibrary
 import com.artem.tusaandroid.app.profile.ProfileState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -118,6 +119,7 @@ class AuthenticationState(
     suspend fun logout(activityContext: Context) {
         val credentialManager = CredentialManager.create(activityContext)
         credentialManager.clearCredentialState(ClearCredentialStateRequest())
+        NativeLibrary.removeMarkersAll()
 
         profileState.saveJwt("")
         authenticated = false

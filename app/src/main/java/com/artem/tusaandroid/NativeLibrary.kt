@@ -12,8 +12,6 @@ object NativeLibrary {
     external fun cleanup()
 
     external fun render(isDebugBuildVariant: Boolean)
-    external fun renderParallel()
-    external fun initParallel()
     external fun onSurfaceChanged(width: Int, height: Int)
     external fun surfaceCreated(assetManager: AssetManager?)
     external fun surfaceDestroyed()
@@ -29,6 +27,7 @@ object NativeLibrary {
 
     // Markers
     external fun removeMarker(key: Long)
+    external fun removeMarkersAll()
     external fun updateMarkerAvatar(key: Long, avatarBuffer: ByteArray)
     external fun updateMarkerGeo(key: Long, latitude: Float, longitude: Float)
     external fun addMarker(key: Long, latitude: Float, longitude: Float, avatarBuffer: ByteArray, updateAvatar: Boolean)

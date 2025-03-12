@@ -51,7 +51,7 @@
             android:exported="false" />
 
         <service
-            android:name=".firebase.MyFirebaseMessagingService"
+            android:name=".firebase.MyFirebaseMessagingServiceNew"
             android:enabled="true"
             android:exported="false">
             <intent-filter>

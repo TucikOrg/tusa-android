@@ -288,14 +288,6 @@ void MapRenderer::destroyGL() {
     drawMap.destroy();
 }
 
- void MapRenderer::initParallel() {
-
- }
-
- void MapRenderer::renderParallel() {
-
- }
-
 
 
 

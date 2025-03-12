@@ -41,10 +41,6 @@ public:
 
     bool surfaceCreated = false;
 
-    void renderParallel();
-
-    void initParallel();
-
 private:
     MapControls mapControls = MapControls();
     MapCamera mapCamera = MapCamera();
