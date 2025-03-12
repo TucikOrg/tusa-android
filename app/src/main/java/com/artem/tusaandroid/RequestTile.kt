@@ -42,7 +42,7 @@ class RequestTile(private val context: Context) {
 
                 // это запись кеша в файловую систему
                 val bytesResult = result.toByteArray()
-                if (bytesResult.size > 0) {
+                 if (bytesResult.size > 0) {
                     saveByteArrayToCache(fileName, bytesResult)
                 }
                 return bytesResult
