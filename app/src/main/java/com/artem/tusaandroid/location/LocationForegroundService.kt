@@ -14,8 +14,10 @@ import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import com.artem.tusaandroid.MainActivity
 import com.artem.tusaandroid.R
+import com.artem.tusaandroid.app.MeAvatarState
 import com.artem.tusaandroid.app.logs.AppLogsState
 import com.artem.tusaandroid.requests.CustomTucikEndpoints
+import com.artem.tusaandroid.socket.SocketListener
 import com.squareup.moshi.Moshi
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
@@ -54,11 +56,16 @@ class LocationForegroundService: Service() {
     lateinit var moshi: Moshi
     @Inject
     lateinit var customTucikEndpoints: CustomTucikEndpoints
+    @Inject
+    lateinit var socketListener: SocketListener
+    @Inject
+    lateinit var meAvatarState: MeAvatarState
 
     fun stop() {
         stopSelf()
         removeActivityRecognition()
     }
+
 
     override fun onStartCommand(intentPassed: Intent?, flags: Int, startId: Int): Int {
         if (intentPassed == null) {
@@ -75,13 +82,15 @@ class LocationForegroundService: Service() {
         activityRecognition = ActivityRecognition.getClient(this)
 
         // нужно грохнуть текущий сервис
-//        if (intent.action == ACTION_STOP) {
-//            logsState.addRow("Stop LocationForegroundService", "")
-//            lastLocationState.saveLocationForegroundServiceStarted(false)
-//
-//            stop()
-//            return START_NOT_STICKY
-//        }
+        if (intent.action == ACTION_STOP) {
+            logsState.addRow("Stop LocationForegroundService", "")
+            lastLocationState.saveLocationForegroundServiceStarted(false)
+            socketListener?.getSendMessage()?.setMeLocationVisibleState(false)
+            meAvatarState?.hideMe()
+
+            stop()
+            return START_NOT_STICKY
+        }
 
         if (intent.action == ACTION_ACTIVITY_RESULT) {
             Log.i("Tucik", "Activity result")
@@ -272,7 +281,7 @@ class LocationForegroundService: Service() {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         val stopPendingIntent = PendingIntent.getService(
-            this, 0, stopIntent, PendingIntent.FLAG_IMMUTABLE
+            this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)

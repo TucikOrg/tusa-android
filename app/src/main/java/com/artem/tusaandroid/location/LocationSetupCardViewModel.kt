@@ -58,17 +58,12 @@ open class LocationSetupCardViewModel @Inject constructor(
             locationServiceStarted.value = true
             meAvatarState?.updateMeMarkerInRender()
         } else {
-            socketListener.getSendMessage()?.setMeLocationVisibleState(false)
             val stopIntent = Intent(context, LocationForegroundService::class.java).apply {
                 action = LocationForegroundService.ACTION_STOP
                 flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
             }
             context.stopService(stopIntent)
-            logsState.addRow("Stop LocationForegroundService", "")
-            lastLocationState?.saveLocationForegroundServiceStarted(false)
-
             locationServiceStarted.value = false
-            meAvatarState?.hideMe()
         }
     }
 }

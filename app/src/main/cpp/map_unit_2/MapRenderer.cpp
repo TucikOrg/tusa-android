@@ -12,7 +12,9 @@ void MapRenderer::renderFrame(bool isDebugBuildVariant) {
     mapFpsCounter.newFrame();
 
     // матрица вида текущего кадра
-    Eigen::Matrix4f viewScreen = mapCamera.createView();
+    Eigen::Matrix4f viewScreen = mapCamera.createView(
+            0, 0, 1, 0, 0, 0, 0, 1, 0
+            );
     Eigen::Matrix4f projectionScreen = mapCamera.createOrthoProjection(0, mapCamera.getScreenW(), mapCamera.getScreenH(), 0, 0.1, 2);
     Eigen::Matrix4f pvScreen = projectionScreen * viewScreen;
 
